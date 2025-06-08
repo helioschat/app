@@ -84,74 +84,125 @@
   {/if}
 </div>
 
-<style>
-  .markdown-content {
-    width: 100%;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    word-break: break-word;
+<style lang="postcss">
+  @reference "tailwindcss";
+
+  .markdown-content,
+  .markdown-content :global(> *) {
+    color: var(--color-12);
   }
 
-  .markdown-content :global(pre) {
-    margin: 1em 0;
-    padding: 1em;
-    border-radius: 0.3em;
-    background: #1e1e1e;
-    overflow-x: auto;
+  .markdown-content :global(> *:first-child) {
+    @apply !mt-0;
   }
 
-  .markdown-content :global(code) {
-    font-family: monospace;
-    font-size: 0.9em;
+  .markdown-content :global(> *:last-child) {
+    @apply !mb-0;
   }
 
-  .markdown-content :global(p) {
-    margin: 0.5em 0;
+  .markdown-content :global(h1),
+  .markdown-content :global(h2),
+  .markdown-content :global(h3),
+  .markdown-content :global(h4),
+  .markdown-content :global(h5),
+  .markdown-content :global(h6),
+  .markdown-content :global(p),
+  .markdown-content :global(ul),
+  .markdown-content :global(ol),
+  .markdown-content :global(blockquote),
+  .markdown-content :global(pre),
+  .markdown-content :global(hr),
+  .markdown-content :global(table) {
+    @apply mb-2;
+  }
+
+  .markdown-content :global(h1),
+  .markdown-content :global(h2),
+  .markdown-content :global(h3),
+  .markdown-content :global(h4),
+  .markdown-content :global(h5),
+  .markdown-content :global(h6) {
+    color: var(--color-12);
   }
 
   .markdown-content :global(h1) {
-    font-size: 1.8em;
-    margin: 0.67em 0;
+    @apply mt-3 text-2xl;
+  }
+
+  .markdown-content :global(h1:not(:last-child)) {
+    @apply pb-1;
   }
 
   .markdown-content :global(h2) {
-    font-size: 1.5em;
-    margin: 0.75em 0;
+    @apply text-xl;
   }
 
   .markdown-content :global(h3) {
-    font-size: 1.3em;
-    margin: 0.83em 0;
+    @apply text-lg;
   }
 
-  .markdown-content :global(h4) {
-    font-size: 1.1em;
-    margin: 1.12em 0;
+  .markdown-content :global(p) {
+    word-wrap: break-word;
   }
 
   .markdown-content :global(ul),
   .markdown-content :global(ol) {
-    margin: 1em 0;
-    padding-left: 2em;
+    @apply pl-8;
+  }
+
+  .markdown-content :global(ul) {
+    @apply list-disc;
+  }
+
+  .markdown-content :global(ol) {
+    @apply list-decimal;
+  }
+
+  .markdown-content :global(blockquote) {
+    @apply pl-8;
+  }
+
+  .markdown-content :global(pre),
+  .markdown-content :global(p > code) {
+    background: var(--color-2);
+    @apply text-sm;
+  }
+
+  .markdown-content :global(pre) {
+    @apply overflow-auto rounded-2xl p-4;
+  }
+
+  .markdown-content :global(p > code) {
+    @apply rounded-lg;
+    @apply px-1.5 py-0.5;
+    @apply whitespace-break-spaces;
   }
 
   .markdown-content :global(table) {
-    border-collapse: collapse;
-    margin: 1em 0;
-    width: 100%;
+    @apply block w-max max-w-full border-collapse overflow-auto tabular-nums;
   }
 
   .markdown-content :global(th),
   .markdown-content :global(td) {
-    border: 1px solid #ddd;
-    padding: 6px 13px;
+    @apply px-3 py-1.5;
+    @apply border;
+    border-color: var(--color-6);
   }
 
-  .markdown-content :global(blockquote) {
-    margin: 1em 0;
-    padding-left: 1em;
-    border-left: 4px solid #ddd;
-    color: #777;
+  .markdown-content :global(tr:nth-child(2n)) {
+    background: var(--color-3);
+  }
+
+  .markdown-content :global(hr) {
+    border-color: var(--color-6);
+  }
+
+  .markdown-content :global(section.footnotes) {
+    @apply pt-4;
+    @apply border-t;
+    border-color: var(--color-6);
+    @apply text-xs;
+    color: var(--color-11);
   }
 
   /* Style for streaming content - optional animation */
