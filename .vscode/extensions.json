@@ -1,0 +1,14 @@
+{
+  "recommendations": [
+    "ricard.postcss",
+    "dbaeumer.vscode-eslint",
+    "ms-vscode.vscode-typescript-next",
+    "esbenp.prettier-vscode",
+    "rvest.vs-code-prettier-eslint",
+    "svelte.svelte-vscode",
+    "ms-azuretools.vscode-docker",
+    "ecmel.vscode-html-css",
+    "yoavbls.pretty-ts-errors",
+    "bradlc.vscode-tailwindcss"
+  ]
+}

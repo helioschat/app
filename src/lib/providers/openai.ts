@@ -1,0 +1,108 @@
+import OpenAI from 'openai';
+import type { Message, ProviderConfig } from '../types';
+import type { LanguageModel, ModelInfo } from './base';
+import { toReadableStream } from './base';
+
+export class OpenAIProvider implements LanguageModel {
+  private client: OpenAI;
+  private config: ProviderConfig;
+  public id = 'openai';
+  public name = 'OpenAI';
+  private tokenCount = 0;
+  public fallbackModel = 'gpt-4.1-nano';
+
+  constructor(config: ProviderConfig) {
+    this.client = new OpenAI({
+      apiKey: config.apiKey,
+      baseURL: config.baseUrl,
+      dangerouslyAllowBrowser: true,
+    });
+    this.config = config;
+  }
+
+  stream(messages: Message[]) {
+    this.tokenCount = 0;
+
+    const gen = async function* (this: OpenAIProvider) {
+      const response = await this.client.chat.completions.create({
+        model: this.config.model || this.fallbackModel,
+        messages: messages.map(({ role, content }) => ({ role, content })),
+        stream: true,
+      });
+
+      for await (const chunk of response) {
+        // Count each chunk as a token (OpenAI streams by token)
+        if (chunk.choices[0]?.delta?.content) {
+          this.tokenCount++;
+        }
+        yield chunk.choices[0]?.delta?.content || '';
+      }
+    }.bind(this)();
+    return toReadableStream(gen);
+  }
+
+  // Get the actual completion token count from the stream
+  getCompletionTokenCount(): number {
+    return this.tokenCount;
+  }
+
+  async countTokens(messages: Message[]): Promise<{
+    promptTokens: number;
+    completionTokens?: number;
+    totalTokens: number;
+  }> {
+    // For prompt tokens, we still need to estimate
+    let promptTokens = 0;
+
+    for (const message of messages) {
+      promptTokens += 4;
+
+      if (message.content) {
+        // Count words and multiply by average tokens per word
+        const words = message.content.split(/\s+/).length;
+        const contentTokens = Math.ceil(words * 1.3);
+        promptTokens += Math.max(1, contentTokens);
+      }
+    }
+
+    // Add overhead tokens
+    promptTokens += 3;
+
+    return {
+      promptTokens: promptTokens,
+      completionTokens: this.tokenCount,
+      totalTokens: promptTokens + this.tokenCount,
+    };
+  }
+
+  getModelName(): string {
+    return this.config.model || this.fallbackModel;
+  }
+
+  getProviderName(): string {
+    return this.name;
+  }
+
+  async getAvailableModels(): Promise<ModelInfo[]> {
+    try {
+      const response = await this.client.models.list();
+
+      return response.data
+        .filter((model) => model.id.startsWith('gpt-'))
+        .map((model) => ({
+          id: model.id,
+          name: model.id,
+          description: `OpenAI ${model.id} model`,
+        }));
+    } catch (error) {
+      console.error('Error fetching OpenAI models:', error);
+      // Fallback
+      return [
+        {
+          id: 'gpt-4.1-nano',
+          name: 'GPT-4.1 Nano',
+        },
+      ];
+    }
+  }
+}
