@@ -7,12 +7,12 @@ import {
   saveChatAsThreadAndMessages,
   type Thread,
 } from '$lib/utils/db';
-import { nanoid } from 'nanoid';
 import { writable, type Writable } from 'svelte/store';
+import { v7 as uuidv7 } from 'uuid';
 
 // Initial chat template
 const createInitialChat = (): Chat => ({
-  id: nanoid(),
+  id: uuidv7(),
   title: 'New Chat',
   messages: [],
   createdAt: new Date(),
@@ -155,7 +155,7 @@ export function createNewChat(initialMessage?: string): string {
     newChat.title = initialMessage.length > 30 ? initialMessage.substring(0, 30) + '...' : initialMessage;
 
     newChat.messages.push({
-      id: nanoid(),
+      id: uuidv7(),
       role: 'user',
       content: initialMessage,
     });

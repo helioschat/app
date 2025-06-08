@@ -2,7 +2,7 @@ import type { StreamMetrics } from '$lib/providers/base';
 import { getLanguageModel } from '$lib/providers/registry';
 import { chats } from '$lib/stores/chat';
 import type { Chat, Message, ProviderConfig } from '$lib/types';
-import { nanoid } from 'nanoid';
+import { v7 as uuidv7 } from 'uuid';
 import { clearChatError } from '../stores/error';
 import type { StreamContextMessage } from './streamState';
 import { endStream, startStream, updateStreamContent } from './streamState';
@@ -56,7 +56,7 @@ export class StreamController {
     if (isExistingUserMessage) {
       // Just add an assistant message to respond to the existing user message
       assistantMessage = {
-        id: nanoid(),
+        id: uuidv7(),
         role: 'assistant',
         content: '',
         provider: this.providerName,
@@ -66,13 +66,13 @@ export class StreamController {
     } else {
       // Standard case: add both user and assistant messages
       const userMessage: Message = {
-        id: nanoid(),
+        id: uuidv7(),
         role: 'user',
         content: userInput,
       };
 
       assistantMessage = {
-        id: nanoid(),
+        id: uuidv7(),
         role: 'assistant',
         content: '',
         provider: this.providerName,
@@ -344,7 +344,7 @@ export class StreamController {
       const minimalContext: StreamContextMessage[] = [
         // First message is the user's instruction to continue
         {
-          id: nanoid(),
+          id: uuidv7(),
           role: 'user',
           content: `You previously wrote the following text. Continue writing exactly where you left off, maintaining the same style, tone, and flow. Make sure there's proper spacing between the last word of the existing text and the first word of your continuation. Do not repeat any content, do not start a new section, do not introduce the topic again, and do not acknowledge this instruction in your response. Just continue writing as if you never stopped:\n\n${currentContent}`,
         },
