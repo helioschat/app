@@ -3,6 +3,7 @@ import { getLanguageModel } from '$lib/providers/registry';
 import { chats } from '$lib/stores/chat';
 import type { Chat, Message, ProviderConfig } from '$lib/types';
 import { nanoid } from 'nanoid';
+import { clearChatError } from '../stores/error';
 import type { StreamContextMessage } from './streamState';
 import { endStream, startStream, updateStreamContent } from './streamState';
 
@@ -35,6 +36,9 @@ export class StreamController {
     if (!userInput.trim() || !activeChat || this.isLoading) {
       return this.getState();
     }
+
+    // Clear any previous errors when starting a new chat
+    clearChatError();
 
     // Check if this is a chat with an existing user message (from landing page)
     // In this case, we don't need to create a new user message
@@ -251,9 +255,7 @@ export class StreamController {
               if (msg.id === assistantMessage.id) {
                 return {
                   ...msg,
-                  content: hasPartialContent
-                    ? currentMessage!.content
-                    : 'An error occurred. Please check your settings and try again.',
+                  content: hasPartialContent ? currentMessage!.content : '',
                   // Add partial metrics even in case of error
                   usage: {
                     promptTokens: this.streamMetrics.promptTokens,
