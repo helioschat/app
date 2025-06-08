@@ -1,3 +1,6 @@
+<script lang="ts">
+</script>
+
 <div
   class="block h-4 w-4 animate-[spin_0.25s_linear_infinite] motion-reduce:animate-[spin_1.5s_linear_infinite]"
   role="status">
