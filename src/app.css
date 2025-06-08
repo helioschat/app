@@ -3,6 +3,7 @@
 /* Fonts */
 html {
   font-family: 'Inter', sans-serif;
+  @apply font-light;
 }
 
 @supports (font-variation-settings: normal) {
