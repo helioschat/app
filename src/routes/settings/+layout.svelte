@@ -3,6 +3,7 @@
   import { ArrowLeft } from 'lucide-svelte';
   import Tabs from '$lib/components/common/Tabs.svelte';
   import { goto } from '$app/navigation';
+  import { activeChatId } from '$lib/stores/chat';
 
   const tabs = [
     { id: 'providers', text: 'Providers', path: '/settings/providers' },
@@ -18,7 +19,7 @@
 </script>
 
 <div class="settings p-4">
-  <button onclick={() => history.back()} class="button button-secondary">
+  <button onclick={() => goto(`/${$activeChatId}`)} class="button button-secondary">
     <ArrowLeft size={20}></ArrowLeft>
     Back to Chat
   </button>
