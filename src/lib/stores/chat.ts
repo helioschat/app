@@ -152,6 +152,8 @@ export function createNewChat(initialMessage?: string): string {
 
   // If an initial message is provided, add it as a user message
   if (initialMessage && initialMessage.trim()) {
+    initialMessage = initialMessage.trim();
+
     newChat.title = initialMessage.length > 30 ? initialMessage.substring(0, 30) + '...' : initialMessage;
 
     newChat.messages.push({
