@@ -23,6 +23,11 @@ const createInitialChat = (): Chat => ({
 export const chats: Writable<Chat[]> = writable<Chat[]>([]);
 export const activeChatId: Writable<string | null> = writable<string | null>(null);
 
+// Helper to sort chats by updatedAt in descending order
+function sortChats(chatList: Chat[]): Chat[] {
+  return [...chatList].sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+}
+
 if (browser) {
   // Load chats from IndexedDB
   const initializeStore = async () => {
@@ -39,7 +44,7 @@ if (browser) {
           }),
         );
 
-        chats.set(initialChats);
+        chats.set(sortChats(initialChats));
 
         // Set the most recently updated chat as active
         activeChatId.set(threads[0].id);
@@ -54,7 +59,7 @@ if (browser) {
               }),
             );
 
-            chats.update((existingChats) => [...existingChats, ...remainingChats]);
+            chats.update((existingChats) => sortChats([...existingChats, ...remainingChats]));
           }, 1000);
         }
       } else {
@@ -106,9 +111,18 @@ if (browser) {
           await saveChatAsThreadAndMessages(activeChat);
         }
       }
+
+      // Ensure chats are always sorted
+      const sortedChats = sortChats(chatList);
+      if (JSON.stringify(sortedChats) !== JSON.stringify(chatList)) {
+        chats.set(sortedChats);
+      }
     }
   });
 }
+
+// Simple mutex to prevent concurrent loads of the same chat
+const loadMutex: Record<string, Promise<Chat | null>> = {};
 
 /**
  * Creates a new chat and returns its ID
@@ -128,7 +142,7 @@ export function createNewChat(initialMessage?: string): string {
     });
   }
 
-  chats.update((allChats) => [...allChats, newChat]);
+  chats.update((allChats) => sortChats([...allChats, newChat]));
   activeChatId.set(newChat.id);
 
   // Save the new chat to IndexedDB
@@ -173,38 +187,56 @@ export async function deleteChatById(id: string): Promise<void> {
  * Loads a specific chat by ID
  */
 export async function loadChat(id: string): Promise<Chat | null> {
-  // Check if the chat is already loaded
-  let currentChats: Chat[] = [];
-  const unsubscribe = chats.subscribe((value) => {
-    currentChats = value;
-  });
-  unsubscribe();
-
-  const existingChat = currentChats.find((chat) => chat.id === id);
-  if (existingChat && existingChat.messages.length > 0) {
-    return existingChat;
+  // If we're already loading this chat, wait for that promise
+  const existingPromise = loadMutex[id];
+  if (existingPromise) {
+    return existingPromise;
   }
 
-  // If not loaded or has no messages, get from IndexedDB
-  const chat = await getChatFromThread(id);
-  if (chat) {
-    // Update the store with the loaded chat
-    chats.update((allChats) => {
-      const index = allChats.findIndex((c) => c.id === id);
-      if (index >= 0) {
-        // Replace existing chat
-        const updated = [...allChats];
-        updated[index] = chat;
-        return updated;
-      } else {
-        // Add new chat
-        return [...allChats, chat];
+  // Create a new promise for loading this chat
+  loadMutex[id] = (async () => {
+    try {
+      // Check if the chat is already loaded
+      let currentChats: Chat[] = [];
+      const unsubscribe = chats.subscribe((value) => {
+        currentChats = value;
+      });
+      unsubscribe();
+
+      const existingChat = currentChats.find((chat) => chat.id === id);
+      if (existingChat && existingChat.messages.length > 0) {
+        return existingChat;
       }
-    });
-    return chat;
-  }
 
-  return null;
+      // If not loaded or has no messages, get from IndexedDB
+      const chat = await getChatFromThread(id);
+      if (chat) {
+        // Update the store with the loaded chat
+        chats.update((allChats) => {
+          const index = allChats.findIndex((c) => c.id === id);
+          if (index >= 0) {
+            // Replace existing chat
+            const updated = [...allChats];
+            updated[index] = chat;
+            return sortChats(updated);
+          } else {
+            // Add new chat
+            return sortChats([...allChats, chat]);
+          }
+        });
+        return chat;
+      }
+
+      return null;
+    } finally {
+      // Clean up the mutex after a delay to prevent immediate duplicate requests
+      setTimeout(() => {
+        delete loadMutex[id];
+      }, 1000);
+    }
+  })();
+
+  return loadMutex[id];
 }
 
 // Helper to get store value without subscription
