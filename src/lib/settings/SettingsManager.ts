@@ -1,6 +1,7 @@
 import { browser } from '$app/environment';
 import type { ModelInfo } from '$lib/providers/base';
 import { getAvailableProviders, getLanguageModel } from '$lib/providers/registry';
+import { modelCache } from '$lib/stores/modelCache';
 import type { Provider, ProviderConfig } from '$lib/types';
 import { PROVIDER_OPENAI } from '$lib/types';
 import { get, writable } from 'svelte/store';
@@ -170,11 +171,22 @@ export class SettingsManager {
     // Load models for each provider
     for (const provider of providers) {
       try {
-        // Get provider instance
+        // Check cache first
+        const cachedModels = modelCache.getCachedModels(provider);
+        if (cachedModels) {
+          availableModels[provider] = cachedModels;
+          continue;
+        }
+
+        // Cache miss - fetch from provider
         const model = getLanguageModel(provider, currentSettings[provider] || {});
-        // Get available models
-        availableModels[provider] = await model.getAvailableModels();
+        const models = await model.getAvailableModels();
+
+        // Cache the results since we got them without error
+        modelCache.cacheModels(provider, models);
+        availableModels[provider] = models;
       } catch (error) {
+        // Don't cache results when we hit an error since these will be fallback models
         console.error(`Failed to fetch models for ${provider}`, error);
         availableModels[provider] = [];
       }
