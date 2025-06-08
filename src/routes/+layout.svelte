@@ -1,5 +1,6 @@
 <script lang="ts">
   import '../app.css';
+  import '@fontsource/inter';
   import ChatSidebar from '$lib/components/chat/ChatSidebar.svelte';
 
   let { children } = $props();
