@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { chats, createNewChat } from '$lib/stores/chat';
+  import { chats, createNewChat, isLoadingChats } from '$lib/stores/chat';
   import { goto } from '$app/navigation';
   import { CirclePlus, Settings, Pin, Trash, Menu } from 'lucide-svelte';
   import { page } from '$app/state';
   import { manifest } from '$lib';
+  import Spinner from '$lib/components/common/Spinner.svelte';
 
   export function handleCreateNewChat() {
     const newChatId = createNewChat();
@@ -41,6 +42,11 @@
         </div>
       </a>
     {/each}
+    {#if $isLoadingChats}
+      <div class="flex justify-center py-2">
+        <Spinner></Spinner>
+      </div>
+    {/if}
   </nav>
 </aside>
 

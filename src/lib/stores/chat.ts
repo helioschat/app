@@ -22,6 +22,7 @@ const createInitialChat = (): Chat => ({
 // Initialize stores with empty values, then load from IndexedDB
 export const chats: Writable<Chat[]> = writable<Chat[]>([]);
 export const activeChatId: Writable<string | null> = writable<string | null>(null);
+export const isLoadingChats: Writable<boolean> = writable<boolean>(false);
 
 // Helper to sort chats by updatedAt in descending order
 function sortChats(chatList: Chat[]): Chat[] {
@@ -35,38 +36,56 @@ if (browser) {
       const threads = await getAllThreads();
 
       if (threads.length > 0) {
-        // Load the first few chats to populate the sidebar quickly
-        // We'll lazy-load the messages when the chat is selected
-        const initialChats: Chat[] = await Promise.all(
-          threads.slice(0, 5).map(async (thread) => {
-            const chat = await getChatFromThread(thread.id);
-            return chat || createEmptyChatFromThread(thread);
-          }),
-        );
+        const CHUNK_SIZE = 16;
+        const loadChunk = async (startIndex: number) => {
+          const chunk = threads.slice(startIndex, startIndex + CHUNK_SIZE);
+          const chunkChats = await Promise.all(
+            chunk.map(async (thread) => {
+              const chat = await getChatFromThread(thread.id);
+              return chat || createEmptyChatFromThread(thread);
+            }),
+          );
+          return chunkChats;
+        };
 
+        // Set loading state
+        isLoadingChats.set(true);
+
+        // Load first chunk immediately
+        const initialChats = await loadChunk(0);
         chats.set(sortChats(initialChats));
 
         // Set the most recently updated chat as active
         activeChatId.set(threads[0].id);
 
-        // Lazy-load the rest of the chats in the background
-        if (threads.length > 5) {
-          setTimeout(async () => {
-            const remainingChats = await Promise.all(
-              threads.slice(5).map(async (thread) => {
-                const chat = await getChatFromThread(thread.id);
-                return chat || createEmptyChatFromThread(thread);
-              }),
-            );
+        // Load remaining chunks in the background
+        if (threads.length > CHUNK_SIZE) {
+          const loadRemainingChunks = async () => {
+            let currentIndex = CHUNK_SIZE;
 
-            chats.update((existingChats) => sortChats([...existingChats, ...remainingChats]));
-          }, 1000);
+            while (currentIndex < threads.length) {
+              const chunkChats = await loadChunk(currentIndex);
+              chats.update((existingChats) => sortChats([...existingChats, ...chunkChats]));
+              currentIndex += CHUNK_SIZE;
+
+              // Small delay between chunks to prevent UI blocking
+              await new Promise((resolve) => setTimeout(resolve, 50));
+            }
+
+            // Done loading
+            isLoadingChats.set(false);
+          };
+
+          // Start loading remaining chunks
+          loadRemainingChunks();
+        } else {
+          // No more chunks to load
+          isLoadingChats.set(false);
         }
-      } else {
-        // Don't create a new chat even if none exist
       }
     } catch (error) {
       console.error('Error initializing chat store:', error);
+      isLoadingChats.set(false);
     }
   };
 
