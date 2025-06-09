@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { chats, createNewChat, isLoadingChats, deleteChatById } from '$lib/stores/chat';
+  import { chats, createNewChat, isLoadingChats, deleteChatById, toggleChatPin } from '$lib/stores/chat';
   import { goto } from '$app/navigation';
   import { CirclePlus, Settings, Pin, Trash, Menu } from 'lucide-svelte';
   import { page } from '$app/state';
@@ -36,6 +36,10 @@
   function handleCancelDelete() {
     chatToDelete = null;
   }
+
+  async function handlePinChat(chatId: string) {
+    await toggleChatPin(chatId);
+  }
 </script>
 
 <aside class="flex w-64 flex-col gap-4 p-4">
@@ -63,7 +67,16 @@
         class:selected={isSelected}>
         <span class="truncate text-sm">{chat.title}</span>
         <div class="hidden items-center group-hover:flex">
-          <button class="button button-secondary"><Pin size={16}></Pin></button>
+          <button
+            class="button button-secondary"
+            on:click={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handlePinChat(chat.id);
+            }}
+            aria-label={chat.pinned ? 'Unpin chat' : 'Pin chat'}>
+            <Pin size={16} class={!chat.pinned ? 'rotate-45' : ''}></Pin>
+          </button>
           <button
             class="button button-secondary"
             on:click={(e) => {

@@ -12,6 +12,7 @@ export type Thread = Omit<Chat, 'messages'> & {
   messageCount: number;
   provider?: string;
   model?: string;
+  pinned?: boolean;
 };
 
 // Raw thread data from IndexedDB before date conversion
@@ -50,6 +51,7 @@ if (browser) {
         const threadStore = db.createObjectStore(THREAD_STORE, { keyPath: 'id' });
         threadStore.createIndex('updatedAt', 'updatedAt', { unique: false });
         threadStore.createIndex('lastMessageDate', 'lastMessageDate', { unique: false });
+        threadStore.createIndex('pinned', 'pinned', { unique: false });
       }
 
       // Create the messages store if it doesn't exist

@@ -26,7 +26,13 @@ export const isLoadingChats: Writable<boolean> = writable<boolean>(false);
 
 // Helper to sort chats by updatedAt in descending order
 function sortChats(chatList: Chat[]): Chat[] {
-  return [...chatList].sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+  return [...chatList].sort((a, b) => {
+    // First sort by pinned status
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    // Then sort by updatedAt
+    return b.updatedAt.getTime() - a.updatedAt.getTime();
+  });
 }
 
 if (browser) {
@@ -269,4 +275,35 @@ function createEmptyChatFromThread(thread: Thread): Chat {
     createdAt: thread.createdAt,
     updatedAt: thread.updatedAt,
   };
+}
+
+/**
+ * Toggles the pinned status of a chat
+ */
+export async function toggleChatPin(id: string): Promise<void> {
+  chats.update((allChats) => {
+    const updatedChats = allChats.map((chat) => {
+      if (chat.id === id) {
+        return {
+          ...chat,
+          pinned: !chat.pinned,
+          updatedAt: new Date(),
+        };
+      }
+      return chat;
+    });
+    return sortChats(updatedChats);
+  });
+
+  // Get the updated chat
+  let updatedChat: Chat | undefined;
+  const unsubscribe = chats.subscribe((allChats) => {
+    updatedChat = allChats.find((chat) => chat.id === id);
+  });
+  unsubscribe();
+
+  // Save to IndexedDB if the chat exists
+  if (updatedChat && browser) {
+    await saveChatAsThreadAndMessages(updatedChat);
+  }
 }

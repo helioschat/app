@@ -25,6 +25,7 @@ export type Chat = {
   updatedAt: Date;
   provider?: string;
   model?: string;
+  pinned?: boolean;
 };
 
 export type Provider = string;
