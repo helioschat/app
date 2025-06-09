@@ -287,7 +287,6 @@ export async function toggleChatPin(id: string): Promise<void> {
         return {
           ...chat,
           pinned: !chat.pinned,
-          updatedAt: new Date(),
         };
       }
       return chat;
