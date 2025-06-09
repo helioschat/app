@@ -4,10 +4,15 @@
   import type { Message } from '$lib/types';
   import { isMessageStreaming } from '$lib/utils/streamState';
   import { page } from '$app/state';
-  import { Copy } from 'lucide-svelte';
+  import { Copy, RefreshCw } from 'lucide-svelte';
+  import { createEventDispatcher } from 'svelte';
 
   export let message: Message;
   export let isStreaming: boolean = false;
+
+  const dispatch = createEventDispatcher<{
+    regenerate: { message: Message };
+  }>();
 
   $: isCurrentlyStreaming =
     isStreaming || (message.role === 'assistant' && isMessageStreaming(page.params.chatId, message.id));
@@ -36,6 +41,10 @@
       }, 2000);
     }
   }
+
+  function handleRegenerate() {
+    dispatch('regenerate', { message });
+  }
 </script>
 
 <div class="message {message.role === 'assistant' ? 'assistant' : 'user'} group" data-message-id={message.id}>
@@ -62,6 +71,12 @@
           <Copy size={16}></Copy>
           {copyButtonText}
         </button>
+        {#if message.role === 'assistant' && !isCurrentlyStreaming}
+          <button class="button button-secondary button-small" on:click={handleRegenerate}>
+            <RefreshCw size={16}></RefreshCw>
+            Regenerate
+          </button>
+        {/if}
       </div>
       {#if message.role === 'assistant' && (message.provider || message.model || generationTime || tokensPerSecond)}
         <div class="text-secondary flex items-center gap-1 text-xs">

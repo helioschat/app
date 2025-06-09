@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Chat } from '$lib/types';
+  import type { Chat, Message } from '$lib/types';
   import MessageItem from '$lib/components/chat/MessageItem.svelte';
   import ResumeButton from '$lib/components/chat/ResumeButton.svelte';
   import ChatNotice from '$lib/components/chat/ChatNotice.svelte';
@@ -12,6 +12,7 @@
   export let showResumeButton: boolean = false;
   export let currentlyStreamingMessageId: string = '';
   export let handleResumeGeneration: () => Promise<void>;
+  export let handleRegenerate: (message: Message) => Promise<void>;
 
   let messagesContainer: HTMLDivElement;
 
@@ -69,7 +70,10 @@
         </div>
       </ChatNotice>
     {:else}
-      <MessageItem {message} isStreaming={currentlyStreamingMessageId === message.id}></MessageItem>
+      <MessageItem
+        {message}
+        isStreaming={currentlyStreamingMessageId === message.id}
+        on:regenerate={({ detail }) => handleRegenerate(detail.message)}></MessageItem>
     {/if}
   {/each}
 

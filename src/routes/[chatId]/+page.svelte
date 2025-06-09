@@ -185,6 +185,52 @@
     await streamController.cancelStream();
   }
 
+  // Handle regenerating a message
+  async function handleRegenerate(message: Message) {
+    if (!activeChat || isLoading || !streamController) return;
+
+    // Set loading state immediately
+    isLoading = true;
+
+    try {
+      // Find the message index
+      const messageIndex = activeChat.messages.findIndex((m) => m.id === message.id);
+      if (messageIndex < 0) return;
+
+      // Get the previous user message
+      const previousUserMessage = activeChat.messages[messageIndex - 1];
+      if (!previousUserMessage || previousUserMessage.role !== 'user') {
+        console.error('No previous user message found for regeneration');
+        return;
+      }
+
+      // Remove all messages after the one we're regenerating
+      chats.update((allChats) => {
+        return allChats.map((c) => {
+          if (c.id === activeChat.id) {
+            return {
+              ...c,
+              messages: c.messages.slice(0, messageIndex),
+              updatedAt: new Date(),
+            };
+          }
+          return c;
+        });
+      });
+
+      // Use the StreamController to handle the regeneration
+      const state = await streamController.handleSubmit(previousUserMessage.content, activeChat);
+
+      // Update UI state from controller
+      isLoading = state.isLoading;
+      showResumeButton = state.showResumeButton;
+      currentlyStreamingMessageId = state.currentlyStreamingMessageId;
+    } catch (error) {
+      console.error('Error in handleRegenerate:', error);
+      isLoading = false;
+    }
+  }
+
   // Update handleSubmit to use StreamController
   async function handleSubmit(e?: Event) {
     if (e) e.preventDefault();
@@ -223,7 +269,8 @@
         {isLoading}
         {showResumeButton}
         {currentlyStreamingMessageId}
-        {handleResumeGeneration}></ChatMessages>
+        {handleResumeGeneration}
+        {handleRegenerate}></ChatMessages>
     </div>
 
     <div class="input-component absolute bottom-0 left-1/2 w-full -translate-x-1/2">
