@@ -331,6 +331,11 @@ select {
   @apply cursor-not-allowed opacity-50;
 }
 
+.button.button-small {
+  @apply rounded-lg p-1 text-sm;
+  color: var(--color-a11);
+}
+
 .button.button-large {
   @apply rounded-lg p-4;
 }

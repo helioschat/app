@@ -4,6 +4,7 @@
   import type { Message } from '$lib/types';
   import { isMessageStreaming } from '$lib/utils/streamState';
   import { page } from '$app/state';
+  import { Copy } from 'lucide-svelte';
 
   export let message: Message;
   export let isStreaming: boolean = false;
@@ -17,6 +18,24 @@
   $: tokensPerSecond = message.metrics?.tokensPerSecond
     ? `${message.metrics.tokensPerSecond.toFixed(2)} tokens/sec`
     : '';
+
+  let copyButtonText = 'Copy';
+
+  async function copyMessageContent() {
+    try {
+      await navigator.clipboard.writeText(message.content);
+      copyButtonText = 'Copied!';
+      setTimeout(() => {
+        copyButtonText = 'Copy';
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy message:', err);
+      copyButtonText = 'Failed to copy';
+      setTimeout(() => {
+        copyButtonText = 'Copy';
+      }, 2000);
+    }
+  }
 </script>
 
 <div class="message {message.role === 'assistant' ? 'assistant' : 'user'}" data-message-id={message.id}>
@@ -38,6 +57,12 @@
 
   <div class="message-actions opacity-0 peer-hover:opacity-100 hover:opacity-100">
     <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <button class="button button-secondary button-small" on:click={copyMessageContent}>
+          <Copy size={16}></Copy>
+          {copyButtonText}
+        </button>
+      </div>
       {#if message.role === 'assistant' && (message.provider || message.model || generationTime || tokensPerSecond)}
         <div class="text-secondary flex items-center gap-1 text-xs">
           {#if message.provider}
