@@ -96,7 +96,7 @@
   @reference "tailwindcss";
 
   .message .message-container {
-    @apply w-fit rounded-3xl px-5 py-2.5;
+    @apply w-fit max-w-full rounded-3xl px-5 py-2.5;
     background-color: var(--color-a2);
   }
 
