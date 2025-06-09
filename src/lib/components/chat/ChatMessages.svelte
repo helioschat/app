@@ -24,7 +24,7 @@
     });
   }
 
-  function handleScroll(event: Event) {
+  function handleScroll() {
     if (!messagesContainer || !currentlyStreamingMessageId) return;
 
     const isNearBottom =
