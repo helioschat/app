@@ -28,7 +28,7 @@
     <p>{manifest.description}</p>
   </div>
 
-  <ChatInput bind:userInput={searchInput} handleSubmit={handleSearch}></ChatInput>
+  <ChatInput bind:userInput={searchInput} handleSubmit={handleSearch} handleStop={async () => {}}></ChatInput>
 
   <div class="text-left">
     <h2 class="mb-3 text-lg font-medium">Try asking about:</h2>
