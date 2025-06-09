@@ -56,7 +56,7 @@
   </div>
 
   <div class="message-actions opacity-0 peer-hover:opacity-100 hover:opacity-100">
-    <div class="flex items-center justify-between">
+    <div class="flex gap-2 p-2">
       <div class="flex items-center gap-2">
         <button class="button button-secondary button-small" on:click={copyMessageContent}>
           <Copy size={16}></Copy>
