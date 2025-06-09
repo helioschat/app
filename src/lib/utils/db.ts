@@ -340,6 +340,7 @@ export async function getChatFromThread(threadId: string): Promise<Chat | null> 
     })),
     provider: thread.provider,
     model: thread.model,
+    pinned: thread.pinned,
   };
 }
 
@@ -367,6 +368,7 @@ export async function saveChatAsThreadAndMessages(chat: Chat): Promise<void> {
       messageCount: chat.messages.length,
       provider: chat.provider,
       model: chat.model,
+      pinned: chat.pinned,
     };
 
     await saveThread(thread);
