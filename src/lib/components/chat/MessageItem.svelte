@@ -38,7 +38,7 @@
   }
 </script>
 
-<div class="message {message.role === 'assistant' ? 'assistant' : 'user'}" data-message-id={message.id}>
+<div class="message {message.role === 'assistant' ? 'assistant' : 'user'} group" data-message-id={message.id}>
   <div class="message-container peer">
     <div class="message-content">
       {#if shouldUseMarkdown}
@@ -55,7 +55,7 @@
     </div>
   </div>
 
-  <div class="message-actions opacity-0 peer-hover:opacity-100 hover:opacity-100">
+  <div class="message-actions opacity-0 group-hover:opacity-100 peer-hover:opacity-100 hover:opacity-100">
     <div class="flex gap-2 p-2">
       <div class="flex items-center gap-2">
         <button class="button button-secondary button-small" on:click={copyMessageContent}>
@@ -101,7 +101,7 @@
   }
 
   .message.assistant {
-    @apply my-6 mr-32;
+    @apply py-6 pr-32;
   }
 
   .message.assistant .message-container {
@@ -113,8 +113,8 @@
     @apply justify-self-start;
   }
 
-  .message.user .message-container {
-    @apply my-2 ml-32;
+  .message.user {
+    @apply pt-2 pl-32;
   }
 
   .message.user .message-container {
