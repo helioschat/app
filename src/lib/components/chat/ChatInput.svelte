@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Send, Square } from 'lucide-svelte';
   import { modelSelectorState, handleModelSelect } from '$lib/stores/modelSelector';
-  import ModelSelectorModal from '$lib/components/common/ModelSelectorModal.svelte';
+  import ModelSelectorModal from '$lib/components/modal/types/ModelSelectorModal.svelte';
   import { providerSettings, selectedProvider } from '$lib/stores/settings';
 
   export let userInput: string = '';

@@ -5,7 +5,7 @@
   import { page } from '$app/state';
   import { manifest } from '$lib';
   import Spinner from '$lib/components/common/Spinner.svelte';
-  import ConfirmationModal from '$lib/components/common/ConfirmationModal.svelte';
+  import ConfirmationModal from '$lib/components/modal/types/ConfirmationModal.svelte';
 
   export function handleCreateNewChat() {
     const newChatId = createNewChat();

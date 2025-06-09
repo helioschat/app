@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import Modal from './Modal.svelte';
+  import Modal from '../Modal.svelte';
 
   export let id: string;
   export let title: string = 'Confirm Action';

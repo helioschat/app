@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import Modal from './Modal.svelte';
+  import Modal from '../Modal.svelte';
   import { Search } from 'lucide-svelte';
   import type { ModelInfo } from '$lib/providers/base';
 
