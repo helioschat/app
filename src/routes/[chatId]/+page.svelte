@@ -119,13 +119,21 @@
   async function handleInitialMessage(initialMessage: string) {
     if (!activeChat || isLoading || !streamController) return;
 
-    // Use the StreamController to handle the initial message
-    const state = await streamController.handleSubmit(initialMessage, activeChat);
+    // Set loading state immediately
+    isLoading = true;
 
-    // Update UI state from controller
-    isLoading = state.isLoading;
-    showResumeButton = state.showResumeButton;
-    currentlyStreamingMessageId = state.currentlyStreamingMessageId;
+    try {
+      // Use the StreamController to handle the initial message
+      const state = await streamController.handleSubmit(initialMessage, activeChat);
+
+      // Update UI state from controller
+      isLoading = state.isLoading;
+      showResumeButton = state.showResumeButton;
+      currentlyStreamingMessageId = state.currentlyStreamingMessageId;
+    } catch (error) {
+      console.error('Error in handleInitialMessage:', error);
+      isLoading = false;
+    }
   }
 
   // Resume a streaming message that was interrupted
@@ -138,29 +146,37 @@
     const messageIndex = activeChat.messages.findIndex((m) => m.id === currentState.messageId);
     if (messageIndex < 0) return;
 
-    // Get the context messages from the state or rebuild them
-    let contextMessages: StreamContextMessage[] = currentState.contextMessages || [];
-    if (!contextMessages || contextMessages.length === 0) {
-      // We need to rebuild the context
-      // Include previous messages for context, up to the current one
-      contextMessages = activeChat.messages.slice(0, messageIndex + 1).map((m) => ({
-        id: m.id,
-        role: m.role,
-        content: m.content,
-        provider: m.provider,
-        model: m.model,
-        usage: m.usage,
-        metrics: m.metrics,
-      }));
+    // Set loading state immediately
+    isLoading = true;
+
+    try {
+      // Get the context messages from the state or rebuild them
+      let contextMessages: StreamContextMessage[] = currentState.contextMessages || [];
+      if (!contextMessages || contextMessages.length === 0) {
+        // We need to rebuild the context
+        // Include previous messages for context, up to the current one
+        contextMessages = activeChat.messages.slice(0, messageIndex + 1).map((m) => ({
+          id: m.id,
+          role: m.role,
+          content: m.content,
+          provider: m.provider,
+          model: m.model,
+          usage: m.usage,
+          metrics: m.metrics,
+        }));
+      }
+
+      // Use the StreamController to resume
+      const state = await streamController.resumeStream(contextMessages, currentState.messageId, activeChat);
+
+      // Update UI state from controller
+      isLoading = state.isLoading;
+      showResumeButton = state.showResumeButton;
+      currentlyStreamingMessageId = state.currentlyStreamingMessageId;
+    } catch (error) {
+      console.error('Error in handleResumeGeneration:', error);
+      isLoading = false;
     }
-
-    // Use the StreamController to resume
-    const state = await streamController.resumeStream(contextMessages, currentState.messageId, activeChat);
-
-    // Update UI state from controller
-    isLoading = state.isLoading;
-    showResumeButton = state.showResumeButton;
-    currentlyStreamingMessageId = state.currentlyStreamingMessageId;
   }
 
   // Update handleSubmit to use StreamController
@@ -171,13 +187,21 @@
     const inputValue = userInput;
     userInput = '';
 
-    // Use the StreamController to handle the submission
-    const state = await streamController.handleSubmit(inputValue, activeChat);
+    // Set loading state immediately
+    isLoading = true;
 
-    // Update UI state from controller
-    isLoading = state.isLoading;
-    showResumeButton = state.showResumeButton;
-    currentlyStreamingMessageId = state.currentlyStreamingMessageId;
+    try {
+      // Use the StreamController to handle the submission
+      const state = await streamController.handleSubmit(inputValue, activeChat);
+
+      // Update UI state from controller
+      isLoading = state.isLoading;
+      showResumeButton = state.showResumeButton;
+      currentlyStreamingMessageId = state.currentlyStreamingMessageId;
+    } catch (error) {
+      console.error('Error in handleSubmit:', error);
+      isLoading = false;
+    }
   }
 </script>
 
