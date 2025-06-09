@@ -61,7 +61,7 @@
     e.preventDefault();
     handleSubmit(e);
   }}
-  class="mx-auto mb-8 max-w-4xl px-4">
+  class="mx-auto mb-8 w-full max-w-4xl px-4">
   <div class="relative flex flex-1 flex-col">
     <div class="flex w-full gap-4">
       <input
