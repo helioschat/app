@@ -179,6 +179,12 @@
     }
   }
 
+  // Handle stopping the current generation
+  async function handleStop() {
+    if (!streamController) return;
+    await streamController.cancelStream();
+  }
+
   // Update handleSubmit to use StreamController
   async function handleSubmit(e?: Event) {
     if (e) e.preventDefault();
@@ -221,7 +227,7 @@
     </div>
 
     <div class="input-component absolute bottom-0 left-1/2 w-full -translate-x-1/2">
-      <ChatInput bind:userInput {isLoading} {handleSubmit}></ChatInput>
+      <ChatInput bind:userInput {isLoading} {handleSubmit} {handleStop}></ChatInput>
     </div>
   {:else}
     <div class="flex flex-1 items-center justify-center">

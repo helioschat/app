@@ -15,11 +15,30 @@ export class StreamController {
   private providerName: string;
   private providerSettings: ProviderConfig;
   private streamMetrics: StreamMetrics = { startTime: 0 };
+  private currentReader: ReadableStreamDefaultReader<string> | null = null;
 
   constructor(chatId: string, providerName: string, providerSettings: ProviderConfig) {
     this.chatId = chatId;
     this.providerName = providerName;
     this.providerSettings = providerSettings;
+  }
+
+  /**
+   * Cancel the current stream if one is active
+   */
+  async cancelStream(): Promise<void> {
+    if (this.currentReader) {
+      try {
+        await this.currentReader.cancel();
+        this.currentReader = null;
+        endStream();
+        this.isLoading = false;
+        this.currentlyStreamingMessageId = '';
+        this.showResumeButton = false;
+      } catch (error) {
+        console.error('Error canceling stream:', error);
+      }
+    }
   }
 
   /**
@@ -146,7 +165,7 @@ export class StreamController {
       }
 
       const stream = model.stream(updatedMessages);
-      const reader = stream.getReader();
+      this.currentReader = stream.getReader();
 
       // Start the stream and record state with context
       startStream(this.chatId, assistantMessage.id, contextMessages);
@@ -155,7 +174,7 @@ export class StreamController {
       let accumulatedContent = '';
 
       while (true) {
-        const { done, value } = await reader.read();
+        const { done, value } = await this.currentReader.read();
         if (done) break;
 
         // Update the accumulated content
@@ -191,6 +210,7 @@ export class StreamController {
       }
 
       // Stream completed successfully
+      this.currentReader = null;
       endStream();
       this.showResumeButton = false;
       this.currentlyStreamingMessageId = '';
@@ -243,6 +263,7 @@ export class StreamController {
       });
     } catch (error) {
       console.error('Stream error:', error);
+      this.currentReader = null;
 
       // Keep partial content if there is any and show resume button
       chats.update((allChats) => {
