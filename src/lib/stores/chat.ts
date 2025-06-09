@@ -7,7 +7,7 @@ import {
   saveChatAsThreadAndMessages,
   type Thread,
 } from '$lib/utils/db';
-import { writable, type Writable } from 'svelte/store';
+import { get, writable, type Writable } from 'svelte/store';
 import { v7 as uuidv7 } from 'uuid';
 
 // Initial chat template
@@ -258,14 +258,6 @@ export async function loadChat(id: string): Promise<Chat | null> {
   })();
 
   return loadMutex[id];
-}
-
-// Helper to get store value without subscription
-function get<T>(store: Writable<T>): T {
-  let value: T;
-  const unsubscribe = store.subscribe((v) => (value = v));
-  unsubscribe();
-  return value!;
 }
 
 // Helper to create an empty chat from a thread
