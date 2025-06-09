@@ -42,13 +42,5 @@
         placeholder="https://api.openai.com/v1" />
       <p class="mt-1 text-sm text-gray-500">Leave empty to use the default OpenAI API endpoint</p>
     </div>
-    <div>
-      <label for="openai-model" class="mb-2 block font-medium">Default Model</label>
-      <select id="openai-model" bind:value={$providerSettings[PROVIDER_OPENAI].model}>
-        {#each availableModels[PROVIDER_OPENAI] || [] as model}
-          <option value={model.id}>{model.name}</option>
-        {/each}
-      </select>
-    </div>
   </div>
 {/if}
