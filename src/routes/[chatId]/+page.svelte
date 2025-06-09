@@ -187,7 +187,7 @@
       <ChatHeader chat={activeChat}></ChatHeader>
     </div>
 
-    <div class="messages-container h-full overflow-y-auto pt-16 pb-24">
+    <div class="messages-container h-full overflow-y-auto">
       <ChatMessages
         chat={activeChat}
         {isLoading}
