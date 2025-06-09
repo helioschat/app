@@ -347,6 +347,11 @@ select {
   &:hover:not(:disabled) {
     background-color: var(--gray-11);
   }
+
+  &:active,
+  &.active {
+    background-color: var(--gray-a12);
+  }
 }
 
 .button.button-primary {
@@ -356,6 +361,11 @@ select {
   &:hover:not(:disabled) {
     background-color: var(--color-a4);
   }
+
+  &:active,
+  &.active {
+    background-color: var(--color-3);
+  }
 }
 
 .button.button-secondary {
@@ -364,6 +374,11 @@ select {
 
   &:hover:not(:disabled) {
     background-color: var(--color-a3);
+  }
+
+  &:active,
+  &.active {
+    background-color: var(--color-3);
   }
 }
 
@@ -377,6 +392,11 @@ select {
   color: var(--color-a12);
 
   &:hover:not(:disabled) {
+    background-color: #b91c1c;
+  }
+
+  &:active,
+  &.active {
     background-color: #b91c1c;
   }
 }
