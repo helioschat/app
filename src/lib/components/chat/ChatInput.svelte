@@ -5,6 +5,8 @@
   export let isLoading: boolean = false;
   export let handleSubmit: (e: Event) => Promise<void>;
   export let handleStop: () => Promise<void>;
+
+  $: isInputEmpty = !userInput.trim();
 </script>
 
 <form
@@ -24,7 +26,7 @@
       <Square size={20}></Square>
     </button>
   {:else}
-    <button type="submit" class="button button-main h-12 w-12">
+    <button type="submit" disabled={isInputEmpty} class="button button-main h-12 w-12" class:opacity-50={isInputEmpty}>
       <Send size={20}></Send>
     </button>
   {/if}
