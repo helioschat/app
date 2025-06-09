@@ -6,7 +6,6 @@
 
   export let data;
 
-  $: availableModels = data.availableModels;
   $: loading = false;
 </script>
 
