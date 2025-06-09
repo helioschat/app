@@ -109,6 +109,10 @@
     background-color: var(--color-2);
   }
 
+  .message.assistant .message-actions {
+    @apply justify-self-start;
+  }
+
   .message.user .message-container {
     @apply my-2 ml-32;
   }
@@ -116,6 +120,10 @@
   .message.user .message-container {
     @apply justify-self-end;
     background-color: var(--blue-10);
+  }
+
+  .message.user .message-actions {
+    @apply justify-self-end;
   }
 
   .cursor {
