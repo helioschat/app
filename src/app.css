@@ -327,6 +327,10 @@ select {
   @apply flex cursor-pointer items-center justify-center gap-1 rounded-full p-2 text-center;
 }
 
+.button:disabled {
+  @apply cursor-not-allowed opacity-50;
+}
+
 .button.button-large {
   @apply rounded-lg p-4;
 }
@@ -335,7 +339,7 @@ select {
   background-color: var(--gray-12);
   color: var(--gray-1);
 
-  &:hover {
+  &:hover:not(:disabled) {
     background-color: var(--gray-11);
   }
 }
@@ -344,7 +348,7 @@ select {
   background-color: var(--color-a3);
   color: var(--color-a12);
 
-  &:hover {
+  &:hover:not(:disabled) {
     background-color: var(--color-a4);
   }
 }
@@ -353,7 +357,7 @@ select {
   @apply bg-transparent;
   color: var(--color-a12);
 
-  &:hover {
+  &:hover:not(:disabled) {
     background-color: var(--color-a3);
   }
 }
@@ -367,7 +371,7 @@ select {
   background-color: #dc2626;
   color: var(--color-a12);
 
-  &:hover {
+  &:hover:not(:disabled) {
     background-color: #b91c1c;
   }
 }
