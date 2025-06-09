@@ -362,3 +362,12 @@ select {
   @apply border;
   border-color: var(--color-7);
 }
+
+.button.button-danger {
+  background-color: #dc2626;
+  color: var(--color-a12);
+
+  &:hover {
+    background-color: #b91c1c;
+  }
+}

@@ -1,14 +1,40 @@
 <script lang="ts">
-  import { chats, createNewChat, isLoadingChats } from '$lib/stores/chat';
+  import { chats, createNewChat, isLoadingChats, deleteChatById } from '$lib/stores/chat';
   import { goto } from '$app/navigation';
   import { CirclePlus, Settings, Pin, Trash, Menu } from 'lucide-svelte';
   import { page } from '$app/state';
   import { manifest } from '$lib';
   import Spinner from '$lib/components/common/Spinner.svelte';
+  import ConfirmationModal from '$lib/components/common/ConfirmationModal.svelte';
 
   export function handleCreateNewChat() {
     const newChatId = createNewChat();
     goto(`/${newChatId}`);
+  }
+
+  let chatToDelete: string | null = null;
+
+  function handleDeleteChat(chatId: string) {
+    chatToDelete = chatId;
+  }
+
+  async function handleConfirmDelete() {
+    if (chatToDelete) {
+      await deleteChatById(chatToDelete);
+      if (chatToDelete === page.params.chatId) {
+        const remainingChats = $chats;
+        if (remainingChats.length > 0) {
+          goto(`/${remainingChats[0].id}`);
+        } else {
+          goto('/');
+        }
+      }
+      chatToDelete = null;
+    }
+  }
+
+  function handleCancelDelete() {
+    chatToDelete = null;
   }
 </script>
 
@@ -38,7 +64,16 @@
         <span class="truncate text-sm">{chat.title}</span>
         <div class="hidden items-center group-hover:flex">
           <button class="button button-secondary"><Pin size={16}></Pin></button>
-          <button class="button button-secondary"><Trash size={16}></Trash></button>
+          <button
+            class="button button-secondary"
+            on:click={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDeleteChat(chat.id);
+            }}
+            aria-label={`Delete chat ${chat.title}`}>
+            <Trash size={16}></Trash>
+          </button>
         </div>
       </a>
     {/each}
@@ -49,6 +84,17 @@
     {/if}
   </nav>
 </aside>
+
+<ConfirmationModal
+  id="delete-chat-modal"
+  title="Delete Chat"
+  message="Are you sure you want to delete this chat? This action cannot be undone."
+  confirmText="Delete"
+  cancelText="Cancel"
+  isDangerous={true}
+  isOpen={chatToDelete !== null}
+  on:confirm={handleConfirmDelete}
+  on:cancel={handleCancelDelete} />
 
 <style lang="postcss">
   @reference "tailwindcss";
