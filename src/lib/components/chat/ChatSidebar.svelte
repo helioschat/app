@@ -22,12 +22,7 @@
     if (chatToDelete) {
       await deleteChatById(chatToDelete);
       if (chatToDelete === page.params.chatId) {
-        const remainingChats = $chats;
-        if (remainingChats.length > 0) {
-          goto(`/${remainingChats[0].id}`);
-        } else {
-          goto('/');
-        }
+        goto('/');
       }
       chatToDelete = null;
     }
