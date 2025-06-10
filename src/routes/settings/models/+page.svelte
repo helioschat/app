@@ -60,7 +60,9 @@
             on:change={(e) => toggleAllModels(instance.id, e.currentTarget.checked)} />
           <label for={`select-all-${instance.id}`} class="select-none">Select All Models</label>
           {#each availableModels[instance.id] as model (model.id)}
-            <div class="button button-secondary button-large">
+            <div
+              class="button button-secondary button-large select-none"
+              on:click={() => toggleModel(instance.id, model.id)}>
               <input
                 type="checkbox"
                 id={`${instance.id}-${model.id}`}
