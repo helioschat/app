@@ -12,7 +12,7 @@
 
   let { collapsed = $bindable(false) } = $props();
 
-  let chatToDelete: string | null = null;
+  let chatToDelete = $state<string | null>(null);
 
   function handleDeleteChat(chatId: string) {
     chatToDelete = chatId;
