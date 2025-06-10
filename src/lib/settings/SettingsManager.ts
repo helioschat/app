@@ -25,7 +25,7 @@ export class SettingsManager {
   public readonly providerInstances = writable<ProviderInstance[]>(this.getInitialProviderInstances());
   public readonly selectedModel = writable<SelectedModel | null>(this.getInitialSelectedModel());
   public readonly advancedSettings = writable<AdvancedSettings>(this.getInitialAdvancedSettings());
-  public readonly enabledModels = writable<Record<string, string[]>>(this.getInitialEnabledModels());
+  public readonly disabledModels = writable<Record<string, string[]>>(this.getInitialDisabledModels());
 
   constructor() {
     // Initialize persistence
@@ -46,8 +46,8 @@ export class SettingsManager {
         localStorage.setItem('advancedSettings', JSON.stringify(value));
       });
 
-      this.enabledModels.subscribe((value) => {
-        localStorage.setItem('enabledModels', JSON.stringify(value));
+      this.disabledModels.subscribe((value) => {
+        localStorage.setItem('disabledModels', JSON.stringify(value));
       });
     }
   }
@@ -88,7 +88,18 @@ export class SettingsManager {
     return SettingsManager.defaultAdvancedSettings;
   }
 
-  private getInitialEnabledModels(): Record<string, string[]> {
+  private getInitialDisabledModels(): Record<string, string[]> {
+    if (browser) {
+      const storedValue = localStorage.getItem('disabledModels');
+      if (storedValue) {
+        try {
+          return JSON.parse(storedValue);
+        } catch (error) {
+          console.error('Error parsing disabled models from localStorage', error);
+          return {};
+        }
+      }
+    }
     return {};
   }
 
@@ -160,8 +171,8 @@ export class SettingsManager {
    * @returns Whether the model is enabled
    */
   public isModelEnabled(providerInstanceId: string, modelId: string): boolean {
-    const models = get(this.enabledModels);
-    return models[providerInstanceId]?.includes(modelId) ?? true; // Default to enabled
+    const models = get(this.disabledModels);
+    return !(models[providerInstanceId]?.includes(modelId) ?? false); // Default to enabled
   }
 
   /**
@@ -170,7 +181,7 @@ export class SettingsManager {
    * @param modelId Model ID
    */
   public toggleModel(providerInstanceId: string, modelId: string): void {
-    this.enabledModels.update((models) => {
+    this.disabledModels.update((models) => {
       if (!models[providerInstanceId]) {
         models[providerInstanceId] = [];
       }
@@ -181,6 +192,23 @@ export class SettingsManager {
         models[providerInstanceId].push(modelId);
       }
 
+      return models;
+    });
+  }
+
+  /**
+   * Toggle all models for a provider to be enabled or disabled
+   * @param providerInstanceId Provider instance ID
+   * @param enable If true, enable all models; if false, disable all models
+   * @param modelIds List of model IDs to toggle for this provider
+   */
+  public toggleAllModels(providerInstanceId: string, enable: boolean, modelIds: string[]): void {
+    this.disabledModels.update((models) => {
+      if (enable) {
+        models[providerInstanceId] = [];
+      } else {
+        models[providerInstanceId] = [...modelIds];
+      }
       return models;
     });
   }
@@ -219,4 +247,4 @@ export class SettingsManager {
 // Settings singleton
 export const settingsManager = new SettingsManager();
 
-export const { providerInstances, selectedModel, advancedSettings, enabledModels } = settingsManager;
+export const { providerInstances, selectedModel, advancedSettings, disabledModels } = settingsManager;

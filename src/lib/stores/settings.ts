@@ -1,6 +1,6 @@
 import { settingsManager } from '$lib/settings/SettingsManager';
 
-export { advancedSettings, enabledModels, providerInstances } from '$lib/settings/SettingsManager';
+export { advancedSettings, disabledModels, providerInstances } from '$lib/settings/SettingsManager';
 
 // Types
 export type { AdvancedSettings } from '$lib/settings/SettingsManager';

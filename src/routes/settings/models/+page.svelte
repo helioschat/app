@@ -1,15 +1,21 @@
 <script lang="ts">
   import Spinner from '$lib/components/common/Spinner.svelte';
-  import { settingsManager, providerInstances } from '$lib/settings/SettingsManager';
+  import { settingsManager, providerInstances, disabledModels } from '$lib/settings/SettingsManager';
   import type { ModelInfo } from '$lib/providers';
   import { onMount } from 'svelte';
 
   let availableModels = $state<Record<string, ModelInfo[]>>({});
   let loading = $state(true);
+  let disabledModelsState = $state<Record<string, string[]>>({});
 
   onMount(async () => {
     availableModels = await settingsManager.loadAvailableModels();
     loading = false;
+    // Subscribe to disabledModels changes
+    disabledModels.subscribe((value) => {
+      disabledModelsState = value;
+      availableModels = { ...availableModels };
+    });
   });
 
   function toggleModel(providerInstanceId: string, modelId: string) {
@@ -19,7 +25,21 @@
   }
 
   function isModelEnabled(providerInstanceId: string, modelId: string) {
-    return settingsManager.isModelEnabled(providerInstanceId, modelId);
+    return !(disabledModelsState[providerInstanceId]?.includes(modelId) ?? false);
+  }
+
+  function toggleAllModels(providerInstanceId: string, enable: boolean) {
+    const modelIds = availableModels[providerInstanceId].map((model) => model.id);
+    settingsManager.toggleAllModels(providerInstanceId, enable, modelIds);
+    // Force a UI update by creating a new object reference
+    availableModels[providerInstanceId] = [...availableModels[providerInstanceId]];
+    availableModels = { ...availableModels };
+  }
+
+  function areAllModelsEnabled(providerInstanceId: string) {
+    const models = availableModels[providerInstanceId];
+    if (!models || models.length === 0) return false;
+    return models.every((model) => isModelEnabled(providerInstanceId, model.id));
   }
 </script>
 
@@ -33,14 +53,19 @@
       <h3 class="mb-3 text-xl font-semibold">{instance.name} ({instance.providerType})</h3>
       <div class="space-y-2">
         {#if availableModels[instance.id]?.length}
+          <input
+            type="checkbox"
+            id={`select-all-${instance.id}`}
+            checked={areAllModelsEnabled(instance.id)}
+            on:change={(e) => toggleAllModels(instance.id, e.currentTarget.checked)} />
+          <label for={`select-all-${instance.id}`} class="select-none">Select All Models</label>
           {#each availableModels[instance.id] as model (model.id)}
             <div class="button button-secondary button-large">
               <input
                 type="checkbox"
                 id={`${instance.id}-${model.id}`}
                 checked={isModelEnabled(instance.id, model.id)}
-                on:change={() => toggleModel(instance.id, model.id)}
-                class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                on:change={() => toggleModel(instance.id, model.id)} />
               <div class="ml-3 h-full w-full flex-1 text-left">
                 <p class="font-medium">{model.name}</p>
                 {#if model.description}
