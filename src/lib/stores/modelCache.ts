@@ -44,7 +44,6 @@ function createModelCache() {
       if (now - cached.timestamp > CACHE_TTL) {
         // Cache expired, remove it
         update((cache) => {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const newCache = { ...cache };
           delete newCache[provider];
           return newCache;
