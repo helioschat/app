@@ -317,7 +317,7 @@ select {
 }
 
 .button {
-  @apply flex cursor-pointer items-center justify-center gap-1 rounded-full p-2 text-center;
+  @apply flex h-10 min-h-10 min-w-10 cursor-pointer items-center justify-center gap-1 rounded-full p-2 text-center;
 }
 
 .button:disabled {
@@ -325,12 +325,12 @@ select {
 }
 
 .button.button-small {
-  @apply rounded-lg p-1 text-sm;
+  @apply h-fit min-h-auto min-w-auto rounded-lg p-1 text-sm;
   color: var(--color-a11);
 }
 
 .button.button-large {
-  @apply rounded-lg p-4;
+  @apply h-fit min-h-fit rounded-lg p-4;
 }
 
 .button.button-main {

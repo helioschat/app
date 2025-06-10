@@ -4,10 +4,11 @@
   import ChatSidebar from '$lib/components/chat/ChatSidebar.svelte';
 
   let { children } = $props();
+  let collapsed = $state(false);
 </script>
 
 <div class="flex h-screen">
-  <ChatSidebar></ChatSidebar>
+  <ChatSidebar bind:collapsed></ChatSidebar>
 
   <div class="flex h-full w-full flex-1 flex-col items-center overflow-y-auto">
     <div class="h-full w-full max-w-7xl">
