@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { chats, activeChatId, loadChat } from '$lib/stores/chat';
-  import { providerSettings, selectedProvider } from '$lib/stores/settings';
+  import { chats, loadChat } from '$lib/stores/chat';
+  import { selectedModel } from '$lib/settings/SettingsManager';
   import type { Message } from '$lib/types';
   import { onMount } from 'svelte';
   import { page } from '$app/state';
@@ -21,22 +21,40 @@
   let partialContent = $state('');
   let initialMessageProcessed = $state(false);
 
-  let streamController: StreamController;
+  let streamController = $state<StreamController | null>(null);
 
-  // Set active chat based on URL parameter and initialize StreamController
+  // When the selected provider changes, we need to reset the stream controller
+  // so that a new one is created with the correct provider instance.
   $effect(() => {
-    const chatId = page.params.chatId;
-    if (chatId) {
-      activeChatId.set(chatId);
-      streamController = new StreamController(chatId, $selectedProvider, $providerSettings[$selectedProvider] || {});
+    // This effect should react to changes in the selected provider instance
+    // eslint-disable-next-line no-unused-expressions
+    $selectedModel;
+
+    if (streamController) {
+      streamController = null;
     }
   });
+
+  function getControllerForCurrentChat(): StreamController | null {
+    if (!activeChat) return null;
+
+    // First, try to use the provider ID associated with the chat
+    // If not available, fall back to the globally selected provider
+    const providerId = activeChat.providerInstanceId || $selectedModel?.providerInstanceId;
+
+    if (!providerId) {
+      console.error('No provider configured for this chat and no fallback is selected.');
+      return null;
+    }
+
+    // Create a new StreamController with the chat ID and correct provider ID
+    return new StreamController(activeChat.id, providerId);
+  }
 
   // Check for initial messages that need a response
   $effect(() => {
     if (
       activeChat &&
-      streamController &&
       !isLoading &&
       !initialMessageProcessed &&
       activeChat.messages.length === 1 &&
@@ -49,13 +67,6 @@
       setTimeout(() => {
         handleInitialMessage(activeChat.messages[0].content);
       }, 100);
-    }
-  });
-
-  // Update StreamController when provider changes
-  $effect(() => {
-    if (streamController) {
-      streamController.updateProvider($selectedProvider, $providerSettings[$selectedProvider] || {});
     }
   });
 
@@ -117,14 +128,16 @@
 
   // Handler for initial messages
   async function handleInitialMessage(initialMessage: string) {
-    if (!activeChat || isLoading || !streamController) return;
+    if (!activeChat || isLoading || !$selectedModel) return;
+    const controller = getControllerForCurrentChat();
+    if (!controller) return;
+    streamController = controller;
 
     // Set loading state immediately
     isLoading = true;
 
     try {
-      // Use the StreamController to handle the initial message
-      const state = await streamController.handleSubmit(initialMessage, activeChat);
+      const state = await streamController.handleSubmit(initialMessage, activeChat, $selectedModel.modelId);
 
       // Update UI state from controller
       isLoading = state.isLoading;
@@ -133,15 +146,28 @@
     } catch (error) {
       console.error('Error in handleInitialMessage:', error);
       isLoading = false;
+    } finally {
+      if (!isLoading) streamController = null;
     }
   }
 
   // Resume a streaming message that was interrupted
   async function handleResumeGeneration() {
     if (!activeChat) return;
+    const controller = getControllerForCurrentChat();
+    if (!controller) return;
+    streamController = controller;
 
     const currentState = $streamState;
     if (!currentState) return;
+
+    // Use the model from the stream state if available, otherwise use the currently selected model
+    const modelId = currentState.contextMessages?.[0]?.model || $selectedModel?.modelId;
+    if (!modelId) {
+      console.error('No model ID found to resume stream.');
+      isLoading = false;
+      return;
+    }
 
     const messageIndex = activeChat.messages.findIndex((m) => m.id === currentState.messageId);
     if (messageIndex < 0) return;
@@ -155,11 +181,12 @@
       if (!contextMessages || contextMessages.length === 0) {
         // We need to rebuild the context
         // Include previous messages for context, up to the current one
-        contextMessages = activeChat.messages.slice(0, messageIndex + 1).map((m) => ({
+        contextMessages = activeChat.messages.slice(0, messageIndex + 1).map((m: Message) => ({
           id: m.id,
           role: m.role,
           content: m.content,
           provider: m.provider,
+          providerInstanceId: m.providerInstanceId,
           model: m.model,
           usage: m.usage,
           metrics: m.metrics,
@@ -167,7 +194,7 @@
       }
 
       // Use the StreamController to resume
-      const state = await streamController.resumeStream(contextMessages, currentState.messageId, activeChat);
+      const state = await streamController.resumeStream(contextMessages, currentState.messageId, activeChat, modelId);
 
       // Update UI state from controller
       isLoading = state.isLoading;
@@ -176,6 +203,8 @@
     } catch (error) {
       console.error('Error in handleResumeGeneration:', error);
       isLoading = false;
+    } finally {
+      if (!isLoading) streamController = null;
     }
   }
 
@@ -183,11 +212,16 @@
   async function handleStop() {
     if (!streamController) return;
     await streamController.cancelStream();
+    streamController = null;
+    isLoading = false;
   }
 
   // Handle regenerating a message
   async function handleRegenerate(message: Message) {
-    if (!activeChat || isLoading || !streamController) return;
+    if (!activeChat || isLoading || !$selectedModel) return;
+    const controller = getControllerForCurrentChat();
+    if (!controller) return;
+    streamController = controller;
 
     // Set loading state immediately
     isLoading = true;
@@ -207,7 +241,7 @@
       // Remove all messages after the one we're regenerating
       chats.update((allChats) => {
         return allChats.map((c) => {
-          if (c.id === activeChat.id) {
+          if (c.id === activeChat?.id) {
             return {
               ...c,
               messages: c.messages.slice(0, messageIndex),
@@ -219,7 +253,11 @@
       });
 
       // Use the StreamController to handle the regeneration
-      const state = await streamController.handleSubmit(previousUserMessage.content, activeChat);
+      const state = await streamController.handleSubmit(
+        previousUserMessage.content,
+        activeChat,
+        $selectedModel.modelId,
+      );
 
       // Update UI state from controller
       isLoading = state.isLoading;
@@ -228,23 +266,25 @@
     } catch (error) {
       console.error('Error in handleRegenerate:', error);
       isLoading = false;
+    } finally {
+      if (!isLoading) streamController = null;
     }
   }
 
   // Update handleSubmit to use StreamController
   async function handleSubmit(e?: Event) {
     if (e) e.preventDefault();
-    if (!userInput.trim() || !activeChat || isLoading || !streamController) return;
+    if (!activeChat || !userInput.trim() || isLoading || !$selectedModel) return;
+    const controller = getControllerForCurrentChat();
+    if (!controller) return;
+    streamController = controller;
 
+    isLoading = true;
     const inputValue = userInput;
     userInput = '';
 
-    // Set loading state immediately
-    isLoading = true;
-
     try {
-      // Use the StreamController to handle the submission
-      const state = await streamController.handleSubmit(inputValue, activeChat);
+      const state = await streamController.handleSubmit(inputValue, activeChat, $selectedModel.modelId);
 
       // Update UI state from controller
       isLoading = state.isLoading;
@@ -253,6 +293,8 @@
     } catch (error) {
       console.error('Error in handleSubmit:', error);
       isLoading = false;
+    } finally {
+      if (!isLoading) streamController = null;
     }
   }
 </script>

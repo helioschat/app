@@ -3,6 +3,7 @@ export type Message = {
   role: 'user' | 'assistant';
   content: string;
   provider?: string;
+  providerInstanceId?: string;
   model?: string;
   usage?: {
     promptTokens?: number;
@@ -24,17 +25,30 @@ export type Chat = {
   createdAt: Date;
   updatedAt: Date;
   provider?: string;
+  providerInstanceId?: string;
   model?: string;
   pinned?: boolean;
 };
 
-export type Provider = string;
+export type ProviderType = 'openai-compatible'; // | 'anthropic' | 'google-gemini' etc.
 
-export const PROVIDER_OPENAI = 'openai';
+export const PROVIDER_TYPES: ProviderType[] = ['openai-compatible'];
 
 export type ProviderConfig = {
   apiKey?: string;
-  baseUrl?: string;
+  baseURL?: string;
   model?: string;
   [key: string]: string | number | boolean | undefined;
+};
+
+export type ProviderInstance = {
+  id: string; // unique id for the instance
+  name: string; // user-defined name
+  providerType: ProviderType;
+  config: ProviderConfig;
+};
+
+export type SelectedModel = {
+  providerInstanceId: string;
+  modelId: string;
 };

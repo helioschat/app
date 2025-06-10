@@ -1,7 +1,9 @@
 import type { StreamMetrics } from '$lib/providers/base';
 import { getLanguageModel } from '$lib/providers/registry';
 import { chats } from '$lib/stores/chat';
-import type { Chat, Message, ProviderConfig } from '$lib/types';
+import { providerInstances } from '$lib/stores/settings';
+import type { Chat, Message, ProviderInstance } from '$lib/types';
+import { get } from 'svelte/store';
 import { v7 as uuidv7 } from 'uuid';
 import { clearChatError } from '../stores/error';
 import type { StreamContextMessage } from './streamState';
@@ -12,15 +14,22 @@ export class StreamController {
   private showResumeButton: boolean = false;
   private currentlyStreamingMessageId: string = '';
   private chatId: string;
-  private providerName: string;
-  private providerSettings: ProviderConfig;
+  private providerInstanceId: string;
   private streamMetrics: StreamMetrics = { startTime: 0 };
   private currentReader: ReadableStreamDefaultReader<string> | null = null;
 
-  constructor(chatId: string, providerName: string, providerSettings: ProviderConfig) {
+  constructor(chatId: string, providerInstanceId: string) {
     this.chatId = chatId;
-    this.providerName = providerName;
-    this.providerSettings = providerSettings;
+    this.providerInstanceId = providerInstanceId;
+  }
+
+  private getProviderInstance(): ProviderInstance {
+    const instances = get(providerInstances) as ProviderInstance[];
+    const instance = instances.find((inst: ProviderInstance) => inst.id === this.providerInstanceId);
+    if (!instance) {
+      throw new Error(`Provider instance not found: ${this.providerInstanceId}`);
+    }
+    return instance;
   }
 
   /**
@@ -47,6 +56,7 @@ export class StreamController {
   async handleSubmit(
     userInput: string,
     activeChat: Chat,
+    modelId: string,
   ): Promise<{
     isLoading: boolean;
     showResumeButton: boolean;
@@ -69,8 +79,12 @@ export class StreamController {
     let updatedMessages;
     let assistantMessage: Message;
 
-    // Get the language model
-    const model = getLanguageModel(this.providerName, this.providerSettings || {});
+    // Get the provider instance for the current chat
+    const providerInstance = this.getProviderInstance();
+    const effectiveConfig = { ...providerInstance.config, model: modelId };
+
+    // Create the model with the correct provider type from the instance
+    const model = getLanguageModel(providerInstance.providerType, effectiveConfig);
 
     if (isExistingUserMessage) {
       // Just add an assistant message to respond to the existing user message
@@ -78,8 +92,9 @@ export class StreamController {
         id: uuidv7(),
         role: 'assistant',
         content: '',
-        provider: this.providerName,
-        model: model.getModelName(),
+        provider: providerInstance.name,
+        providerInstanceId: this.providerInstanceId,
+        model: modelId,
       };
       updatedMessages = [...activeChat.messages, assistantMessage];
     } else {
@@ -94,8 +109,9 @@ export class StreamController {
         id: uuidv7(),
         role: 'assistant',
         content: '',
-        provider: this.providerName,
-        model: model.getModelName(),
+        provider: providerInstance.name,
+        providerInstanceId: this.providerInstanceId,
+        model: modelId,
       };
 
       updatedMessages = [...activeChat.messages, userMessage, assistantMessage];
@@ -104,8 +120,8 @@ export class StreamController {
     // Update the chat with provider and model information if not already set
     const updatedChat = {
       ...activeChat,
-      provider: activeChat.provider || this.providerName,
-      model: activeChat.model || model.getModelName(),
+      providerInstanceId: activeChat.providerInstanceId || this.providerInstanceId,
+      model: modelId,
       messages: updatedMessages,
       updatedAt: new Date(),
     };
@@ -129,7 +145,7 @@ export class StreamController {
       id: m.id,
       role: m.role,
       content: m.content,
-      provider: m.provider,
+      providerInstanceId: m.providerInstanceId,
       model: m.model,
       usage: m.usage,
       metrics: m.metrics,
@@ -328,6 +344,7 @@ export class StreamController {
     contextMessages: StreamContextMessage[],
     assistantMessageId: string,
     activeChat: Chat,
+    modelId: string,
   ): Promise<{
     isLoading: boolean;
     showResumeButton: boolean;
@@ -341,7 +358,20 @@ export class StreamController {
     this.currentlyStreamingMessageId = assistantMessageId;
 
     try {
-      const model = getLanguageModel(this.providerName, this.providerSettings || {});
+      // Clear any previous errors
+      clearChatError();
+
+      // Fallback to rough estimate if no context is provided
+      if (!contextMessages || contextMessages.length === 0) {
+        this.isLoading = false;
+        return this.getState();
+      }
+
+      const providerInstance = this.getProviderInstance();
+      const effectiveConfig = { ...providerInstance.config, model: modelId };
+
+      // Create the model instance
+      const model = getLanguageModel(providerInstance.providerType, effectiveConfig);
 
       // Find the message being resumed
       const messageIndex = activeChat?.messages.findIndex((m) => m.id === assistantMessageId) ?? -1;
@@ -374,7 +404,7 @@ export class StreamController {
           id: assistantMessageId,
           role: 'assistant',
           content: '',
-          provider: this.providerName,
+          providerInstanceId: this.providerInstanceId,
           model: model.getModelName(),
         },
       ];
@@ -432,7 +462,7 @@ export class StreamController {
                   return {
                     ...msg,
                     content: accumulatedContent,
-                    provider: this.providerName,
+                    providerInstanceId: this.providerInstanceId,
                     model: model.getModelName(),
                   };
                 }
@@ -477,7 +507,7 @@ export class StreamController {
                 return {
                   ...msg,
                   content: accumulatedContent,
-                  provider: this.providerName,
+                  providerInstanceId: this.providerInstanceId,
                   model: model.getModelName(),
                   usage: {
                     promptTokens: this.streamMetrics.promptTokens,
@@ -565,9 +595,7 @@ export class StreamController {
     };
   }
 
-  // Update the provider info if needed
-  updateProvider(providerName: string, providerSettings: ProviderConfig) {
-    this.providerName = providerName;
-    this.providerSettings = providerSettings;
+  updateProviderInstance(providerInstanceId: string) {
+    this.providerInstanceId = providerInstanceId;
   }
 }

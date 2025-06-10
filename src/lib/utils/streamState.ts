@@ -6,6 +6,7 @@ export interface StreamContextMessage {
   role: 'user' | 'assistant';
   content: string;
   provider?: string;
+  providerInstanceId?: string;
   model?: string;
   usage?: {
     promptTokens?: number;

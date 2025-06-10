@@ -11,6 +11,7 @@ export type Thread = Omit<Chat, 'messages'> & {
   lastMessageDate: Date;
   messageCount: number;
   provider?: string;
+  providerInstanceId?: string;
   model?: string;
   pinned?: boolean;
 };
@@ -197,18 +198,6 @@ export type StoredMessage = Message & {
   threadId: string;
   timestamp: Date;
   provider?: string;
-  model?: string;
-  usage?: {
-    promptTokens?: number;
-    completionTokens?: number;
-    totalTokens?: number;
-  };
-  metrics?: {
-    startTime?: number;
-    endTime?: number;
-    totalTime?: number;
-    tokensPerSecond?: number;
-  };
 };
 
 export async function getMessagesForThread(threadId: string): Promise<StoredMessage[]> {
@@ -329,16 +318,18 @@ export async function getChatFromThread(threadId: string): Promise<Chat | null> 
     title: thread.title,
     createdAt: thread.createdAt,
     updatedAt: thread.updatedAt,
-    messages: messages.map(({ id, role, content, provider, model, usage, metrics }) => ({
+    messages: messages.map(({ id, role, content, provider, providerInstanceId, model, usage, metrics }) => ({
       id,
       role,
       content,
       provider,
+      providerInstanceId,
       model,
       usage,
       metrics,
     })),
     provider: thread.provider,
+    providerInstanceId: thread.providerInstanceId,
     model: thread.model,
     pinned: thread.pinned,
   };
@@ -367,6 +358,7 @@ export async function saveChatAsThreadAndMessages(chat: Chat): Promise<void> {
       lastMessageDate: chat.messages.length > 0 ? chat.updatedAt : chat.createdAt,
       messageCount: chat.messages.length,
       provider: chat.provider,
+      providerInstanceId: chat.providerInstanceId,
       model: chat.model,
       pinned: chat.pinned,
     };

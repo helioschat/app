@@ -1,18 +1,26 @@
 <script lang="ts">
   import { Send, Square } from 'lucide-svelte';
-  import { modelSelectorState, handleModelSelect } from '$lib/stores/modelSelector';
+  import { settingsManager, providerInstances, selectedModel } from '$lib/settings/SettingsManager';
+  import { onMount, tick } from 'svelte';
   import ModelSelectorModal from '$lib/components/modal/types/ModelSelectorModal.svelte';
-  import { providerSettings, selectedProvider } from '$lib/stores/settings';
 
   export let userInput: string = '';
   export let isLoading: boolean = false;
   export let handleSubmit: (e: Event) => Promise<void>;
   export let handleStop: () => Promise<void>;
 
-  $: currentModelName =
-    $modelSelectorState.availableModels[$selectedProvider]?.find(
-      (m) => m.id === $providerSettings[$selectedProvider]?.model,
-    )?.name || 'Select Model';
+  let showModelSelector = false;
+  let availableModels: Record<string, { id: string; name: string }[]> = {};
+
+  onMount(async () => {
+    availableModels = await settingsManager.loadAvailableModels();
+  });
+
+  async function openModelSelector() {
+    availableModels = await settingsManager.loadAvailableModels();
+    await tick();
+    showModelSelector = true;
+  }
 </script>
 
 <form
@@ -46,19 +54,25 @@
     <div class="absolute bottom-0 left-0 flex h-12 items-center px-3 pb-3">
       <button
         type="button"
-        on:click={() => modelSelectorState.setShowModelSelector(true)}
-        disabled={$modelSelectorState.loading || isLoading}
+        on:click={openModelSelector}
+        disabled={isLoading}
         class="button button-primary button-small !px-2">
-        <span>{currentModelName}</span>
+        <span>{$selectedModel?.modelId || 'Select Model'}</span>
       </button>
     </div>
   </div>
 </form>
 
 <ModelSelectorModal
-  id="model-selector"
-  isOpen={$modelSelectorState.showModelSelector}
-  models={$modelSelectorState.availableModels[$selectedProvider] || []}
-  currentModelId={$providerSettings[$selectedProvider]?.model}
-  on:close={() => modelSelectorState.setShowModelSelector(false)}
-  on:select={(e) => handleModelSelect(e.detail.modelId)}></ModelSelectorModal>
+  id="chat-model-selector"
+  isOpen={showModelSelector}
+  providerInstances={$providerInstances}
+  {availableModels}
+  currentModelId={$selectedModel?.modelId}
+  on:close={() => (showModelSelector = false)}
+  on:select={(e) => {
+    const { providerInstanceId, modelId } = e.detail;
+    selectedModel.set({ providerInstanceId, modelId });
+    showModelSelector = false;
+  }}>
+</ModelSelectorModal>

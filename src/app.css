@@ -226,11 +226,7 @@ body {
 }
 
 textarea,
-input {
-  background-color: var(--color-3);
-  color: var(--color-a12);
-}
-
+input,
 select {
   background-color: var(--color-3);
   color: var(--color-a12);
@@ -315,12 +311,9 @@ html {
 }
 
 textarea,
-input {
-  @apply rounded-[28px] p-3;
-}
-
+input,
 select {
-  @apply rounded-lg p-1;
+  @apply rounded-[28px] p-3;
 }
 
 .button {

@@ -251,22 +251,21 @@ export async function loadChat(id: string): Promise<Chat | null> {
             return sortChats([...allChats, chat]);
           }
         });
-        return chat;
       }
-
-      return null;
+      return chat;
     } finally {
-      // Clean up the mutex after a delay to prevent immediate duplicate requests
-      setTimeout(() => {
-        delete loadMutex[id];
-      }, 1000);
+      // Remove the promise from the mutex once it's resolved
+      delete loadMutex[id];
     }
   })();
-
   return loadMutex[id];
 }
 
-// Helper to create an empty chat from a thread
+/**
+ * Creates an empty chat object from a thread (for initial display)
+ * This is used when the full chat data with messages hasn't been loaded yet
+ * @param thread Thread object from IndexedDB
+ */
 function createEmptyChatFromThread(thread: Thread): Chat {
   return {
     id: thread.id,
@@ -275,6 +274,7 @@ function createEmptyChatFromThread(thread: Thread): Chat {
     createdAt: thread.createdAt,
     updatedAt: thread.updatedAt,
     provider: thread.provider,
+    providerInstanceId: thread.providerInstanceId,
     model: thread.model,
     pinned: thread.pinned,
   };
@@ -282,30 +282,20 @@ function createEmptyChatFromThread(thread: Thread): Chat {
 
 /**
  * Toggles the pinned status of a chat
+ * @param id The ID of the chat to pin/unpin
  */
 export async function toggleChatPin(id: string): Promise<void> {
   chats.update((allChats) => {
-    const updatedChats = allChats.map((chat) => {
-      if (chat.id === id) {
-        return {
-          ...chat,
-          pinned: !chat.pinned,
-        };
-      }
-      return chat;
-    });
-    return sortChats(updatedChats);
-  });
+    const chatIndex = allChats.findIndex((c) => c.id === id);
+    if (chatIndex > -1) {
+      const chat = allChats[chatIndex];
+      chat.pinned = !chat.pinned;
+      chat.updatedAt = new Date();
 
-  // Get the updated chat
-  let updatedChat: Chat | undefined;
-  const unsubscribe = chats.subscribe((allChats) => {
-    updatedChat = allChats.find((chat) => chat.id === id);
+      // Trigger IndexedDB save
+      saveChatAsThreadAndMessages(chat);
+    }
+    // Return a new array to trigger Svelte reactivity, properly sorted
+    return sortChats([...allChats]);
   });
-  unsubscribe();
-
-  // Save to IndexedDB if the chat exists
-  if (updatedChat && browser) {
-    await saveChatAsThreadAndMessages(updatedChat);
-  }
 }

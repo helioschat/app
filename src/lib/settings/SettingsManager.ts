@@ -1,10 +1,10 @@
 import { browser } from '$app/environment';
 import type { ModelInfo } from '$lib/providers/base';
-import { getAvailableProviders, getLanguageModel } from '$lib/providers/registry';
+import { getLanguageModel } from '$lib/providers/registry';
 import { modelCache } from '$lib/stores/modelCache';
-import type { Provider, ProviderConfig } from '$lib/types';
-import { PROVIDER_OPENAI } from '$lib/types';
+import type { ProviderConfig, ProviderInstance, ProviderType, SelectedModel } from '$lib/types';
 import { get, writable } from 'svelte/store';
+import { v7 as uuidv7 } from 'uuid';
 
 // Advanced settings interface
 export interface AdvancedSettings {
@@ -13,9 +13,9 @@ export interface AdvancedSettings {
 
 export class SettingsManager {
   // Default settings
-  private static readonly defaultProviderSettings: Record<Provider, ProviderConfig> = {
-    [PROVIDER_OPENAI]: { apiKey: '', baseUrl: '', model: 'gpt-4.1-nano' },
-  };
+  private static getDefaultProviderInstances(): ProviderInstance[] {
+    return [];
+  }
 
   private static readonly defaultAdvancedSettings: Record<string, AdvancedSettings> = {
     default: {
@@ -24,20 +24,24 @@ export class SettingsManager {
   };
 
   // Stores
-  public readonly providerSettings = writable<Record<Provider, ProviderConfig>>(this.getInitialProviderSettings());
-  public readonly selectedProvider = writable<Provider>(this.getInitialProvider());
+  public readonly providerInstances = writable<ProviderInstance[]>(this.getInitialProviderInstances());
+  public readonly selectedModel = writable<SelectedModel | null>(this.getInitialSelectedModel());
   public readonly advancedSettings = writable<Record<string, AdvancedSettings>>(this.getInitialAdvancedSettings());
   public readonly enabledModels = writable<Record<string, string[]>>({});
 
   constructor() {
     // Initialize persistence
     if (browser) {
-      this.providerSettings.subscribe((value) => {
-        localStorage.setItem('providerSettings', JSON.stringify(value));
+      this.providerInstances.subscribe((value) => {
+        localStorage.setItem('providerInstances', JSON.stringify(value));
       });
 
-      this.selectedProvider.subscribe((value) => {
-        localStorage.setItem('selectedProvider', JSON.stringify(value));
+      this.selectedModel.subscribe((value) => {
+        if (value) {
+          localStorage.setItem('selectedModel', JSON.stringify(value));
+        } else {
+          localStorage.removeItem('selectedModel');
+        }
       });
 
       this.advancedSettings.subscribe((value) => {
@@ -51,37 +55,23 @@ export class SettingsManager {
   }
 
   // Initialize provider settings from localStorage or defaults
-  private getInitialProviderSettings(): Record<Provider, ProviderConfig> {
+  private getInitialProviderInstances(): ProviderInstance[] {
     if (browser) {
-      const storedValue = localStorage.getItem('providerSettings');
+      const storedValue = localStorage.getItem('providerInstances');
       if (storedValue) {
         try {
-          // Merge with default values to ensure all providers have proper defaults
-          return { ...SettingsManager.defaultProviderSettings, ...JSON.parse(storedValue) };
+          return JSON.parse(storedValue);
         } catch (error) {
-          console.error('Error parsing provider settings from localStorage', error);
-          return SettingsManager.defaultProviderSettings;
+          console.error('Error parsing provider instances from localStorage', error);
+          return SettingsManager.getDefaultProviderInstances();
         }
       }
     }
-    return SettingsManager.defaultProviderSettings;
+    return SettingsManager.getDefaultProviderInstances();
   }
 
-  private getInitialProvider(): Provider {
-    if (browser) {
-      const storedProvider = localStorage.getItem('selectedProvider');
-      if (storedProvider) {
-        try {
-          const provider = JSON.parse(storedProvider);
-          if (getAvailableProviders().includes(provider)) {
-            return provider;
-          }
-        } catch {
-          // ignore
-        }
-      }
-    }
-    return PROVIDER_OPENAI;
+  private getInitialSelectedModel(): SelectedModel | null {
+    return null;
   }
 
   // Initialize advanced settings from localStorage or defaults
@@ -100,59 +90,96 @@ export class SettingsManager {
     return SettingsManager.defaultAdvancedSettings;
   }
 
-  /**
-   * Register a new provider with default settings
-   * @param provider Provider ID
-   * @param defaultConfig Default configuration
-   */
-  public registerProviderSettings(provider: Provider, defaultConfig: ProviderConfig): void {
-    this.providerSettings.update((settings) => {
-      // Only add if it doesn't exist
-      if (!settings[provider]) {
-        settings[provider] = defaultConfig;
-      }
-      return settings;
+  public addProviderInstance(name: string, providerType: ProviderType, config: ProviderConfig): string {
+    const newInstance: ProviderInstance = {
+      id: uuidv7(),
+      name,
+      providerType,
+      config,
+    };
+
+    this.providerInstances.update((instances) => {
+      return [...instances, newInstance];
     });
+
+    return newInstance.id;
+  }
+
+  public updateProviderInstance(id: string, update: Partial<ProviderInstance>): void {
+    this.providerInstances.update((instances) => {
+      return instances.map((instance) => {
+        if (instance.id === id) {
+          const newConfig =
+            instance.config && update.config
+              ? { ...instance.config, ...update.config }
+              : update.config || instance.config;
+
+          return { ...instance, ...update, config: newConfig };
+        }
+        return instance;
+      });
+    });
+  }
+
+  public removeProviderInstance(id: string): void {
+    this.providerInstances.update((instances) => {
+      return instances.filter((instance) => instance.id !== id);
+    });
+
+    // If the selected provider is removed, select another one
+    if (get(this.selectedModel)?.providerInstanceId === id) {
+      const instances = get(this.providerInstances);
+      if (instances.length > 0) {
+        // Find the first available model for the new default provider
+        // This is a bit of a placeholder, a more robust solution would be to
+        // fetch the models and select the first one.
+        this.selectedModel.set({
+          providerInstanceId: instances[0].id,
+          modelId: 'default-model', // Placeholder
+        });
+      } else {
+        this.selectedModel.set(null);
+      }
+    }
   }
 
   /**
    * Get advanced settings for a provider
-   * @param provider Provider ID
+   * @param providerInstanceId Provider instance ID
    * @returns Advanced settings for the provider or default settings
    */
-  public getAdvancedSettingsForProvider(provider: Provider): AdvancedSettings {
+  public getAdvancedSettingsForProvider(providerInstanceId: string): AdvancedSettings {
     const settings = get(this.advancedSettings);
-    return settings[provider] || settings.default || SettingsManager.defaultAdvancedSettings.default;
+    // This could be more granular in the future
+    return settings[providerInstanceId] || settings.default || SettingsManager.defaultAdvancedSettings.default;
   }
 
   /**
    * Check if a model is enabled
-   * @param provider Provider ID
+   * @param providerInstanceId Provider instance ID
    * @param modelId Model ID
    * @returns Whether the model is enabled
    */
-  public isModelEnabled(provider: string, modelId: string): boolean {
+  public isModelEnabled(providerInstanceId: string, modelId: string): boolean {
     const models = get(this.enabledModels);
-    return models[provider]?.includes(modelId) ?? true; // Default to enabled
+    return models[providerInstanceId]?.includes(modelId) ?? true; // Default to enabled
   }
 
   /**
    * Toggle model enabled/disabled
-   * @param provider Provider ID
+   * @param providerInstanceId Provider instance ID
    * @param modelId Model ID
    */
-  public toggleModel(provider: string, modelId: string): void {
+  public toggleModel(providerInstanceId: string, modelId: string): void {
     this.enabledModels.update((models) => {
-      // Initialize if not exists
-      if (!models[provider]) {
-        models[provider] = [];
+      if (!models[providerInstanceId]) {
+        models[providerInstanceId] = [];
       }
 
-      // Toggle model
-      if (models[provider].includes(modelId)) {
-        models[provider] = models[provider].filter((id) => id !== modelId);
+      if (models[providerInstanceId].includes(modelId)) {
+        models[providerInstanceId] = models[providerInstanceId].filter((id) => id !== modelId);
       } else {
-        models[provider].push(modelId);
+        models[providerInstanceId].push(modelId);
       }
 
       return models;
@@ -160,35 +187,29 @@ export class SettingsManager {
   }
 
   /**
-   * Load all available models for all providers
-   * @returns Promise resolving to a record of available models by provider
+   * Load all available models for all provider instances
+   * @returns Promise resolving to a record of available models by provider instance ID
    */
   public async loadAvailableModels(): Promise<Record<string, ModelInfo[]>> {
     const availableModels: Record<string, ModelInfo[]> = {};
-    const providers = getAvailableProviders();
-    const currentSettings = get(this.providerSettings);
+    const instances = get(this.providerInstances);
 
-    // Load models for each provider
-    for (const provider of providers) {
+    for (const instance of instances) {
       try {
-        // Check cache first
-        const cachedModels = modelCache.getCachedModels(provider);
+        const cachedModels = modelCache.getCachedModels(instance.id);
         if (cachedModels) {
-          availableModels[provider] = cachedModels;
+          availableModels[instance.id] = cachedModels;
           continue;
         }
 
-        // Cache miss - fetch from provider
-        const model = getLanguageModel(provider, currentSettings[provider] || {});
+        const model = getLanguageModel(instance.providerType, instance.config);
         const models = await model.getAvailableModels();
 
-        // Cache the results since we got them without error
-        modelCache.cacheModels(provider, models);
-        availableModels[provider] = models;
+        modelCache.cacheModels(instance.id, models);
+        availableModels[instance.id] = models;
       } catch (error) {
-        // Don't cache results when we hit an error since these will be fallback models
-        console.error(`Failed to fetch models for ${provider}`, error);
-        availableModels[provider] = [];
+        console.error(`Failed to fetch models for ${instance.name} (${instance.id})`, error);
+        availableModels[instance.id] = [];
       }
     }
 
@@ -199,4 +220,4 @@ export class SettingsManager {
 // Settings singleton
 export const settingsManager = new SettingsManager();
 
-export const { providerSettings, selectedProvider, advancedSettings, enabledModels } = settingsManager;
+export const { providerInstances, selectedModel, advancedSettings, enabledModels } = settingsManager;

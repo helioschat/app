@@ -3,17 +3,20 @@
   import Modal from '../Modal.svelte';
   import { Search } from 'lucide-svelte';
   import type { ModelInfo } from '$lib/providers/base';
+  import type { ProviderInstance } from '$lib/types';
+  import { settingsManager } from '$lib/settings/SettingsManager';
 
   export let id: string;
   export let isOpen = false;
-  export let models: ModelInfo[] = [];
+  export let providerInstances: ProviderInstance[] = [];
+  export let availableModels: Record<string, ModelInfo[]> = {};
   export let currentModelId: string | undefined;
 
   let searchQuery = '';
 
   const dispatch = createEventDispatcher<{
     close: void;
-    select: { modelId: string };
+    select: { providerInstanceId: string; modelId: string };
   }>();
 
   function handleClose() {
@@ -21,12 +24,10 @@
     dispatch('close');
   }
 
-  function handleSelect(modelId: string) {
-    dispatch('select', { modelId });
+  function handleSelect(providerInstanceId: string, modelId: string) {
+    dispatch('select', { providerInstanceId, modelId });
     handleClose();
   }
-
-  $: filteredModels = models.filter((model) => model.name.toLowerCase().includes(searchQuery.toLowerCase()));
 </script>
 
 <Modal {id} title="Select Model" {isOpen} on:close={handleClose}>
@@ -36,19 +37,31 @@
   </div>
 
   <div class="max-h-[400px] overflow-y-auto">
-    {#each filteredModels as model}
-      <button
-        type="button"
-        on:click={() => handleSelect(model.id)}
-        class="button button-secondary button-large w-full border-0 border-none"
-        class:active={model.id === currentModelId}>
-        <div class="flex-1 text-left">
-          <div class="text-primary font-medium">{model.name}</div>
-          {#if model.description}
-            <div class="text-secondary text-sm">{model.description}</div>
-          {/if}
-        </div>
-      </button>
+    {#each providerInstances as instance (instance.id)}
+      {@const allInstanceModels = availableModels[instance.id] || []}
+      {@const enabledAndFilteredModels = allInstanceModels.filter(
+        (model) =>
+          settingsManager.isModelEnabled(instance.id, model.id) &&
+          model.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      )}
+
+      {#if enabledAndFilteredModels.length > 0}
+        <h3 class="text-primary mt-4 text-sm font-semibold first:mt-0">{instance.name}</h3>
+        {#each enabledAndFilteredModels as model (model.id)}
+          <button
+            type="button"
+            on:click={() => handleSelect(instance.id, model.id)}
+            class="button button-secondary button-large w-full border-0 border-none"
+            class:active={model.id === currentModelId}>
+            <div class="flex-1 text-left">
+              <div class="text-primary font-medium">{model.name}</div>
+              {#if model.description}
+                <div class="text-secondary text-sm">{model.description}</div>
+              {/if}
+            </div>
+          </button>
+        {/each}
+      {/if}
     {/each}
   </div>
 </Modal>

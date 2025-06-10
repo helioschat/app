@@ -1,35 +1,35 @@
-import type { Provider, ProviderConfig } from '../types';
+import type { ProviderConfig, ProviderType } from '../types';
 import type { LanguageModel } from './base';
-import { OpenAIProvider } from './openai';
+import { OpenAICompatibleProvider } from './openai-compatible';
 
 // Provider registry - this is where we register all available providers
 // Makes it easy to add new providers in the future
 const providerRegistry: Record<string, new (config: ProviderConfig) => LanguageModel> = {
-  openai: OpenAIProvider,
+  'openai-compatible': OpenAICompatibleProvider,
 };
 
 /**
  * Get a provider instance by ID
- * @param provider Provider ID
+ * @param providerType Provider Type
  * @param config Provider configuration
  * @returns LanguageModel instance
  */
-export function getLanguageModel(provider: Provider, config: ProviderConfig): LanguageModel {
-  const ProviderClass = providerRegistry[provider];
+export function getLanguageModel(providerType: ProviderType, config: ProviderConfig): LanguageModel {
+  const ProviderClass = providerRegistry[providerType];
 
   if (!ProviderClass) {
-    throw new Error(`Unsupported provider: ${provider}`);
+    throw new Error(`Unsupported provider: ${providerType}`);
   }
 
   return new ProviderClass(config);
 }
 
 /**
- * Get all registered providers
- * @returns Array of provider IDs
+ * Get all registered provider types
+ * @returns Array of provider types
  */
-export function getAvailableProviders(): Provider[] {
-  return Object.keys(providerRegistry) as Provider[];
+export function getAvailableProviderTypes(): ProviderType[] {
+  return Object.keys(providerRegistry) as ProviderType[];
 }
 
 /**

@@ -15,18 +15,17 @@ export interface OpenAIError extends Error {
   error: OpenAIErrorDetails;
 }
 
-export class OpenAIProvider implements LanguageModel {
+export class OpenAICompatibleProvider implements LanguageModel {
   private client: OpenAI;
   private config: ProviderConfig;
-  public id = 'openai';
-  public name = 'OpenAI';
+  public readonly id = 'openai-compatible';
+  public name = 'OpenAI-Compatible';
   private tokenCount = 0;
-  public fallbackModel = 'gpt-4.1-nano';
 
   constructor(config: ProviderConfig) {
     this.client = new OpenAI({
       apiKey: config.apiKey,
-      baseURL: config.baseUrl,
+      baseURL: config.baseURL,
       dangerouslyAllowBrowser: true,
     });
     this.config = config;
@@ -35,10 +34,10 @@ export class OpenAIProvider implements LanguageModel {
   stream(messages: Message[]) {
     this.tokenCount = 0;
 
-    const gen = async function* (this: OpenAIProvider) {
+    const gen = async function* (this: OpenAICompatibleProvider) {
       try {
         const response = await this.client.chat.completions.create({
-          model: this.config.model || this.fallbackModel,
+          model: this.config.model as string,
           messages: messages.map(({ role, content }) => ({ role, content })),
           stream: true,
         });
@@ -124,7 +123,7 @@ export class OpenAIProvider implements LanguageModel {
   }
 
   getModelName(): string {
-    return this.config.model || this.fallbackModel;
+    return this.config.model || 'unknown';
   }
 
   getProviderName(): string {
@@ -135,13 +134,11 @@ export class OpenAIProvider implements LanguageModel {
     try {
       const response = await this.client.models.list();
 
-      return response.data
-        .filter((model) => model.id.startsWith('gpt-'))
-        .map((model) => ({
-          id: model.id,
-          name: model.id,
-          description: `OpenAI ${model.id} model`,
-        }));
+      return response.data.map((model) => ({
+        id: model.id,
+        name: model.id,
+        description: `OpenAI-compatible model ${model.id}`,
+      }));
     } catch (error) {
       // Handle API errors for model listing
       if (this.isOpenAIError(error)) {
@@ -153,14 +150,9 @@ export class OpenAIProvider implements LanguageModel {
           provider: this.id,
         });
       }
-      console.error('Error fetching OpenAI models:', error);
+      console.error('Error fetching OpenAI-compatible models:', error);
       // Fallback
-      return [
-        {
-          id: 'gpt-4.1-nano',
-          name: 'GPT-4.1 Nano',
-        },
-      ];
+      return [];
     }
   }
 }
