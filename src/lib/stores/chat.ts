@@ -273,7 +273,6 @@ function createEmptyChatFromThread(thread: Thread): Chat {
     messages: [],
     createdAt: thread.createdAt,
     updatedAt: thread.updatedAt,
-    provider: thread.provider,
     providerInstanceId: thread.providerInstanceId,
     model: thread.model,
     pinned: thread.pinned,

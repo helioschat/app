@@ -185,7 +185,6 @@
           id: m.id,
           role: m.role,
           content: m.content,
-          provider: m.provider,
           providerInstanceId: m.providerInstanceId,
           model: m.model,
           usage: m.usage,

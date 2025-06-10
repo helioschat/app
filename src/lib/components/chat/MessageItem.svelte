@@ -6,6 +6,7 @@
   import { page } from '$app/state';
   import { Copy, RefreshCw } from 'lucide-svelte';
   import { createEventDispatcher } from 'svelte';
+  import { providerInstances } from '$lib/settings/SettingsManager';
 
   export let message: Message;
   export let isStreaming: boolean = false;
@@ -19,6 +20,7 @@
 
   $: shouldUseMarkdown = likelyContainsMarkdown(message.content);
 
+  $: providerName = $providerInstances.find((p) => p.id === message.providerInstanceId)?.name;
   $: generationTime = message.metrics?.totalTime ? `${(message.metrics.totalTime / 1000).toFixed(2)}s` : '';
   $: tokensPerSecond = message.metrics?.tokensPerSecond
     ? `${message.metrics.tokensPerSecond.toFixed(2)} tokens/sec`
@@ -78,10 +80,10 @@
           </button>
         {/if}
       </div>
-      {#if message.role === 'assistant' && (message.provider || message.model || generationTime || tokensPerSecond)}
+      {#if message.role === 'assistant' && (providerName || message.model || generationTime || tokensPerSecond)}
         <div class="text-secondary flex items-center gap-1 text-xs">
-          {#if message.provider}
-            <span>{message.provider}</span>
+          {#if providerName}
+            <span>{providerName}</span>
             {#if message.model}
               /
             {/if}

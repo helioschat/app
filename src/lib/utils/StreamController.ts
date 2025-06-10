@@ -92,7 +92,6 @@ export class StreamController {
         id: uuidv7(),
         role: 'assistant',
         content: '',
-        provider: providerInstance.name,
         providerInstanceId: this.providerInstanceId,
         model: modelId,
       };
@@ -109,7 +108,6 @@ export class StreamController {
         id: uuidv7(),
         role: 'assistant',
         content: '',
-        provider: providerInstance.name,
         providerInstanceId: this.providerInstanceId,
         model: modelId,
       };

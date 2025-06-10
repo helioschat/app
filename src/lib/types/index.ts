@@ -2,7 +2,6 @@ export type Message = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  provider?: string;
   providerInstanceId?: string;
   model?: string;
   usage?: {
@@ -24,7 +23,6 @@ export type Chat = {
   messages: Message[];
   createdAt: Date;
   updatedAt: Date;
-  provider?: string;
   providerInstanceId?: string;
   model?: string;
   pinned?: boolean;
