@@ -289,7 +289,7 @@ export async function toggleChatPin(id: string): Promise<void> {
     if (chatIndex > -1) {
       const chat = allChats[chatIndex];
       chat.pinned = !chat.pinned;
-      chat.updatedAt = new Date();
+      // Note: Don't update updatedAt here, as it's not required
 
       // Trigger IndexedDB save
       saveChatAsThreadAndMessages(chat);
