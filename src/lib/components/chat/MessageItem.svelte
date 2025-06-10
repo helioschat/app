@@ -101,7 +101,8 @@
     </div>
   </div>
 
-  <div class="message-actions opacity-0 group-hover:opacity-100 peer-hover:opacity-100 hover:opacity-100">
+  <div
+    class="message-actions h-[44px] max-h-[44px] items-center opacity-0 group-hover:opacity-100 peer-hover:opacity-100 hover:opacity-100">
     <div class="flex gap-2 p-2">
       <div class="flex items-center gap-2">
         <button class="button button-secondary button-small" on:click={copyMessageContent}>
