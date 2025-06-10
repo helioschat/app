@@ -163,6 +163,10 @@ export class StreamController {
       metrics: m.metrics,
     }));
 
+    // Initialize accumulated content and reasoning
+    let accumulatedContent = '';
+    let accumulatedReasoning = '';
+
     try {
       // Start metrics tracking
       this.streamMetrics = {
@@ -171,6 +175,8 @@ export class StreamController {
         completionTokens: 0,
         totalTokens: 0,
       };
+
+      let firstContentReceived = false;
 
       // Try to count tokens if the provider supports it
       try {
@@ -198,14 +204,43 @@ export class StreamController {
       // Start the stream and record state with context
       startStream(this.chatId, assistantMessage.id, contextMessages);
 
-      // Initialize accumulated content
-      let accumulatedContent = '';
-
       while (true) {
         const { done, value } = await this.currentReader.read();
         if (done) break;
 
-        // Update the accumulated content
+        if (value.startsWith('[REASONING]')) {
+          // Reasoning update
+          const reasoningChunk = value.substring('[REASONING]'.length);
+          accumulatedReasoning += reasoningChunk;
+
+          // Update reasoning in store
+          chats.update((allChats) => {
+            return allChats.map((chat) => {
+              if (chat.id === this.chatId) {
+                const updatedChatMessages = chat.messages.map((m) => {
+                  if (m.id === assistantMessage.id) {
+                    return {
+                      ...m,
+                      reasoning: accumulatedReasoning,
+                    };
+                  }
+                  return m;
+                });
+                return { ...chat, messages: updatedChatMessages };
+              }
+              return chat;
+            });
+          });
+          continue;
+        }
+
+        // Record thinking time when first visible content arrives
+        if (!firstContentReceived) {
+          this.streamMetrics.thinkingTime = Date.now() - this.streamMetrics.startTime;
+          firstContentReceived = true;
+        }
+
+        // Update the accumulated assistant visible content
         accumulatedContent += value;
 
         // Save the partial content to stream state for recovery
@@ -221,6 +256,7 @@ export class StreamController {
                   return {
                     ...msg,
                     content: accumulatedContent,
+                    reasoning: accumulatedReasoning || msg.reasoning,
                   };
                 }
                 return msg;
@@ -255,7 +291,7 @@ export class StreamController {
         ? this.streamMetrics.completionTokens / (this.streamMetrics.totalTime / 1000)
         : undefined;
 
-      // Update the message with final metrics
+      // Update the message with final metrics and reasoning
       chats.update((allChats) => {
         return allChats.map((chat) => {
           if (chat.id === this.chatId) {
@@ -273,7 +309,9 @@ export class StreamController {
                     endTime: this.streamMetrics.endTime,
                     totalTime: this.streamMetrics.totalTime,
                     tokensPerSecond: this.streamMetrics.tokensPerSecond,
+                    thinkingTime: this.streamMetrics.thinkingTime,
                   },
+                  reasoning: accumulatedReasoning || msg.reasoning,
                 };
               }
               return msg;
@@ -317,7 +355,9 @@ export class StreamController {
                     tokensPerSecond: this.streamMetrics.completionTokens
                       ? this.streamMetrics.completionTokens / ((Date.now() - this.streamMetrics.startTime) / 1000)
                       : undefined,
+                    thinkingTime: this.streamMetrics.thinkingTime,
                   },
+                  reasoning: accumulatedReasoning || msg.reasoning,
                 };
               }
               return msg;
@@ -368,6 +408,10 @@ export class StreamController {
     this.isLoading = true;
     this.currentlyStreamingMessageId = assistantMessageId;
 
+    // Initialize with current content and reasoning before attempting resume
+    let accumulatedContent = '';
+    let accumulatedReasoning = '';
+
     try {
       // Clear any previous errors
       clearChatError();
@@ -391,7 +435,7 @@ export class StreamController {
       }
 
       // Get the current content to continue from
-      const currentContent = activeChat?.messages[messageIndex].content || '';
+      accumulatedContent = activeChat?.messages[messageIndex].content || '';
 
       // Start metrics tracking
       this.streamMetrics = {
@@ -401,6 +445,8 @@ export class StreamController {
         completionTokens: activeChat.messages[messageIndex].usage?.completionTokens || 0,
         totalTokens: activeChat.messages[messageIndex].usage?.totalTokens || 0,
       };
+
+      let firstContentReceived = accumulatedContent.length > 0;
 
       // Get system prompt from advanced settings
       const systemPrompt = get(advancedSettings).systemPrompt;
@@ -421,7 +467,7 @@ export class StreamController {
         {
           id: uuidv7(),
           role: 'user',
-          content: `You previously wrote the following text. Continue writing exactly where you left off, maintaining the same style, tone, and flow. Make sure there's proper spacing between the last word of the existing text and the first word of your continuation. Do not repeat any content, do not start a new section, do not introduce the topic again, and do not acknowledge this instruction in your response. Just continue writing as if you never stopped:\n\n${currentContent}`,
+          content: `You previously wrote the following text. Continue writing exactly where you left off, maintaining the same style, tone, and flow. Make sure there's proper spacing between the last word of the existing text and the first word of your continuation. Do not repeat any content, do not start a new section, do not introduce the topic again, and do not acknowledge this instruction in your response. Just continue writing as if you never stopped:\n\n${accumulatedContent}`,
         },
         // Second message is an empty assistant message that will be filled with the continuation
         {
@@ -462,17 +508,43 @@ export class StreamController {
       // This ensures we have the full history for potential future resumptions
       startStream(this.chatId, assistantMessageId, contextMessages);
 
-      // Initialize with current content
-      let accumulatedContent = currentContent;
       let newContent = '';
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        // Append new content
+        if (value.startsWith('[REASONING]')) {
+          const reasoningChunk = value.substring('[REASONING]'.length);
+          accumulatedReasoning += reasoningChunk;
+
+          // Update reasoning in store
+          chats.update((allChats) => {
+            return allChats.map((chat) => {
+              if (chat.id === this.chatId) {
+                const updatedChatMessages = chat.messages.map((m) => {
+                  if (m.id === assistantMessageId) {
+                    return { ...m, reasoning: accumulatedReasoning };
+                  }
+                  return m;
+                });
+                return { ...chat, messages: updatedChatMessages };
+              }
+              return chat;
+            });
+          });
+          continue;
+        }
+
+        // Record thinking time when first visible content arrives
+        if (!firstContentReceived) {
+          this.streamMetrics.thinkingTime = Date.now() - this.streamMetrics.startTime;
+          firstContentReceived = true;
+        }
+
+        // Append new assistant visible content
         newContent += value;
-        accumulatedContent = currentContent + newContent;
+        accumulatedContent += newContent;
 
         // Save the partial content to stream state for recovery
         updateStreamContent(this.chatId, accumulatedContent);
@@ -486,8 +558,7 @@ export class StreamController {
                   return {
                     ...msg,
                     content: accumulatedContent,
-                    providerInstanceId: this.providerInstanceId,
-                    model: model.getModelName(),
+                    reasoning: accumulatedReasoning,
                   };
                 }
                 return msg;
@@ -521,7 +592,7 @@ export class StreamController {
         ? this.streamMetrics.completionTokens / (this.streamMetrics.totalTime / 1000)
         : undefined;
 
-      // Update the message with final metrics
+      // Update the message with final metrics and reasoning
       chats.update((allChats) => {
         return allChats.map((chat) => {
           if (chat.id === this.chatId) {
@@ -530,8 +601,6 @@ export class StreamController {
                 return {
                   ...msg,
                   content: accumulatedContent,
-                  providerInstanceId: this.providerInstanceId,
-                  model: model.getModelName(),
                   usage: {
                     promptTokens: this.streamMetrics.promptTokens,
                     completionTokens: this.streamMetrics.completionTokens,
@@ -542,7 +611,9 @@ export class StreamController {
                     endTime: this.streamMetrics.endTime,
                     totalTime: this.streamMetrics.totalTime,
                     tokensPerSecond: this.streamMetrics.tokensPerSecond,
+                    thinkingTime: this.streamMetrics.thinkingTime,
                   },
+                  reasoning: accumulatedReasoning,
                 };
               }
               return msg;
@@ -572,6 +643,7 @@ export class StreamController {
                   ...msg,
                   // Keep existing content
                   content: currentMessage?.content || 'Error resuming generation.',
+                  reasoning: accumulatedReasoning || msg.reasoning,
                   // Add partial metrics even in case of error
                   usage: {
                     promptTokens: this.streamMetrics.promptTokens,
@@ -583,6 +655,7 @@ export class StreamController {
                     endTime: Date.now(),
                     totalTime: Date.now() - this.streamMetrics.startTime,
                     tokensPerSecond: undefined,
+                    thinkingTime: this.streamMetrics.thinkingTime,
                   },
                 };
               }

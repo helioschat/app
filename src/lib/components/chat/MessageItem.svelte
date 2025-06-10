@@ -4,12 +4,13 @@
   import type { Message } from '$lib/types';
   import { isMessageStreaming } from '$lib/utils/streamState';
   import { page } from '$app/state';
-  import { Copy, RefreshCw } from 'lucide-svelte';
+  import { ChevronDown, ChevronUp, Copy, RefreshCw } from 'lucide-svelte';
   import { createEventDispatcher } from 'svelte';
   import { providerInstances } from '$lib/settings/SettingsManager';
 
   export let message: Message;
   export let isStreaming: boolean = false;
+  export let isThinking: boolean = false;
 
   const dispatch = createEventDispatcher<{
     regenerate: { message: Message };
@@ -19,6 +20,10 @@
     isStreaming || (message.role === 'assistant' && isMessageStreaming(page.params.chatId, message.id));
 
   $: shouldUseMarkdown = likelyContainsMarkdown(message.content);
+
+  $: showReasoning = false;
+  $: hasReasoning = message.role === 'assistant' && message.reasoning && message.reasoning.length > 0;
+  $: reasoningUsesMarkdown = hasReasoning && likelyContainsMarkdown(message.reasoning || '');
 
   $: providerName = $providerInstances.find((p) => p.id === message.providerInstanceId)?.name;
   $: generationTime = message.metrics?.totalTime ? `${(message.metrics.totalTime / 1000).toFixed(2)}s` : '';
@@ -50,6 +55,36 @@
 </script>
 
 <div class="message {message.role === 'assistant' ? 'assistant' : 'user'} group" data-message-id={message.id}>
+  {#if hasReasoning}
+    <button
+      class="reasoning-button button button-secondary text-sm"
+      class:thinking={isThinking}
+      on:click={() => (showReasoning = !showReasoning)}>
+      <span class="flex items-center gap-1">
+        <div class="inline-block">
+          {#if !showReasoning}
+            <ChevronDown size={16}></ChevronDown>
+          {:else}
+            <ChevronUp size={16}></ChevronUp>
+          {/if}
+        </div>
+        {isThinking
+          ? 'Thinking...'
+          : message.metrics?.thinkingTime
+            ? `Thought for ${(message.metrics.thinkingTime / 1000).toFixed(2)} seconds`
+            : 'Show thought process'}</span>
+    </button>
+
+    {#if showReasoning}
+      <div class="reasoning-content text-secondary mb-2 text-xs">
+        {#if reasoningUsesMarkdown}
+          <MarkdownRenderer content={message.reasoning || ''} isStreaming={false}></MarkdownRenderer>
+        {:else}
+          <p class="whitespace-pre-wrap italic">{message.reasoning}</p>
+        {/if}
+      </div>
+    {/if}
+  {/if}
   <div class="message-container peer">
     <div class="message-content">
       {#if shouldUseMarkdown}
@@ -148,6 +183,25 @@
     animation: blink 1s step-end infinite;
   }
 
+  .reasoning-content {
+    @apply rounded-xl p-3 opacity-90;
+    background-color: var(--color-a2);
+  }
+
+  .reasoning-button > span {
+    color: var(--color-a11);
+  }
+
+  .reasoning-button.thinking > span {
+    background: linear-gradient(to right, var(--color-a3), var(--color-a12), var(--color-a3)) 0 0 no-repeat;
+    background-size: 200%;
+    color: var(--color-a6);
+    background-clip: text;
+    animation-name: shine;
+    animation-duration: 1s;
+    animation-iteration-count: infinite;
+  }
+
   @keyframes blink {
     0%,
     100% {
@@ -155,6 +209,15 @@
     }
     50% {
       opacity: 0;
+    }
+  }
+
+  @keyframes shine {
+    0% {
+      background-position: -200%;
+    }
+    100% {
+      background-position: 200%;
     }
   }
 </style>

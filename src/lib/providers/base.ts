@@ -33,6 +33,7 @@ export interface StreamMetrics {
   promptTokens?: number;
   completionTokens?: number;
   totalTokens?: number;
+  thinkingTime?: number; // time between stream start and first content token (ms)
 }
 
 export const toReadableStream = (gen: AsyncGenerator<string, void, unknown>): ReadableStream<string> => {

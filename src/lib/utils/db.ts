@@ -318,10 +318,11 @@ export async function getChatFromThread(threadId: string): Promise<Chat | null> 
     title: thread.title,
     createdAt: thread.createdAt,
     updatedAt: thread.updatedAt,
-    messages: messages.map(({ id, role, content, provider, providerInstanceId, model, usage, metrics }) => ({
+    messages: messages.map(({ id, role, content, reasoning, provider, providerInstanceId, model, usage, metrics }) => ({
       id,
       role,
       content,
+      reasoning,
       provider,
       providerInstanceId,
       model,

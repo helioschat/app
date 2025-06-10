@@ -50,11 +50,20 @@ export class OpenAICompatibleProvider implements LanguageModel {
         });
 
         for await (const chunk of response) {
-          // Count each chunk as a token (OpenAI streams by token)
-          if (chunk.choices[0]?.delta?.content) {
-            this.tokenCount++;
+          const delta = chunk.choices[0]?.delta as {
+            content?: string;
+            reasoning?: string | null;
+          };
+
+          // Handle reasoning if provided by model (e.g., :thinking models)
+          if (delta?.reasoning) {
+            yield `[REASONING]${delta.reasoning}`;
           }
-          yield chunk.choices[0]?.delta?.content || '';
+
+          if (delta?.content) {
+            this.tokenCount++;
+            yield delta.content as string;
+          }
         }
       } catch (error) {
         // Handle OpenAI API errors

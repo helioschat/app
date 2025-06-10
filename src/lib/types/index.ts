@@ -2,6 +2,8 @@ export type Message = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  // Optional reasoning/thinking content emitted by some models
+  reasoning?: string;
   providerInstanceId?: string;
   model?: string;
   usage?: {
@@ -14,6 +16,7 @@ export type Message = {
     endTime?: number;
     totalTime?: number;
     tokensPerSecond?: number;
+    thinkingTime?: number;
   };
 };
 
