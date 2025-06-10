@@ -20,8 +20,9 @@ export interface ModelInfo {
   id: string;
   name: string;
   description?: string;
+  createdAt?: number;
   contextWindow?: number;
-  maxTokens?: number;
+  huggingfaceId?: string;
 }
 
 export interface StreamMetrics {

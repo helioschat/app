@@ -4,6 +4,13 @@ import type { Message, ProviderConfig } from '../types';
 import type { LanguageModel, ModelInfo } from './base';
 import { toReadableStream } from './base';
 
+interface OpenAIModel extends OpenAI.Models.Model {
+  name?: string;
+  description?: string;
+  context_length?: number;
+  huggingface_id?: string;
+}
+
 interface OpenAIErrorDetails {
   message: string;
   type: string;
@@ -134,10 +141,13 @@ export class OpenAICompatibleProvider implements LanguageModel {
     try {
       const response = await this.client.models.list();
 
-      return response.data.map((model) => ({
+      return response.data.map((model: OpenAIModel) => ({
         id: model.id,
-        name: model.id,
-        description: `OpenAI-compatible model ${model.id}`,
+        name: model.name || model.id,
+        description: model.description || `OpenAI-compatible model ${model.id}`,
+        contextWindow: model.context_length,
+        huggingfaceId: model.huggingface_id,
+        createdAt: model.created,
       }));
     } catch (error) {
       // Handle API errors for model listing
