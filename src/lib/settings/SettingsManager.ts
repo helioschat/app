@@ -17,17 +17,15 @@ export class SettingsManager {
     return [];
   }
 
-  private static readonly defaultAdvancedSettings: Record<string, AdvancedSettings> = {
-    default: {
-      systemPrompt: 'You are a helpful AI assistant.',
-    },
+  private static readonly defaultAdvancedSettings: AdvancedSettings = {
+    systemPrompt: 'You are a helpful AI assistant.',
   };
 
   // Stores
   public readonly providerInstances = writable<ProviderInstance[]>(this.getInitialProviderInstances());
   public readonly selectedModel = writable<SelectedModel | null>(this.getInitialSelectedModel());
-  public readonly advancedSettings = writable<Record<string, AdvancedSettings>>(this.getInitialAdvancedSettings());
-  public readonly enabledModels = writable<Record<string, string[]>>({});
+  public readonly advancedSettings = writable<AdvancedSettings>(this.getInitialAdvancedSettings());
+  public readonly enabledModels = writable<Record<string, string[]>>(this.getInitialEnabledModels());
 
   constructor() {
     // Initialize persistence
@@ -75,7 +73,7 @@ export class SettingsManager {
   }
 
   // Initialize advanced settings from localStorage or defaults
-  private getInitialAdvancedSettings(): Record<string, AdvancedSettings> {
+  private getInitialAdvancedSettings(): AdvancedSettings {
     if (browser) {
       const storedValue = localStorage.getItem('advancedSettings');
       if (storedValue) {
@@ -88,6 +86,10 @@ export class SettingsManager {
       }
     }
     return SettingsManager.defaultAdvancedSettings;
+  }
+
+  private getInitialEnabledModels(): Record<string, string[]> {
+    return {};
   }
 
   public addProviderInstance(name: string, providerType: ProviderType, config: ProviderConfig): string {
@@ -144,14 +146,11 @@ export class SettingsManager {
   }
 
   /**
-   * Get advanced settings for a provider
-   * @param providerInstanceId Provider instance ID
-   * @returns Advanced settings for the provider or default settings
+   * Get advanced settings (global)
+   * @returns Global advanced settings
    */
-  public getAdvancedSettingsForProvider(providerInstanceId: string): AdvancedSettings {
-    const settings = get(this.advancedSettings);
-    // This could be more granular in the future
-    return settings[providerInstanceId] || settings.default || SettingsManager.defaultAdvancedSettings.default;
+  public getAdvancedSettings(): AdvancedSettings {
+    return get(this.advancedSettings);
   }
 
   /**

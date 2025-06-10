@@ -1,7 +1,7 @@
 import type { StreamMetrics } from '$lib/providers/base';
 import { getLanguageModel } from '$lib/providers/registry';
 import { chats } from '$lib/stores/chat';
-import { providerInstances } from '$lib/stores/settings';
+import { advancedSettings, providerInstances } from '$lib/stores/settings';
 import type { Chat, Message, ProviderInstance } from '$lib/types';
 import { get } from 'svelte/store';
 import { v7 as uuidv7 } from 'uuid';
@@ -86,6 +86,18 @@ export class StreamController {
     // Create the model with the correct provider type from the instance
     const model = getLanguageModel(providerInstance.providerType, effectiveConfig);
 
+    // Get system prompt from advanced settings
+    const systemPrompt = get(advancedSettings).systemPrompt;
+
+    // Prepare messages with system prompt if available
+    const messagesForProvider = [];
+    if (systemPrompt) {
+      messagesForProvider.push({
+        role: 'system',
+        content: systemPrompt,
+      });
+    }
+
     if (isExistingUserMessage) {
       // Just add an assistant message to respond to the existing user message
       assistantMessage = {
@@ -96,6 +108,7 @@ export class StreamController {
         model: modelId,
       };
       updatedMessages = [...activeChat.messages, assistantMessage];
+      messagesForProvider.push(...activeChat.messages);
     } else {
       // Standard case: add both user and assistant messages
       const userMessage: Message = {
@@ -113,6 +126,7 @@ export class StreamController {
       };
 
       updatedMessages = [...activeChat.messages, userMessage, assistantMessage];
+      messagesForProvider.push(...activeChat.messages, userMessage);
     }
 
     // Update the chat with provider and model information if not already set
@@ -178,7 +192,7 @@ export class StreamController {
         // Continue without token counting
       }
 
-      const stream = model.stream(updatedMessages);
+      const stream = model.stream(messagesForProvider as Message[]);
       this.currentReader = stream.getReader();
 
       // Start the stream and record state with context
@@ -388,6 +402,19 @@ export class StreamController {
         totalTokens: activeChat.messages[messageIndex].usage?.totalTokens || 0,
       };
 
+      // Get system prompt from advanced settings
+      const systemPrompt = get(advancedSettings).systemPrompt;
+
+      // Prepare messages with system prompt if available
+      const messagesForProvider = [];
+      if (systemPrompt) {
+        messagesForProvider.push({
+          role: 'system',
+          content: systemPrompt,
+        });
+      }
+      messagesForProvider.push(...contextMessages);
+
       // Create a minimal context with just two messages for continuation
       const minimalContext: StreamContextMessage[] = [
         // First message is the user's instruction to continue
@@ -428,7 +455,7 @@ export class StreamController {
       }
 
       // Stream using the minimal context approach
-      const stream = model.stream(minimalContext as Message[]);
+      const stream = model.stream(messagesForProvider as Message[]);
       const reader = stream.getReader();
 
       // Start the stream and record state with the original context messages

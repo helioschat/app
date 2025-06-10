@@ -1,14 +1,11 @@
 <script lang="ts">
-  import { selectedModel, advancedSettings } from '$lib/settings/SettingsManager';
+  import { advancedSettings } from '$lib/settings/SettingsManager';
 
-  // TODO: replace default string
-  $: currentSettings = $advancedSettings[$selectedModel?.providerInstanceId || 'default'] || $advancedSettings.default;
+  $: currentSettings = $advancedSettings;
 
   function updateSettings() {
     advancedSettings.update((settings) => {
-      // TODO: replace default string
-      settings[$selectedModel?.providerInstanceId || 'default'] = { ...currentSettings };
-      return settings;
+      return { ...settings };
     });
   }
 </script>
