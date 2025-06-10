@@ -38,14 +38,14 @@
         disabled={isLoading}
         class="min-h-12 flex-1 !pb-14" />
       {#if isLoading}
-        <button type="button" on:click={handleStop} class="button button-main h-12 w-12">
+        <button type="button" on:click={handleStop} class="button button-main button-large !rounded-full">
           <Square size={20}></Square>
         </button>
       {:else}
         <button
           type="submit"
           disabled={!userInput.trim()}
-          class="button button-main h-12 w-12"
+          class="button button-main button-large !rounded-full"
           class:opacity-50={!userInput.trim()}>
           <Send size={20}></Send>
         </button>
