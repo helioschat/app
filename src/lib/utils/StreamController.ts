@@ -40,7 +40,7 @@ export class StreamController {
       try {
         await this.currentReader.cancel();
         this.currentReader = null;
-        endStream();
+        endStream(this.chatId);
         this.isLoading = false;
         this.currentlyStreamingMessageId = '';
         this.showResumeButton = false;
@@ -195,7 +195,7 @@ export class StreamController {
         accumulatedContent += value;
 
         // Save the partial content to stream state for recovery
-        updateStreamContent(accumulatedContent);
+        updateStreamContent(this.chatId, accumulatedContent);
 
         // Update the assistant message content
         chats.update((allChats) => {
@@ -224,7 +224,7 @@ export class StreamController {
 
       // Stream completed successfully
       this.currentReader = null;
-      endStream();
+      endStream(this.chatId);
       this.showResumeButton = false;
       this.currentlyStreamingMessageId = '';
 
@@ -314,7 +314,7 @@ export class StreamController {
               this.showResumeButton = true;
             } else {
               // If no partial content, clean up stream state
-              endStream();
+              endStream(this.chatId);
               this.currentlyStreamingMessageId = '';
             }
 
@@ -448,7 +448,7 @@ export class StreamController {
         accumulatedContent = currentContent + newContent;
 
         // Save the partial content to stream state for recovery
-        updateStreamContent(accumulatedContent);
+        updateStreamContent(this.chatId, accumulatedContent);
 
         // Update the message content in the store
         chats.update((allChats) => {
@@ -477,7 +477,7 @@ export class StreamController {
       }
 
       // Stream completed successfully
-      endStream();
+      endStream(this.chatId);
       this.showResumeButton = false;
       this.currentlyStreamingMessageId = '';
 
@@ -563,7 +563,7 @@ export class StreamController {
             });
 
             // Clean up stream state
-            endStream();
+            endStream(this.chatId);
             this.currentlyStreamingMessageId = '';
 
             return {
