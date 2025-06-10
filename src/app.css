@@ -393,3 +393,12 @@ select {
     background-color: #b91c1c;
   }
 }
+
+/* Accessibility */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
