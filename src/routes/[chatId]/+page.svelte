@@ -2,9 +2,9 @@
   import { chats, loadChat } from '$lib/stores/chat';
   import { selectedModel } from '$lib/settings/SettingsManager';
   import type { Message } from '$lib/types';
-  import { onMount } from 'svelte';
-  import { page } from '$app/state';
-  import { streamStates, getStreamState, type StreamContextMessage } from '$lib/utils/streamState';
+  import { page } from '$app/stores';
+  import { tick, onMount, onDestroy } from 'svelte';
+  import { streamStates, getStreamState, endStream } from '$lib/utils/streamState';
   import { browser } from '$app/environment';
   import { StreamController } from '$lib/utils/StreamController';
   import ChatHeader from '$lib/components/chat/ChatHeader.svelte';
@@ -12,257 +12,199 @@
   import ChatInput from '$lib/components/chat/ChatInput.svelte';
   import Spinner from '$lib/components/common/Spinner.svelte';
 
-  let activeChat = $derived($chats.find((chat) => chat.id === page.params.chatId));
-  const chatId = $derived(page.params.chatId);
+  $: chatId = $page.params.chatId;
+  $: activeChat = $chats.find((chat) => chat.id === chatId);
+  $: currentStreamState = $streamStates[chatId];
+  $: isLoading = currentStreamState?.isStreaming ?? false;
+  $: currentlyStreamingMessageId = currentStreamState?.messageId ?? '';
 
-  // Derive state from the streamStates store for the current chat
-  const currentStreamState = $derived($streamStates[chatId]);
+  let userInput = '';
+  let showResumeButton = false;
+  let initialMessageProcessed = false;
 
-  let userInput = $state('');
-  let isLoading = $derived(currentStreamState?.isStreaming || false);
-  let currentlyStreamingMessageId = $derived(currentStreamState?.messageId || '');
-  let showResumeButton = $state(false);
-  let initialMessageProcessed = $state(false);
+  const streamControllers: Record<string, StreamController> = {};
 
-  let streamController = $state<StreamController | null>(null);
+  /**
+   * Retrieves or creates a StreamController for a given chat ID.
+   * This ensures that each chat has its own controller, allowing for concurrent streams.
+   */
+  function getOrCreateStreamController(id: string): StreamController | null {
+    const chat = $chats.find((c) => c.id === id);
+    if (!chat) return null;
 
-  // When the selected provider changes, we need to reset the stream controller
-  // so that a new one is created with the correct provider instance.
-  $effect(() => {
-    // This effect should react to changes in the selected provider instance
-    // eslint-disable-next-line no-unused-expressions
-    $selectedModel;
-
-    if (streamController) {
-      streamController = null;
-    }
-  });
-
-  function getControllerForCurrentChat(): StreamController | null {
-    if (!activeChat) return null;
-
-    // First, try to use the provider ID associated with the chat
-    // If not available, fall back to the globally selected provider
-    const providerId = activeChat.providerInstanceId || $selectedModel?.providerInstanceId;
-
-    if (!providerId) {
-      console.error('No provider configured for this chat and no fallback is selected.');
+    const providerInstanceId = chat.providerInstanceId || $selectedModel?.providerInstanceId;
+    if (!providerInstanceId) {
+      console.error('No provider instance configured for this chat and no global model selected.');
       return null;
     }
 
-    // Create a new StreamController with the chat ID and correct provider ID
-    return new StreamController(activeChat.id, providerId);
+    if (streamControllers[id]) {
+      const controller = streamControllers[id];
+      controller.updateProviderInstance(providerInstanceId);
+      return controller;
+    }
+
+    const newController = new StreamController(id, providerInstanceId);
+    streamControllers[id] = newController;
+    return newController;
   }
 
-  // Check for initial messages that need a response
-  $effect(() => {
-    if (
-      activeChat &&
-      !isLoading &&
-      !initialMessageProcessed &&
-      activeChat.messages.length === 1 &&
-      activeChat.messages[0].role === 'user'
-    ) {
-      // We have a chat with only an initial user message, trigger the AI response
-      initialMessageProcessed = true;
+  /**
+   * Handles the submission of a new message from the user.
+   */
+  async function handleSubmit() {
+    const messageContent = userInput;
+    if (!messageContent.trim() || !activeChat || isLoading || !$selectedModel) return;
 
-      // Hack: Use setTimeout to ensure the UI is ready
-      setTimeout(() => {
-        handleInitialMessage(activeChat.messages[0].content);
-      }, 100);
+    const controller = getOrCreateStreamController(chatId);
+    if (!controller) return;
+
+    await controller.handleSubmit(messageContent, activeChat, $selectedModel.modelId);
+    userInput = ''; // Clear input after submission
+  }
+
+  /**
+   * Handles the "Stop" button action to cancel an in-progress stream.
+   */
+  async function handleStop() {
+    const controller = getOrCreateStreamController(chatId);
+    if (controller) {
+      await controller.cancelStream();
+    } else {
+      // If no controller exists but the state is stuck, force cleanup.
+      endStream(chatId);
     }
-  });
+  }
 
-  // Update the onMount section to use loadChat and handle interrupted streams
-  onMount(() => {
-    const loadChatData = async () => {
-      // Try to load the chat from our store or database
-      const chat = await loadChat(chatId);
-
-      // After the chat is loaded, check for any streaming messages to resume
-      if (chat) {
-        const currentState = getStreamState(chatId);
-
-        // If there's a stream in progress for this thread
-        if (currentState && currentState.isStreaming) {
-          // Get the content that was already generated
-          const partialContent = currentState.partialContent || '';
-
-          // Get the message that was being streamed
-          const messageIndex = chat.messages.findIndex((m: Message) => m.id === currentState.messageId);
-
-          // If we found the message and it's from the assistant
-          if (messageIndex >= 0 && chat.messages[messageIndex].role === 'assistant') {
-            // Check if we have partial content that was saved
-            if (partialContent && partialContent.length > 0) {
-              // Update the message with the partial content that was saved
-              chats.update((allChats) => {
-                return allChats.map((c) => {
-                  if (c.id === chatId) {
-                    const updatedMessages = [...c.messages];
-                    updatedMessages[messageIndex] = {
-                      ...updatedMessages[messageIndex],
-                      content: partialContent
-                    };
-                    return { ...c, messages: updatedMessages };
-                  }
-                  return c;
-                });
-              });
-
-              // Show resume button
-              showResumeButton = true;
-            }
-          }
-        }
-      }
-    };
-
-    if (browser) {
-      loadChatData();
-    }
-  });
-
-  // Handler for initial messages
-  async function handleInitialMessage(initialMessage: string) {
+  /**
+   * Handles the "Regenerate" button action for an assistant message.
+   */
+  async function handleRegenerate(messageToRegenerate: Message) {
     if (!activeChat || isLoading || !$selectedModel) return;
-    const controller = getControllerForCurrentChat();
-    if (!controller) return;
-    streamController = controller;
 
-    try {
-      await streamController.handleSubmit(initialMessage, activeChat, $selectedModel.modelId);
-    } catch (error) {
-      console.error('Error in handleInitialMessage:', error);
-    } finally {
-      streamController = null;
+    const messageIndex = activeChat.messages.findIndex((m) => m.id === messageToRegenerate.id);
+    if (messageIndex < 1 || activeChat.messages[messageIndex].role !== 'assistant') {
+      console.error('Cannot regenerate: not a valid assistant message.');
+      return;
     }
+
+    const previousMessage = activeChat.messages[messageIndex - 1];
+    if (previousMessage.role !== 'user') {
+      console.error('Cannot regenerate: previous message was not from the user.');
+      return;
+    }
+
+    const originalUserInput = previousMessage.content;
+
+    // Truncate chat history to the point *before* the user message we are regenerating from.
+    const truncatedMessages = activeChat.messages.slice(0, messageIndex - 1);
+
+    chats.update((allChats) => {
+      const chatIndex = allChats.findIndex((c) => c.id === chatId);
+      if (chatIndex !== -1) {
+        allChats[chatIndex] = {
+          ...allChats[chatIndex],
+          messages: truncatedMessages,
+          updatedAt: new Date(),
+        };
+      }
+      return allChats;
+    });
+
+    // Wait for Svelte to process the store update.
+    await tick();
+
+    // Resubmit the original user prompt to the now-truncated chat.
+    const controller = getOrCreateStreamController(chatId);
+    if (!controller) return;
+
+    const updatedChat = $chats.find((c) => c.id === chatId);
+    if (!updatedChat) return;
+
+    await controller.handleSubmit(originalUserInput, updatedChat, $selectedModel.modelId);
   }
 
-  // Resume a streaming message that was interrupted
+  /**
+   * Resumes a stream that was interrupted (e.g., by a page refresh).
+   */
   async function handleResumeGeneration() {
-    if (!activeChat) return;
-    const controller = getControllerForCurrentChat();
+    if (!activeChat || !$selectedModel) return;
+
+    const controller = getOrCreateStreamController(chatId);
     if (!controller) return;
-    streamController = controller;
 
     const currentState = getStreamState(chatId);
-    if (!currentState || !currentState.isStreaming) {
-      // No active stream for this chat, or stream state is out of sync
+    if (!currentState?.isStreaming) {
       showResumeButton = false;
       return;
     }
 
-    const messageIndex = activeChat.messages.findIndex((m) => m.id === currentState.messageId);
-    if (messageIndex < 0) return;
+    showResumeButton = false;
+    let contextMessages = currentState.contextMessages;
 
-    if (!$selectedModel) {
-      console.error('Cannot resume generation without a selected model.');
-      return;
-    }
-
-    try {
-      // Get the context messages from the state or rebuild them
-      let contextMessages: StreamContextMessage[] = currentState.contextMessages || [];
-      if (!contextMessages || contextMessages.length === 0) {
-        // Rebuild context from chat history if not in stream state
+    if (!contextMessages || contextMessages.length === 0) {
+      const messageIndex = activeChat.messages.findIndex((m) => m.id === currentState.messageId);
+      if (messageIndex > 0) {
         contextMessages = activeChat.messages.slice(0, messageIndex).map((m) => ({
           id: m.id,
           role: m.role,
-          content: m.content
+          content: m.content,
         }));
       }
-
-      await streamController.resumeStream(
-        contextMessages,
-        currentState.messageId,
-        activeChat,
-        $selectedModel.modelId
-      );
-    } catch (error) {
-      console.error('Error in handleResumeGeneration:', error);
-    } finally {
-      streamController = null;
     }
+
+    if (!contextMessages || contextMessages.length === 0) {
+      console.error('Could not rebuild context for resume.');
+      endStream(chatId); // Clean up stuck state
+      return;
+    }
+
+    await controller.resumeStream(contextMessages, currentState.messageId, activeChat, $selectedModel.modelId);
   }
 
-  // Handle stopping the current generation
-  async function handleStop() {
-    if (!streamController) {
-      // As a fallback, create a controller to ensure stop can be called
-      const controller = getControllerForCurrentChat();
-      if (!controller) return;
-      await controller.cancelStream();
-    } else {
-      await streamController.cancelStream();
-    }
-    streamController = null;
-  }
-
-  // Handle regenerating a message
-  async function handleRegenerate(message: Message) {
-    if (!activeChat || isLoading || !$selectedModel) return;
-    const controller = getControllerForCurrentChat();
-    if (!controller) return;
-    streamController = controller;
-
-    try {
-      // Find the message index
-      const messageIndex = activeChat.messages.findIndex((m) => m.id === message.id);
-      if (messageIndex < 0) return;
-
-      // Get the previous user message
-      const previousUserMessage = activeChat.messages[messageIndex - 1];
-      if (!previousUserMessage || previousUserMessage.role !== 'user') {
-        console.error('No previous user message found for regeneration');
-        return;
+  onMount(() => {
+    async function setupChat() {
+      const chat = await loadChat(chatId);
+      if (chat) {
+        const currentState = getStreamState(chatId);
+        if (currentState?.isStreaming && currentState.partialContent) {
+          showResumeButton = true;
+        } else if (currentState?.isStreaming) {
+          // This stream is stuck, clean it up.
+          endStream(chatId);
+        }
       }
-
-      // Remove all messages from the one we're regenerating onwards
-      chats.update((allChats) => {
-        return allChats.map((c) => {
-          if (c.id === activeChat?.id) {
-            return {
-              ...c,
-              messages: c.messages.slice(0, messageIndex - 1),
-              updatedAt: new Date()
-            };
-          }
-          return c;
-        });
-      });
-
-      // Use the StreamController to handle the regeneration
-      await streamController.handleSubmit(
-        previousUserMessage.content,
-        activeChat,
-        $selectedModel.modelId
-      );
-    } catch (error) {
-      console.error('Error in handleRegenerate:', error);
-    } finally {
-      streamController = null;
     }
-  }
 
-  // Update handleSubmit to use StreamController
-  async function handleSubmit(e?: Event) {
-    if (e) e.preventDefault();
-    if (!activeChat || !userInput.trim() || isLoading || !$selectedModel) return;
-    const controller = getControllerForCurrentChat();
-    if (!controller) return;
-    streamController = controller;
-
-    const inputValue = userInput;
-    userInput = '';
-
-    try {
-      await streamController.handleSubmit(inputValue, activeChat, $selectedModel.modelId);
-    } catch (error) {
-      console.error('Error in handleSubmit:', error);
-    } finally {
-      streamController = null;
+    if (browser) {
+      setupChat();
     }
+  });
+
+  onDestroy(() => {
+    // Clean up the controller for this chat if it's not streaming, to save memory.
+    const controller = streamControllers[chatId];
+    if (controller && !$streamStates[chatId]?.isStreaming) {
+      delete streamControllers[chatId];
+    }
+  });
+
+  $: if (
+    browser &&
+    activeChat &&
+    !isLoading &&
+    !initialMessageProcessed &&
+    activeChat.messages.length === 1 &&
+    activeChat.messages[0].role === 'user'
+  ) {
+    initialMessageProcessed = true;
+    // Hack: Use a timeout to ensure other reactive updates have settled before starting the stream.
+    setTimeout(() => {
+      const controller = getOrCreateStreamController(chatId);
+      if (controller && $selectedModel) {
+        controller.handleSubmit(activeChat.messages[0].content, activeChat, $selectedModel.modelId);
+      }
+    }, 100);
   }
 </script>
 
@@ -278,8 +220,8 @@
         {isLoading}
         {showResumeButton}
         {currentlyStreamingMessageId}
-        {handleResumeGeneration}
-        {handleRegenerate}></ChatMessages>
+        {handleRegenerate}
+        {handleResumeGeneration}></ChatMessages>
     </div>
 
     <div class="input-component absolute bottom-0 left-1/2 w-full -translate-x-1/2">
