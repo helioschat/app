@@ -215,7 +215,6 @@ export class StreamController {
               return {
                 ...chat,
                 messages: updatedChatMessages,
-                updatedAt: new Date(),
               };
             }
             return chat;
@@ -470,7 +469,6 @@ export class StreamController {
               return {
                 ...chat,
                 messages: updatedMessages,
-                updatedAt: new Date(),
               };
             }
             return chat;
