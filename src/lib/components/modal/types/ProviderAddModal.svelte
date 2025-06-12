@@ -67,7 +67,7 @@
 </Modal>
 
 <style lang="postcss">
-  @reference "tailwind.css";
+  @reference "tailwindcss";
 
   .edit-section {
     @apply flex flex-col gap-0.5;
