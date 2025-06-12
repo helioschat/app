@@ -14,26 +14,24 @@ export class StreamingController {
   private isLoading: boolean = false;
   private currentlyStreamingMessageId: string = '';
   private chatId: string;
-  private providerInstanceId: string;
   private streamMetrics: StreamMetrics = { startTime: 0 };
   private currentReader: ReadableStreamDefaultReader<string> | null = null;
 
-  constructor(chatId: string, providerInstanceId: string) {
+  constructor(chatId: string) {
     this.chatId = chatId;
-    this.providerInstanceId = providerInstanceId;
   }
 
-  private getProviderInstance(): ProviderInstance {
+  private getProviderInstance(providerInstanceId: string): ProviderInstance {
     const instances = get(providerInstances) as ProviderInstance[];
-    const instance = instances.find((inst: ProviderInstance) => inst.id === this.providerInstanceId);
+    const instance = instances.find((inst: ProviderInstance) => inst.id === providerInstanceId);
     if (!instance) {
-      throw new Error(`Provider instance not found: ${this.providerInstanceId}`);
+      throw new Error(`Provider instance not found: ${providerInstanceId}`);
     }
     return instance;
   }
 
-  private buildModel(modelId: string) {
-    const providerInstance = this.getProviderInstance();
+  private buildModel(providerInstanceId: string, modelId: string) {
+    const providerInstance = this.getProviderInstance(providerInstanceId);
     const effectiveConfig = { ...providerInstance.config, model: modelId };
     return getLanguageModel(providerInstance.providerType, effectiveConfig);
   }
@@ -104,7 +102,12 @@ export class StreamingController {
     }
   }
 
-  async handleSubmit(userInput: string, activeChat: Chat, modelId: string): Promise<StreamControllerState> {
+  async handleSubmit(
+    userInput: string,
+    activeChat: Chat,
+    providerInstanceId: string,
+    modelId: string,
+  ): Promise<StreamControllerState> {
     if (!userInput.trim() || !activeChat || this.isLoading) {
       return this.getState();
     }
@@ -119,7 +122,7 @@ export class StreamingController {
     let updatedMessages;
     let assistantMessage: Message;
 
-    const model = this.buildModel(modelId);
+    const model = this.buildModel(providerInstanceId, modelId);
     const systemPrompt = get(advancedSettings).systemPrompt;
 
     const messagesForProvider = [];
@@ -135,7 +138,7 @@ export class StreamingController {
         id: uuidv7(),
         role: 'assistant',
         content: '',
-        providerInstanceId: this.providerInstanceId,
+        providerInstanceId: providerInstanceId,
         model: modelId,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -155,7 +158,7 @@ export class StreamingController {
         id: uuidv7(),
         role: 'assistant',
         content: '',
-        providerInstanceId: this.providerInstanceId,
+        providerInstanceId: providerInstanceId,
         model: modelId,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -167,7 +170,7 @@ export class StreamingController {
 
     const updatedChat = {
       ...activeChat,
-      providerInstanceId: activeChat.providerInstanceId || this.providerInstanceId,
+      providerInstanceId: activeChat.providerInstanceId || providerInstanceId,
       model: modelId,
       messages: updatedMessages,
       updatedAt: new Date(),
@@ -286,9 +289,5 @@ export class StreamingController {
       isLoading: this.isLoading,
       currentlyStreamingMessageId: this.currentlyStreamingMessageId,
     };
-  }
-
-  updateProviderInstance(providerInstanceId: string): void {
-    this.providerInstanceId = providerInstanceId;
   }
 }

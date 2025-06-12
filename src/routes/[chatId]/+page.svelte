@@ -28,22 +28,11 @@
    * This ensures that each chat has its own controller, allowing for concurrent streams.
    */
   function getOrCreateStreamController(id: string): StreamingController | null {
-    const chat = $chats.find((c) => c.id === id);
-    if (!chat) return null;
-
-    const providerInstanceId = chat.providerInstanceId || $selectedModel?.providerInstanceId;
-    if (!providerInstanceId) {
-      console.error('No provider instance configured for this chat and no global model selected.');
-      return null;
-    }
-
     if (streamControllers[id]) {
-      const controller = streamControllers[id];
-      controller.updateProviderInstance(providerInstanceId);
-      return controller;
+      return streamControllers[id];
     }
 
-    const newController = new StreamingController(id, providerInstanceId);
+    const newController = new StreamingController(id);
     streamControllers[id] = newController;
     return newController;
   }
@@ -59,7 +48,7 @@
     if (!controller) return;
 
     userInput = ''; // Clear input
-    controller.handleSubmit(messageContent, activeChat, $selectedModel.modelId);
+    controller.handleSubmit(messageContent, activeChat, $selectedModel.providerInstanceId, $selectedModel.modelId);
   }
 
   /**
@@ -120,7 +109,12 @@
     const updatedChat = $chats.find((c) => c.id === chatId);
     if (!updatedChat) return;
 
-    await controller.handleSubmit(originalUserInput, updatedChat, $selectedModel.modelId);
+    await controller.handleSubmit(
+      originalUserInput,
+      updatedChat,
+      $selectedModel.providerInstanceId,
+      $selectedModel.modelId,
+    );
   }
 
   onMount(() => {
@@ -166,7 +160,12 @@
     setTimeout(() => {
       const controller = getOrCreateStreamController(chatId);
       if (controller && $selectedModel) {
-        controller.handleSubmit(activeChat.messages[0].content, activeChat, $selectedModel.modelId);
+        controller.handleSubmit(
+          activeChat.messages[0].content,
+          activeChat,
+          $selectedModel.providerInstanceId,
+          $selectedModel.modelId,
+        );
       }
     }, 100);
   }
