@@ -25,6 +25,12 @@
     showModelSelector = true;
   }
 
+  async function submit(e: Event) {
+    e.preventDefault();
+    await handleSubmit(e);
+    resizeTextarea({ target: userInputComponent } as unknown as Event);
+  }
+
   function resizeTextarea(e: Event) {
     const target = e.target as HTMLTextAreaElement;
     target.style.height = 'auto';
@@ -33,18 +39,12 @@
 
   function submitTextarea(e: KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
+      submit(e);
     }
   }
 </script>
 
-<form
-  on:submit={(e) => {
-    e.preventDefault();
-    handleSubmit(e);
-  }}
-  class="mx-auto mb-8 w-full max-w-4xl px-4">
+<form on:submit={(e) => submit(e)} class="mx-auto mb-8 w-full max-w-4xl px-4">
   <div class="flex w-full gap-4">
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -60,7 +60,8 @@
           disabled={isLoading}
           class="max-h-52 min-h-6 flex-1 resize-none !rounded-none !p-0 outline-none"
           on:input={resizeTextarea}
-          on:keydown={submitTextarea}></textarea>
+          on:keydown={submitTextarea}
+          on:change={resizeTextarea}></textarea>
       </div>
       <div class="flex h-7 items-center">
         <button

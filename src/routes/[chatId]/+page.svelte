@@ -59,8 +59,8 @@
     const controller = getOrCreateStreamController(chatId);
     if (!controller) return;
 
-    await controller.handleSubmit(messageContent, activeChat, $selectedModel.modelId);
-    userInput = ''; // Clear input after submission
+    userInput = ''; // Clear input
+    controller.handleSubmit(messageContent, activeChat, $selectedModel.modelId);
   }
 
   /**
