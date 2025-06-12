@@ -47,7 +47,6 @@ export interface StreamState {
 
 export interface StreamControllerState {
   isLoading: boolean;
-  showResumeButton: boolean;
   currentlyStreamingMessageId: string;
 }
 

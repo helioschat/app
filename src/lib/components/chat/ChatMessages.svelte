@@ -1,17 +1,13 @@
 <script lang="ts">
   import type { Chat, Message } from '$lib/types';
   import MessageItem from '$lib/components/chat/MessageItem.svelte';
-  import ResumeButton from '$lib/components/chat/ResumeButton.svelte';
   import ChatNotice from '$lib/components/chat/ChatNotice.svelte';
   import { chatError } from '$lib/stores/error';
   import { scrollState } from '$lib/stores/scroll';
   import { onMount } from 'svelte';
 
   export let chat: Chat;
-  export let isLoading: boolean = false;
-  export let showResumeButton: boolean = false;
   export let currentlyStreamingMessageId: string = '';
-  export let handleResumeGeneration: () => Promise<void>;
   export let handleRegenerate: (message: Message) => Promise<void>;
 
   let messagesContainer: HTMLDivElement;
@@ -79,8 +75,4 @@
         on:regenerate={({ detail }) => handleRegenerate(detail.message)}></MessageItem>
     {/if}
   {/each}
-
-  {#if showResumeButton}
-    <ResumeButton {isLoading} {handleResumeGeneration}></ResumeButton>
-  {/if}
 </div>

@@ -12,7 +12,6 @@ import type { StreamContextMessage, StreamControllerState, StreamMetrics } from 
 
 export class StreamingController {
   private isLoading: boolean = false;
-  private showResumeButton: boolean = false;
   private currentlyStreamingMessageId: string = '';
   private chatId: string;
   private providerInstanceId: string;
@@ -99,7 +98,6 @@ export class StreamingController {
         endStream(this.chatId);
         this.isLoading = false;
         this.currentlyStreamingMessageId = '';
-        this.showResumeButton = false;
       } catch (error) {
         console.error('Error canceling stream:', error);
       }
@@ -179,7 +177,6 @@ export class StreamingController {
 
     this.isLoading = true;
     this.currentlyStreamingMessageId = assistantMessage.id;
-    this.showResumeButton = false;
 
     const contextMessages: StreamContextMessage[] = updatedMessages.map((m) => ({
       id: m.id,
@@ -235,100 +232,6 @@ export class StreamingController {
     return this.getState();
   }
 
-  async resumeStream(
-    contextMessages: StreamContextMessage[],
-    assistantMessageId: string,
-    activeChat: Chat,
-    modelId: string,
-  ): Promise<StreamControllerState> {
-    if (this.isLoading || !contextMessages?.length) {
-      return this.getState();
-    }
-
-    this.isLoading = true;
-    this.currentlyStreamingMessageId = assistantMessageId;
-
-    try {
-      clearChatError();
-
-      const model = this.buildModel(modelId);
-      const messageIndex = activeChat?.messages.findIndex((m) => m.id === assistantMessageId) ?? -1;
-
-      if (messageIndex < 0) {
-        throw new Error('Message not found for resuming');
-      }
-
-      const currentMessage = activeChat.messages[messageIndex];
-      const accumulatedContent = currentMessage.content || '';
-
-      this.streamMetrics = {
-        startTime: Date.now(),
-        promptTokens: currentMessage.usage?.promptTokens || 0,
-        completionTokens: currentMessage.usage?.completionTokens || 0,
-        totalTokens: currentMessage.usage?.totalTokens || 0,
-      };
-
-      const systemPrompt = get(advancedSettings).systemPrompt;
-      const messagesForProvider = [];
-
-      if (systemPrompt) {
-        messagesForProvider.push({
-          role: 'system',
-          content: systemPrompt,
-        });
-      }
-
-      // Create a continuation prompt
-      const continuationMessage: Message = {
-        id: uuidv7(),
-        role: 'user' as const,
-        content: `You previously wrote the following text. Continue writing exactly where you left off, maintaining the same style, tone, and flow. Make sure there's proper spacing between the last word of the existing text and the first word of your continuation. Do not repeat any content, do not start a new section, do not introduce the topic again, and do not acknowledge this instruction in your response. Just continue writing as if you never stopped:\n\n${accumulatedContent}`,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      messagesForProvider.push(continuationMessage);
-
-      try {
-        const newPromptTokens = await MessageProcessor.estimatePromptTokens([continuationMessage], model);
-        this.streamMetrics.promptTokens = (this.streamMetrics.promptTokens || 0) + newPromptTokens;
-        this.streamMetrics.totalTokens = (this.streamMetrics.totalTokens || 0) + newPromptTokens;
-      } catch (e) {
-        console.error('Error estimating tokens:', e);
-      }
-
-      const stream = model.stream(messagesForProvider as Message[]);
-      const reader = stream.getReader();
-
-      startStream(this.chatId, assistantMessageId, contextMessages);
-
-      const streamProcessor = new StreamProcessor(
-        this.chatId,
-        assistantMessageId,
-        this.updateAssistantMessage.bind(this),
-      );
-
-      const {
-        accumulatedContent: finalContent,
-        accumulatedReasoning,
-        thinkingTime,
-      } = await streamProcessor.processStream(reader, accumulatedContent);
-
-      this.streamMetrics.thinkingTime = thinkingTime;
-      this.finalizeAssistantMessage(assistantMessageId, finalContent, accumulatedReasoning, model);
-    } catch (error) {
-      await this.handleStreamError(
-        error,
-        assistantMessageId,
-        activeChat.messages.find((m) => m.id === assistantMessageId)?.content || '',
-      );
-    } finally {
-      this.isLoading = false;
-    }
-
-    return this.getState();
-  }
-
   private async handleStreamError(error: unknown, assistantMessageId: string, fallbackContent: string) {
     console.error('Stream error:', error);
     this.currentReader = null;
@@ -364,9 +267,7 @@ export class StreamingController {
           return msg;
         });
 
-        if (hasPartialContent) {
-          this.showResumeButton = true;
-        } else {
+        if (!hasPartialContent) {
           endStream(this.chatId);
           this.currentlyStreamingMessageId = '';
         }
@@ -383,7 +284,6 @@ export class StreamingController {
   getState(): StreamControllerState {
     return {
       isLoading: this.isLoading,
-      showResumeButton: this.showResumeButton,
       currentlyStreamingMessageId: this.currentlyStreamingMessageId,
     };
   }

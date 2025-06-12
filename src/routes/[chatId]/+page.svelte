@@ -4,7 +4,7 @@
   import type { Message } from '$lib/types';
   import { page } from '$app/stores';
   import { tick, onMount, onDestroy } from 'svelte';
-  import { streamStates, getStreamState, endStream } from '$lib/streaming';
+  import { streamStates, endStream } from '$lib/streaming';
   import { browser } from '$app/environment';
   import { StreamingController } from '$lib/streaming';
   import ChatHeader from '$lib/components/chat/ChatHeader.svelte';
@@ -19,7 +19,6 @@
   $: currentlyStreamingMessageId = currentStreamState?.messageId ?? '';
 
   let userInput = '';
-  let showResumeButton = false;
   let initialMessageProcessed = false;
 
   const streamControllers: Record<string, StreamingController> = {};
@@ -124,54 +123,12 @@
     await controller.handleSubmit(originalUserInput, updatedChat, $selectedModel.modelId);
   }
 
-  /**
-   * Resumes a stream that was interrupted (e.g., by a page refresh).
-   */
-  async function handleResumeGeneration() {
-    if (!activeChat || !$selectedModel) return;
-
-    const controller = getOrCreateStreamController(chatId);
-    if (!controller) return;
-
-    const currentState = getStreamState(chatId);
-    if (!currentState?.isStreaming) {
-      showResumeButton = false;
-      return;
-    }
-
-    showResumeButton = false;
-    let contextMessages = currentState.contextMessages;
-
-    if (!contextMessages || contextMessages.length === 0) {
-      const messageIndex = activeChat.messages.findIndex((m) => m.id === currentState.messageId);
-      if (messageIndex > 0) {
-        contextMessages = activeChat.messages.slice(0, messageIndex).map((m) => ({
-          id: m.id,
-          role: m.role,
-          content: m.content,
-          createdAt: m.createdAt,
-          updatedAt: m.updatedAt,
-        }));
-      }
-    }
-
-    if (!contextMessages || contextMessages.length === 0) {
-      console.error('Could not rebuild context for resume.');
-      endStream(chatId); // Clean up stuck state
-      return;
-    }
-
-    await controller.resumeStream(contextMessages, currentState.messageId, activeChat, $selectedModel.modelId);
-  }
-
   onMount(() => {
     async function setupChat() {
       const chat = await loadChat(chatId);
       if (chat) {
-        const currentState = getStreamState(chatId);
-        if (currentState?.isStreaming && currentState.partialContent) {
-          showResumeButton = true;
-        } else if (currentState?.isStreaming) {
+        const currentStreamState = $streamStates[chatId];
+        if (currentStreamState?.isStreaming) {
           // This stream is stuck, clean it up.
           endStream(chatId);
         }
@@ -217,13 +174,7 @@
     </div>
 
     <div class="messages-container -mb-30 h-full overflow-y-auto">
-      <ChatMessages
-        chat={activeChat}
-        {isLoading}
-        {showResumeButton}
-        {currentlyStreamingMessageId}
-        {handleRegenerate}
-        {handleResumeGeneration}></ChatMessages>
+      <ChatMessages chat={activeChat} {currentlyStreamingMessageId} {handleRegenerate}></ChatMessages>
     </div>
 
     <div class="input-container">
