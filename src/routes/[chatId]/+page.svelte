@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { chats, loadChat } from '$lib/stores/chat';
+  import { chats, loadChat, clearTemporaryChats } from '$lib/stores/chat';
   import { selectedModel } from '$lib/settings/SettingsManager';
   import type { Message } from '$lib/types';
   import { page } from '$app/stores';
@@ -145,6 +145,11 @@
     const controller = streamControllers[chatId];
     if (controller && !$streamStates[chatId]?.isStreaming) {
       delete streamControllers[chatId];
+    }
+
+    // Clean up temporary chats when navigating away
+    if (browser) {
+      clearTemporaryChats();
     }
   });
 

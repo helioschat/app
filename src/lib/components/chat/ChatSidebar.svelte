@@ -74,7 +74,7 @@
     <nav
       class="flex flex-1 flex-col gap-y-0.5 overflow-y-auto"
       transition:fade={{ duration: COLLAPSE_ANIMATION_DURATION * 0.75 }}>
-      {#each $chats as chat}
+      {#each $chats.filter((chat) => !chat.temporary) as chat}
         {@const isSelected = chat.id === page.params.chatId}
         {@const isGenerating = $streamStates[chat.id]?.isStreaming ?? false}
         <a

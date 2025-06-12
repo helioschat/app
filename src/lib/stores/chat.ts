@@ -130,9 +130,10 @@ if (browser) {
 
       // Only save the active chat to IndexedDB when it changes
       // This improves performance by not saving all chats every time
+      // Skip temporary chats as they shouldn't be saved
       if (currentActiveChatId) {
         const activeChat = chatList.find((chat) => chat.id === currentActiveChatId);
-        if (activeChat) {
+        if (activeChat && !activeChat.temporary) {
           await saveChatAsThreadAndMessages(activeChat);
         }
       }
@@ -152,9 +153,15 @@ const loadMutex: Record<string, Promise<Chat | null>> = {};
 /**
  * Creates a new chat and returns its ID
  * @param initialMessage Optional initial message to add to the chat
+ * @param temporary Whether this chat should be temporary (not saved to IndexedDB)
  */
-export function createNewChat(initialMessage?: string): string {
+export function createNewChat(initialMessage?: string, temporary?: boolean): string {
   const newChat: Chat = createInitialChat();
+
+  // Mark as temporary if specified
+  if (temporary) {
+    newChat.temporary = true;
+  }
 
   // If an initial message is provided, add it as a user message
   if (initialMessage && initialMessage.trim()) {
@@ -174,8 +181,8 @@ export function createNewChat(initialMessage?: string): string {
   chats.update((allChats) => sortChats([...allChats, newChat]));
   activeChatId.set(newChat.id);
 
-  // Save the new chat to IndexedDB
-  if (browser) {
+  // Only save to IndexedDB if not temporary
+  if (browser && !temporary) {
     saveChatAsThreadAndMessages(newChat);
   }
 
@@ -186,6 +193,16 @@ export function createNewChat(initialMessage?: string): string {
  * Deletes a chat by ID
  */
 export async function deleteChatById(id: string): Promise<void> {
+  // Check if it's a temporary chat before trying to delete from IndexedDB
+  let isTemporary = false;
+  chats.update((allChats) => {
+    const chatToDelete = allChats.find((chat) => chat.id === id);
+    if (chatToDelete) {
+      isTemporary = !!chatToDelete.temporary;
+    }
+    return allChats;
+  });
+
   // Remove from store
   chats.update((allChats) => {
     const filtered = allChats.filter((chat) => chat.id !== id);
@@ -208,8 +225,10 @@ export async function deleteChatById(id: string): Promise<void> {
     return filtered;
   });
 
-  // Remove from IndexedDB
-  await deleteThread(id);
+  // Only remove from IndexedDB if it's not a temporary chat
+  if (!isTemporary) {
+    await deleteThread(id);
+  }
 }
 
 /**
@@ -234,6 +253,11 @@ export async function loadChat(id: string): Promise<Chat | null> {
 
       const existingChat = currentChats.find((chat) => chat.id === id);
       if (existingChat && existingChat.messages.length > 0) {
+        return existingChat;
+      }
+
+      // If it's a temporary chat, don't try to load from IndexedDB
+      if (existingChat && existingChat.temporary) {
         return existingChat;
       }
 
@@ -279,6 +303,16 @@ function createEmptyChatFromThread(thread: Thread): Chat {
     model: thread.model,
     pinned: thread.pinned,
   };
+}
+
+/**
+ * Removes all temporary chats from the store
+ */
+export function clearTemporaryChats(): void {
+  chats.update((allChats) => {
+    const filteredChats = allChats.filter((chat) => !chat.temporary);
+    return sortChats(filteredChats);
+  });
 }
 
 /**

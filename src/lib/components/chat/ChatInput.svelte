@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Send, Square } from 'lucide-svelte';
+  import { Send, Square, VenetianMask } from 'lucide-svelte';
   import { providerInstances, selectedModel } from '$lib/settings/SettingsManager';
   import { availableModels } from '$lib/stores/modelCache';
   import { onMount, tick } from 'svelte';
@@ -10,6 +10,8 @@
   export let isLoading: boolean = false;
   export let handleSubmit: (e: Event) => Promise<void>;
   export let handleStop: () => Promise<void>;
+  export let showTemporaryToggle: boolean = false;
+  export let isTemporary: boolean = false;
 
   let userInputComponent: HTMLTextAreaElement;
 
@@ -72,14 +74,29 @@
           on:keydown={submitTextarea}
           on:change={resizeTextarea}></textarea>
       </div>
-      <div class="flex h-7 items-center">
-        <button
-          type="button"
-          on:click={openModelSelector}
-          disabled={isLoading}
-          class="button button-primary button-small !px-2">
-          <span>{$selectedModel?.modelId || 'Select Model'}</span>
-        </button>
+      <div class="flex h-7 items-center justify-between">
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            on:click={openModelSelector}
+            disabled={isLoading}
+            class="button button-primary button-small !px-2">
+            <span>{$selectedModel?.modelId || 'Select Model'}</span>
+          </button>
+          {#if showTemporaryToggle}
+            <button
+              type="button"
+              on:click={() => (isTemporary = !isTemporary)}
+              disabled={isLoading}
+              class="button button-small !px-2"
+              class:button-secondary={!isTemporary}
+              class:button-primary={isTemporary}
+              title={isTemporary ? "Temporary chat (won't be saved)" : 'Regular chat (will be saved)'}>
+              <VenetianMask size={16}></VenetianMask>
+              <span class="hidden lg:block">Temporary</span>
+            </button>
+          {/if}
+        </div>
       </div>
     </div>
     {#if isLoading}

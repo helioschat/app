@@ -21,6 +21,7 @@ export type Chat = {
   providerInstanceId?: string;
   model?: string;
   pinned?: boolean;
+  temporary?: boolean;
 };
 
 export type ProviderType = 'openai-compatible'; // | 'anthropic' | 'google-gemini' etc.

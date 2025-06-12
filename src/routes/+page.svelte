@@ -5,12 +5,13 @@
   import ChatInput from '$lib/components/chat/ChatInput.svelte';
 
   let searchInput = $state('');
+  let isTemporary = $state(false);
 
   async function handleSearch(e: Event) {
     e.preventDefault();
     if (!searchInput.trim()) return;
 
-    const newChatId = createNewChat(searchInput);
+    const newChatId = createNewChat(searchInput, isTemporary);
     goto(`/${newChatId}`);
   }
 
@@ -28,7 +29,12 @@
     <p>{manifest.description}</p>
   </div>
 
-  <ChatInput bind:userInput={searchInput} handleSubmit={handleSearch} handleStop={async () => {}}></ChatInput>
+  <ChatInput
+    bind:userInput={searchInput}
+    bind:isTemporary
+    handleSubmit={handleSearch}
+    handleStop={async () => {}}
+    showTemporaryToggle={true}></ChatInput>
 
   <div class="text-left">
     <h2 class="mb-3 text-lg font-medium">Try asking about:</h2>
