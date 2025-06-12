@@ -149,6 +149,8 @@
           id: m.id,
           role: m.role,
           content: m.content,
+          createdAt: m.createdAt,
+          updatedAt: m.updatedAt,
         }));
       }
     }

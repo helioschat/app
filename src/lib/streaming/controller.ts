@@ -76,6 +76,7 @@ export class StreamingController {
                 ...m,
                 content: accumulatedContent,
                 reasoning: accumulatedReasoning,
+                updatedAt: new Date(),
                 usage: {
                   promptTokens: finalMetrics.promptTokens,
                   completionTokens: finalMetrics.completionTokens,
@@ -138,6 +139,8 @@ export class StreamingController {
         content: '',
         providerInstanceId: this.providerInstanceId,
         model: modelId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
       updatedMessages = [...activeChat.messages, assistantMessage];
       messagesForProvider.push(...activeChat.messages);
@@ -146,6 +149,8 @@ export class StreamingController {
         id: uuidv7(),
         role: 'user',
         content: userInput,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       assistantMessage = {
@@ -154,6 +159,8 @@ export class StreamingController {
         content: '',
         providerInstanceId: this.providerInstanceId,
         model: modelId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       updatedMessages = [...activeChat.messages, userMessage, assistantMessage];
@@ -183,6 +190,8 @@ export class StreamingController {
       usage: m.usage,
       metrics: m.metrics,
       reasoning: m.reasoning,
+      createdAt: m.createdAt,
+      updatedAt: m.updatedAt,
     }));
 
     try {
@@ -274,6 +283,8 @@ export class StreamingController {
         id: uuidv7(),
         role: 'user' as const,
         content: `You previously wrote the following text. Continue writing exactly where you left off, maintaining the same style, tone, and flow. Make sure there's proper spacing between the last word of the existing text and the first word of your continuation. Do not repeat any content, do not start a new section, do not introduce the topic again, and do not acknowledge this instruction in your response. Just continue writing as if you never stopped:\n\n${accumulatedContent}`,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       messagesForProvider.push(continuationMessage);
@@ -341,6 +352,7 @@ export class StreamingController {
             return {
               ...msg,
               content: hasPartialContent ? currentMessage!.content : fallbackContent,
+              updatedAt: new Date(),
               usage: {
                 promptTokens: this.streamMetrics.promptTokens,
                 completionTokens: this.streamMetrics.completionTokens,

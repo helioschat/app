@@ -166,6 +166,8 @@ export function createNewChat(initialMessage?: string): string {
       id: uuidv7(),
       role: 'user',
       content: initialMessage,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
   }
 

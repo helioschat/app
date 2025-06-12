@@ -21,17 +21,33 @@ export async function getChatFromThread(threadId: string): Promise<Chat | null> 
     title: thread.title,
     createdAt: thread.createdAt,
     updatedAt: thread.updatedAt,
-    messages: messages.map(({ id, role, content, reasoning, provider, providerInstanceId, model, usage, metrics }) => ({
-      id,
-      role,
-      content,
-      reasoning,
-      provider,
-      providerInstanceId,
-      model,
-      usage,
-      metrics,
-    })),
+    messages: messages.map(
+      ({
+        id,
+        role,
+        content,
+        reasoning,
+        provider,
+        providerInstanceId,
+        model,
+        usage,
+        metrics,
+        createdAt,
+        updatedAt,
+      }) => ({
+        id,
+        role,
+        content,
+        reasoning,
+        provider,
+        providerInstanceId,
+        model,
+        usage,
+        metrics,
+        createdAt,
+        updatedAt,
+      }),
+    ),
     providerInstanceId: thread.providerInstanceId,
     model: thread.model,
     pinned: thread.pinned,
@@ -64,15 +80,10 @@ export async function saveChatAsThreadAndMessages(chat: Chat): Promise<void> {
     if (chat.messages.length > 0) {
       const existingMessages = await getMessagesForThread(chat.id);
 
-      const savePromises = chat.messages.map((message, index) => {
-        const timestamp = message.metrics?.startTime
-          ? new Date(message.metrics.startTime)
-          : new Date(chat.createdAt.getTime() + index * 1000);
-
+      const savePromises = chat.messages.map((message) => {
         const storedMessage: StoredMessage = {
           ...message,
           threadId: chat.id,
-          timestamp,
         };
 
         return saveMessage(storedMessage);

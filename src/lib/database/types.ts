@@ -15,7 +15,6 @@ export type Thread = Omit<Chat, 'messages'> & {
 // Message with storage metadata
 export type StoredMessage = Message & {
   threadId: string;
-  timestamp: Date;
   provider?: string;
 };
 
@@ -26,6 +25,7 @@ export type RawThread = Omit<Thread, 'createdAt' | 'updatedAt' | 'lastMessageDat
   lastMessageDate: string;
 };
 
-export type RawMessage = Omit<StoredMessage, 'timestamp'> & {
-  timestamp: string;
+export type RawMessage = Omit<StoredMessage, 'createdAt' | 'updatedAt'> & {
+  createdAt: string;
+  updatedAt: string;
 };

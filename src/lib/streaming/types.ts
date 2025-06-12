@@ -31,6 +31,8 @@ export interface StreamContextMessage {
     thinkingTime?: number;
   };
   reasoning?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface StreamState {

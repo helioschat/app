@@ -10,8 +10,12 @@ export async function getMessagesForThread(threadId: string): Promise<StoredMess
     const rawMessages = (await promisify(store.index('threadId').getAll(threadId))) as RawMessage[];
 
     return rawMessages
-      .map((msg) => ({ ...msg, timestamp: new Date(msg.timestamp) }))
-      .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+      .map((msg) => ({
+        ...msg,
+        createdAt: new Date(msg.createdAt),
+        updatedAt: new Date(msg.updatedAt),
+      }))
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   } catch (error) {
     console.error('Error getting messages from IndexedDB:', error);
     return [];

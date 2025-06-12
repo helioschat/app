@@ -8,6 +8,8 @@ export type Message = {
   model?: string;
   usage?: TokenUsage;
   metrics?: StreamMetrics;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export type Chat = {
