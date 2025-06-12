@@ -102,7 +102,7 @@
   </div>
 
   <div
-    class="message-actions h-[44px] max-h-[44px] items-center opacity-0 group-hover:opacity-100 peer-hover:opacity-100 hover:opacity-100">
+    class="message-actions flex h-[44px] max-h-[44px] items-center opacity-0 group-hover:opacity-100 peer-hover:opacity-100 hover:opacity-100">
     <div class="flex gap-2 p-2">
       <div class="flex items-center gap-2">
         <button class="button button-secondary button-small" on:click={copyMessageContent}>
@@ -158,12 +158,12 @@
   }
 
   .message.assistant .message-container {
-    @apply justify-self-start;
+    @apply mr-auto;
     background-color: var(--color-2);
   }
 
   .message.assistant .message-actions {
-    @apply justify-self-start;
+    @apply justify-start;
   }
 
   .message.user {
@@ -171,12 +171,12 @@
   }
 
   .message.user .message-container {
-    @apply justify-self-end;
+    @apply ml-auto;
     background-color: var(--blue-10);
   }
 
   .message.user .message-actions {
-    @apply justify-self-end;
+    @apply justify-end;
   }
 
   .cursor {
