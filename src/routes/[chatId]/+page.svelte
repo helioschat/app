@@ -238,6 +238,8 @@
 
 <style lang="postcss">
   .input-container {
-    background: linear-gradient(to top, var(--color-1), transparent);
+    background-image: linear-gradient(to top, var(--color-1), transparent);
+    background-size: 100% 120px;
+    background-repeat: no-repeat;
   }
 </style>
