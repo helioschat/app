@@ -7,6 +7,7 @@
   import Spinner from '$lib/components/common/Spinner.svelte';
   import ConfirmationModal from '$lib/components/modal/types/ConfirmationModal.svelte';
   import { fade } from 'svelte/transition';
+  import { streamStates } from '$lib/streaming';
 
   const COLLAPSE_ANIMATION_DURATION = 150; //ms
 
@@ -75,12 +76,14 @@
       transition:fade={{ duration: COLLAPSE_ANIMATION_DURATION * 0.75 }}>
       {#each $chats as chat}
         {@const isSelected = chat.id === page.params.chatId}
+        {@const isGenerating = $streamStates[chat.id]?.isStreaming ?? false}
         <a
           href="/{chat.id}"
           class="thread-item group flex h-9 items-center justify-between rounded-[10px] py-2 pr-0.5 pl-2.5"
           class:selected={isSelected}
+          class:generating={isGenerating}
           title={chat.title}>
-          <span class="truncate text-sm">{chat.title}</span>
+          <span class="truncate text-sm transition-colors duration-200">{chat.title}</span>
           <div class="hidden items-center group-hover:flex">
             <button
               class="button button-secondary button-small"
@@ -134,5 +137,24 @@
 
   .thread-item:active {
     background-color: var(--color-a5);
+  }
+
+  .thread-item.generating span {
+    background: linear-gradient(to right, var(--color-a3), var(--color-a12), var(--color-a3)) 0 0 no-repeat;
+    background-size: 200%;
+    color: var(--color-a6);
+    background-clip: text;
+    animation-name: shine;
+    animation-duration: 1s;
+    animation-iteration-count: infinite;
+  }
+
+  @keyframes shine {
+    0% {
+      background-position: -200%;
+    }
+    100% {
+      background-position: 200%;
+    }
   }
 </style>
