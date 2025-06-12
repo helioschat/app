@@ -1,7 +1,4 @@
 import { browser } from '$app/environment';
-import type { ModelInfo } from '$lib/providers/base';
-import { getLanguageModel } from '$lib/providers/registry';
-import { modelCache } from '$lib/stores/modelCache';
 import type { ProviderConfig, ProviderInstance, ProviderType, SelectedModel } from '$lib/types';
 import { get, writable } from 'svelte/store';
 import { v7 as uuidv7 } from 'uuid';
@@ -211,36 +208,6 @@ export class SettingsManager {
       }
       return models;
     });
-  }
-
-  /**
-   * Load all available models for all provider instances
-   * @returns Promise resolving to a record of available models by provider instance ID
-   */
-  public async loadAvailableModels(): Promise<Record<string, ModelInfo[]>> {
-    const availableModels: Record<string, ModelInfo[]> = {};
-    const instances = get(this.providerInstances);
-
-    for (const instance of instances) {
-      try {
-        const cachedModels = modelCache.getCachedModels(instance.id);
-        if (cachedModels) {
-          availableModels[instance.id] = cachedModels;
-          continue;
-        }
-
-        const model = getLanguageModel(instance.providerType, instance.config);
-        const models = await model.getAvailableModels();
-
-        modelCache.cacheModels(instance.id, models);
-        availableModels[instance.id] = models;
-      } catch (error) {
-        console.error(`Failed to fetch models for ${instance.name} (${instance.id})`, error);
-        availableModels[instance.id] = [];
-      }
-    }
-
-    return availableModels;
   }
 }
 

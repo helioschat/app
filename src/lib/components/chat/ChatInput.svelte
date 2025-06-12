@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Send, Square } from 'lucide-svelte';
-  import { settingsManager, providerInstances, selectedModel } from '$lib/settings/SettingsManager';
+  import { providerInstances, selectedModel } from '$lib/settings/SettingsManager';
+  import { availableModels } from '$lib/stores/modelCache';
   import { onMount, tick } from 'svelte';
   import ModelSelectorModal from '$lib/components/modal/types/ModelSelectorModal.svelte';
   import { browser } from '$app/environment';
@@ -13,15 +14,22 @@
   let userInputComponent: HTMLTextAreaElement;
 
   let showModelSelector = false;
-  let availableModels: Record<string, { id: string; name: string }[]> = {};
+  let cachedModels: Record<string, { id: string; name: string }[]> = {};
 
-  onMount(async () => {
-    availableModels = await settingsManager.loadAvailableModels();
+  onMount(() => {
+    cachedModels = $availableModels;
+
+    // Subscribe to model cache changes
+    const unsubscribe = availableModels.subscribe((models) => {
+      cachedModels = models;
+    });
+
     if (browser && userInputComponent) resizeTextarea({ target: userInputComponent } as unknown as Event);
+
+    return unsubscribe;
   });
 
   async function openModelSelector() {
-    availableModels = await settingsManager.loadAvailableModels();
     await tick();
     showModelSelector = true;
   }
@@ -94,7 +102,7 @@
   id="chat-model-selector"
   isOpen={showModelSelector}
   providerInstances={$providerInstances}
-  {availableModels}
+  availableModels={cachedModels}
   currentModelId={$selectedModel?.modelId}
   on:close={() => (showModelSelector = false)}
   on:select={(e) => {

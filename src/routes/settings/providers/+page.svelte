@@ -2,8 +2,32 @@
   import ProviderAddModal from '$lib/components/modal/types/ProviderAddModal.svelte';
   import Provider from '$lib/components/settings/Provider.svelte';
   import { providerInstances, settingsManager } from '$lib/settings/SettingsManager';
+  import { modelCache } from '$lib/stores/modelCache';
 
   let showAddModal = $state(false);
+
+  async function handleAddProvider(event: CustomEvent) {
+    const { name, providerType, apiKey, baseURL } = event.detail;
+
+    // Add the provider instance
+    const providerId = settingsManager.addProviderInstance(name, providerType, { apiKey, baseURL });
+
+    // Sync models for the new provider
+    try {
+      const { getLanguageModel } = await import('$lib/providers/registry');
+      const newProvider = {
+        id: providerId,
+        name,
+        providerType,
+        config: { apiKey, baseURL },
+      };
+      modelCache.syncProvider(newProvider, getLanguageModel);
+    } catch (error) {
+      console.error('Failed to sync models for new provider:', error);
+    }
+
+    showAddModal = false;
+  }
 </script>
 
 <div>
@@ -22,8 +46,4 @@
   id="provider-add-modal"
   isOpen={showAddModal}
   on:close={() => (showAddModal = false)}
-  on:select={(e) => {
-    const { name, providerType, apiKey, baseURL } = e.detail;
-    settingsManager.addProviderInstance(name, providerType, { apiKey, baseURL });
-    showAddModal = false;
-  }}></ProviderAddModal>
+  on:select={handleAddProvider}></ProviderAddModal>

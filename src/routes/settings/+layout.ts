@@ -1,12 +1,5 @@
-import { settingsManager } from '$lib/settings/SettingsManager';
-
 export async function load() {
-  // Load models data once at the layout level to share across all settings pages
-  const availableModels = await settingsManager.loadAvailableModels();
-
-  return {
-    availableModels,
-  };
+  return {};
 }
 
 // Client-side only route

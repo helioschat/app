@@ -1,27 +1,74 @@
 <script lang="ts">
   import Spinner from '$lib/components/common/Spinner.svelte';
   import { settingsManager, providerInstances, disabledModels } from '$lib/settings/SettingsManager';
+  import { availableModels, modelCache } from '$lib/stores/modelCache';
   import type { ModelInfo } from '$lib/providers';
+  import type { ProviderInstance } from '$lib/types';
   import { onMount } from 'svelte';
+  import { get } from 'svelte/store';
 
-  let availableModels = $state<Record<string, ModelInfo[]>>({});
+  let cachedModels = $state<Record<string, ModelInfo[]>>({});
   let loading = $state(true);
   let disabledModelsState = $state<Record<string, string[]>>({});
-
-  onMount(async () => {
-    availableModels = await settingsManager.loadAvailableModels();
+  onMount(() => {
+    // Initialize with cached models
+    cachedModels = $availableModels;
     loading = false;
-    // Subscribe to disabledModels changes
-    disabledModels.subscribe((value) => {
-      disabledModelsState = value;
-      availableModels = { ...availableModels };
+
+    // Check for providers with no models and sync them
+    checkAndSyncMissingModels();
+
+    // Subscribe to model cache changes
+    const unsubscribeModels = availableModels.subscribe((models) => {
+      cachedModels = models;
     });
+
+    // Subscribe to disabledModels changes
+    const unsubscribeDisabled = disabledModels.subscribe((value) => {
+      disabledModelsState = value;
+      // Trigger reactivity by creating new reference
+      cachedModels = { ...cachedModels };
+    });
+
+    return () => {
+      unsubscribeModels();
+      unsubscribeDisabled();
+    };
   });
+
+  async function checkAndSyncMissingModels() {
+    const instances = get(providerInstances);
+    const providersToSync: ProviderInstance[] = [];
+
+    // Find providers that have no cached models
+    for (const instance of instances) {
+      if (!cachedModels[instance.id] || cachedModels[instance.id].length === 0) {
+        providersToSync.push(instance);
+      }
+    }
+
+    if (providersToSync.length > 0) {
+      try {
+        const { getLanguageModel } = await import('$lib/providers/registry');
+
+        // Sync models for providers with no models
+        for (const instance of providersToSync) {
+          try {
+            await modelCache.syncProvider(instance, getLanguageModel);
+          } catch (error) {
+            console.error(`Failed to sync models for ${instance.name}:`, error);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to import getLanguageModel:', error);
+      }
+    }
+  }
 
   function toggleModel(providerInstanceId: string, modelId: string) {
     settingsManager.toggleModel(providerInstanceId, modelId);
     // We need to trigger a re-render manually here since the change is in a deep object
-    availableModels = { ...availableModels };
+    cachedModels = { ...cachedModels };
   }
 
   function isModelEnabled(providerInstanceId: string, modelId: string) {
@@ -29,17 +76,27 @@
   }
 
   function toggleAllModels(providerInstanceId: string, enable: boolean) {
-    const modelIds = availableModels[providerInstanceId].map((model) => model.id);
+    const modelIds = cachedModels[providerInstanceId]?.map((model) => model.id) || [];
     settingsManager.toggleAllModels(providerInstanceId, enable, modelIds);
     // Force a UI update by creating a new object reference
-    availableModels[providerInstanceId] = [...availableModels[providerInstanceId]];
-    availableModels = { ...availableModels };
+    if (cachedModels[providerInstanceId]) {
+      cachedModels[providerInstanceId] = [...cachedModels[providerInstanceId]];
+    }
+    cachedModels = { ...cachedModels };
   }
 
   function areAllModelsEnabled(providerInstanceId: string) {
-    const models = availableModels[providerInstanceId];
+    const models = cachedModels[providerInstanceId];
     if (!models || models.length === 0) return false;
     return models.every((model) => isModelEnabled(providerInstanceId, model.id));
+  }
+
+  async function refreshModels() {
+    loading = true;
+    const getProviderInstances = () => get(settingsManager.providerInstances);
+    const { getLanguageModel } = await import('$lib/providers/registry');
+    await modelCache.syncNow(getProviderInstances, getLanguageModel);
+    loading = false;
   }
 </script>
 
@@ -48,26 +105,32 @@
     <Spinner></Spinner>
   </div>
 {:else}
+  <div class="mb-4 flex items-center justify-between">
+    <h2 class="text-2xl font-semibold">Model Configuration</h2>
+    <button type="button" onclick={refreshModels} class="button button-secondary" disabled={loading}>
+      Refresh Models
+    </button>
+  </div>
   {#each $providerInstances as instance (instance.id)}
     <div class="mb-6">
       <h3 class="mb-3 text-xl font-semibold">{instance.name} ({instance.providerType})</h3>
       <div class="space-y-2">
-        {#if availableModels[instance.id]?.length}
+        {#if cachedModels[instance.id]?.length}
           <input
             type="checkbox"
             id={`select-all-${instance.id}`}
             checked={areAllModelsEnabled(instance.id)}
-            on:change={(e) => toggleAllModels(instance.id, e.currentTarget.checked)} />
+            onchange={(e) => toggleAllModels(instance.id, e.currentTarget.checked)} />
           <label for={`select-all-${instance.id}`} class="select-none">Select All Models</label>
-          {#each availableModels[instance.id] as model (model.id)}
+          {#each cachedModels[instance.id] as model (model.id)}
             <div
               class="button button-secondary button-large select-none"
-              on:click={() => toggleModel(instance.id, model.id)}>
+              onclick={() => toggleModel(instance.id, model.id)}>
               <input
                 type="checkbox"
                 id={`${instance.id}-${model.id}`}
                 checked={isModelEnabled(instance.id, model.id)}
-                on:change={() => toggleModel(instance.id, model.id)} />
+                onchange={() => toggleModel(instance.id, model.id)} />
               <div class="ml-3 h-full w-full flex-1 text-left">
                 <p class="font-medium">{model.name}</p>
                 {#if model.description}

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { settingsManager } from '$lib/settings/SettingsManager';
+  import { modelCache } from '$lib/stores/modelCache';
   import type { ProviderInstance } from '$lib/types';
   import { Pencil, Trash } from 'lucide-svelte';
   import ProviderEditModal from '../modal/types/ProviderEditModal.svelte';
@@ -17,6 +18,8 @@
 
   async function handleConfirmDelete() {
     if (providerToDelete) {
+      // Clear cache for the provider before deleting
+      modelCache.clearProviderCache(providerToDelete);
       settingsManager.removeProviderInstance(providerToDelete);
       providerToDelete = null;
     }
@@ -24,6 +27,37 @@
 
   function handleCancelDelete() {
     providerToDelete = null;
+  }
+
+  async function handleProviderUpdate(event: CustomEvent) {
+    const { name, apiKey, apiBaseUrl } = event.detail;
+
+    // Update the provider instance
+    settingsManager.updateProviderInstance(provider.id, {
+      name,
+      config: {
+        apiKey,
+        baseURL: apiBaseUrl,
+      },
+    });
+
+    // Clear old cache and sync new models
+    modelCache.clearProviderCache(provider.id);
+
+    // Import getLanguageModel and sync models for this provider
+    try {
+      const { getLanguageModel } = await import('$lib/providers/registry');
+      const updatedProvider = {
+        ...provider,
+        name,
+        config: { apiKey, baseURL: apiBaseUrl },
+      };
+      await modelCache.syncProvider(updatedProvider, getLanguageModel);
+    } catch (error) {
+      console.error('Failed to sync models after provider update:', error);
+    }
+
+    showEditModal = false;
   }
 </script>
 
@@ -56,17 +90,7 @@
   {provider}
   isOpen={showEditModal}
   on:close={() => (showEditModal = false)}
-  on:select={(e) => {
-    const { name, apiKey, apiBaseUrl } = e.detail;
-    settingsManager.updateProviderInstance(provider.id, {
-      name,
-      config: {
-        apiKey,
-        baseURL: apiBaseUrl,
-      },
-    });
-    showEditModal = false;
-  }}></ProviderEditModal>
+  on:select={handleProviderUpdate}></ProviderEditModal>
 
 <ConfirmationModal
   id="delete-provider-modal"
