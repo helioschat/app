@@ -2,7 +2,7 @@
   import MarkdownRenderer from '$lib/components/chat/MarkdownRenderer.svelte';
   import { likelyContainsMarkdown } from '$lib/utils/markdown';
   import type { Message } from '$lib/types';
-  import { isMessageStreaming } from '$lib/utils/streamState';
+  import { isMessageStreaming } from '$lib/streaming';
   import { page } from '$app/state';
   import { ChevronDown, ChevronUp, Copy, RefreshCw } from 'lucide-svelte';
   import { createEventDispatcher } from 'svelte';

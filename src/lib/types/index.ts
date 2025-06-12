@@ -6,18 +6,8 @@ export type Message = {
   reasoning?: string;
   providerInstanceId?: string;
   model?: string;
-  usage?: {
-    promptTokens?: number;
-    completionTokens?: number;
-    totalTokens?: number;
-  };
-  metrics?: {
-    startTime?: number;
-    endTime?: number;
-    totalTime?: number;
-    tokensPerSecond?: number;
-    thinkingTime?: number;
-  };
+  usage?: TokenUsage;
+  metrics?: StreamMetrics;
 };
 
 export type Chat = {
@@ -53,3 +43,25 @@ export type SelectedModel = {
   providerInstanceId: string;
   modelId: string;
 };
+
+export interface TokenUsage {
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
+}
+
+export interface StreamMetrics {
+  startTime?: number;
+  endTime?: number;
+  totalTime?: number;
+  tokensPerSecond?: number;
+  thinkingTime?: number;
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
+}
+
+// Interface that language model implementations may satisfy for token counting
+export interface TokenCountable {
+  countTokens(messages: Message[]): Promise<{ promptTokens: number; totalTokens: number }>;
+}

@@ -1,5 +1,5 @@
 import { browser } from '$app/environment';
-import { getThread } from '$lib/utils/db';
+import { getThread } from '$lib/database';
 import { redirect } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
 

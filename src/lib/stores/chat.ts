@@ -1,12 +1,12 @@
 import { browser } from '$app/environment';
-import type { Chat } from '$lib/types';
 import {
   deleteThread,
   getAllThreads,
   getChatFromThread,
   saveChatAsThreadAndMessages,
   type Thread,
-} from '$lib/utils/db';
+} from '$lib/database';
+import type { Chat } from '$lib/types';
 import { get, writable, type Writable } from 'svelte/store';
 import { v7 as uuidv7 } from 'uuid';
 
@@ -46,7 +46,7 @@ if (browser) {
         const loadChunk = async (startIndex: number) => {
           const chunk = threads.slice(startIndex, startIndex + CHUNK_SIZE);
           const chunkChats = await Promise.all(
-            chunk.map(async (thread) => {
+            chunk.map(async (thread: Thread) => {
               const chat = await getChatFromThread(thread.id);
               return chat || createEmptyChatFromThread(thread);
             }),

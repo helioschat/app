@@ -4,9 +4,9 @@
   import type { Message } from '$lib/types';
   import { page } from '$app/stores';
   import { tick, onMount, onDestroy } from 'svelte';
-  import { streamStates, getStreamState, endStream } from '$lib/utils/streamState';
+  import { streamStates, getStreamState, endStream } from '$lib/streaming';
   import { browser } from '$app/environment';
-  import { StreamController } from '$lib/utils/StreamController';
+  import { StreamingController } from '$lib/streaming';
   import ChatHeader from '$lib/components/chat/ChatHeader.svelte';
   import ChatMessages from '$lib/components/chat/ChatMessages.svelte';
   import ChatInput from '$lib/components/chat/ChatInput.svelte';
@@ -22,13 +22,13 @@
   let showResumeButton = false;
   let initialMessageProcessed = false;
 
-  const streamControllers: Record<string, StreamController> = {};
+  const streamControllers: Record<string, StreamingController> = {};
 
   /**
-   * Retrieves or creates a StreamController for a given chat ID.
+   * Retrieves or creates a StreamingController for a given chat ID.
    * This ensures that each chat has its own controller, allowing for concurrent streams.
    */
-  function getOrCreateStreamController(id: string): StreamController | null {
+  function getOrCreateStreamController(id: string): StreamingController | null {
     const chat = $chats.find((c) => c.id === id);
     if (!chat) return null;
 
@@ -44,7 +44,7 @@
       return controller;
     }
 
-    const newController = new StreamController(id, providerInstanceId);
+    const newController = new StreamingController(id, providerInstanceId);
     streamControllers[id] = newController;
     return newController;
   }
