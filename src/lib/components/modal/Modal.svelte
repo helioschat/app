@@ -51,7 +51,7 @@
 
       <dialog
         bind:this={dialog}
-        class="relative mx-auto w-full max-w-lg rounded-lg p-6"
+        class="relative mx-auto w-full max-w-lg rounded-lg p-6 lg:max-w-2xl"
         aria-labelledby={`${id}-title`}
         aria-modal="true"
         open
