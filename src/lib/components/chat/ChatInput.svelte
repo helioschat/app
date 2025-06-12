@@ -5,11 +5,12 @@
   import ModelSelectorModal from '$lib/components/modal/types/ModelSelectorModal.svelte';
   import { browser } from '$app/environment';
 
-  export let userInputComponent: HTMLTextAreaElement;
   export let userInput: string = '';
   export let isLoading: boolean = false;
   export let handleSubmit: (e: Event) => Promise<void>;
   export let handleStop: () => Promise<void>;
+
+  let userInputComponent: HTMLTextAreaElement;
 
   let showModelSelector = false;
   let availableModels: Record<string, { id: string; name: string }[]> = {};
