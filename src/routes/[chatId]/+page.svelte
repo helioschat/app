@@ -214,7 +214,7 @@
       <ChatHeader chat={activeChat}></ChatHeader>
     </div>
 
-    <div class="messages-container h-full overflow-y-auto">
+    <div class="messages-container -mb-30 h-full overflow-y-auto">
       <ChatMessages
         chat={activeChat}
         {isLoading}
@@ -224,7 +224,7 @@
         {handleResumeGeneration}></ChatMessages>
     </div>
 
-    <div class="input-component absolute bottom-0 left-1/2 w-full -translate-x-1/2">
+    <div class="input-container">
       <ChatInput bind:userInput {isLoading} {handleSubmit} {handleStop}></ChatInput>
     </div>
   {:else}
@@ -237,7 +237,7 @@
 </main>
 
 <style lang="postcss">
-  .input-component {
-    background: linear-gradient(to top, var(--color-1) 50%, transparent);
+  .input-container {
+    background: linear-gradient(to top, var(--color-1), transparent);
   }
 </style>
