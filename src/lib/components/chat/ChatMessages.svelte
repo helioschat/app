@@ -73,7 +73,9 @@
       <MessageItem
         {message}
         isStreaming={currentlyStreamingMessageId === message.id}
-        isThinking={currentlyStreamingMessageId === message.id && message.content.length === 0 && message.role === 'assistant'}
+        isThinking={currentlyStreamingMessageId === message.id &&
+          message.content.length === 0 &&
+          message.role === 'assistant'}
         on:regenerate={({ detail }) => handleRegenerate(detail.message)}></MessageItem>
     {/if}
   {/each}
