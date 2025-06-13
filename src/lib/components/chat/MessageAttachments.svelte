@@ -71,7 +71,7 @@
       <div
         class="attachment relative flex h-fit w-full max-w-full items-center gap-3 rounded-lg border border-[var(--color-6)] bg-[var(--color-3)] p-3 sm:w-fit sm:max-w-48 md:max-w-64 lg:max-w-96"
         class:file={attachment.type === 'file'}
-        class:image={attachment.type === 'image'}
+        class:image={attachment.type === 'image' && attachment.previewUrl}
         class:sent={isSent}>
         <div class="peer flex w-full items-center">
           {#if attachment.type === 'image' && attachment.previewUrl}
@@ -85,12 +85,12 @@
               <File size={24} />
             </div>
           {/if}
-          {#if !(isSent && attachment.type === 'image')}
+          {#if !(isSent && attachment.type === 'image' && attachment.previewUrl)}
             <div class="ml-3 min-w-0 flex-1 text-left">
               <p class="truncate text-sm font-medium">{attachment.name}</p>
               <p class="text-secondary text-xs">{formatFileSize(attachment.size)}</p>
             </div>
-            {#if isSent && attachment.type !== 'image'}
+            {#if isSent && (attachment.type !== 'image' || (attachment.type === 'image' && !attachment.previewUrl))}
               <div class="ml-1">
                 {@render downloadBtn(attachment)}
               </div>
@@ -102,7 +102,7 @@
             {/if}
           {/if}
         </div>
-        {#if isSent && attachment.type === 'image'}
+        {#if isSent && attachment.type === 'image' && attachment.previewUrl}
           <div
             class="pointer-events-none absolute top-0 left-0 flex h-full w-full items-center justify-center rounded bg-black/50 opacity-0 transition-opacity peer-hover:pointer-events-auto peer-hover:opacity-100 hover:pointer-events-auto hover:opacity-100">
             {@render downloadBtn(attachment)}
