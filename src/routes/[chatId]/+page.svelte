@@ -40,7 +40,7 @@
   /**
    * Handles the submission of a new message from the user.
    */
-  async function handleSubmit(e: Event, attachments?: Attachment[]) {
+  async function handleSubmit(_: Event, attachments?: Attachment[]) {
     const messageContent = userInput;
     if (
       (!messageContent.trim() && (!attachments || attachments.length === 0)) ||
