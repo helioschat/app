@@ -1,5 +1,6 @@
 import { browser } from '$app/environment';
 import type { LanguageModel, ModelInfo } from '$lib/providers/base';
+import { applyModelOverrides, detectKnownProvider } from '$lib/providers/known';
 import type { ProviderConfig, ProviderInstance, ProviderType } from '$lib/types';
 import { derived, writable } from 'svelte/store';
 
@@ -165,7 +166,11 @@ async function syncModels(
   for (const instance of instances) {
     try {
       const model = getLanguageModel(instance.providerType, instance.config);
-      const models = await model.getAvailableModels();
+      let models = await model.getAvailableModels();
+      const matched = instance.config.matchedProvider;
+      if (matched) {
+        models = applyModelOverrides(matched, models);
+      }
 
       updateCache((cache) => ({
         ...cache,
@@ -205,7 +210,13 @@ async function syncSpecificProvider(
 
   try {
     const model = getLanguageModel(instance.providerType, instance.config);
-    const models = await model.getAvailableModels();
+    let models = await model.getAvailableModels();
+    const matched =
+      (instance.config as ProviderConfig & { matchedProvider?: string }).matchedProvider ??
+      detectKnownProvider(instance.config as ProviderConfig);
+    if (matched) {
+      models = applyModelOverrides(matched, models);
+    }
 
     updateCache((cache) => ({
       ...cache,

@@ -1,6 +1,7 @@
 <script lang="ts">
   import ProviderAddModal from '$lib/components/modal/types/ProviderAddModal.svelte';
   import Provider from '$lib/components/settings/Provider.svelte';
+  import { detectKnownProvider } from '$lib/providers/known';
   import { providerInstances, settingsManager } from '$lib/settings/SettingsManager';
   import { modelCache } from '$lib/stores/modelCache';
 
@@ -12,6 +13,14 @@
     // Add the provider instance
     const providerId = settingsManager.addProviderInstance(name, providerType, { apiKey, baseURL });
 
+    // Detect if this config matches a known provider for metadata purposes
+    const matchedProvider = detectKnownProvider({ apiKey, baseURL });
+    if (matchedProvider) {
+      settingsManager.updateProviderInstance(providerId, {
+        config: { apiKey, baseURL, matchedProvider },
+      });
+    }
+
     // Sync models for the new provider
     try {
       const { getLanguageModel } = await import('$lib/providers/registry');
@@ -19,9 +28,14 @@
         id: providerId,
         name,
         providerType,
-        config: { apiKey, baseURL },
+        config: { apiKey, baseURL, matchedProvider },
       };
-      modelCache.syncProvider(newProvider, getLanguageModel);
+      await modelCache.syncProvider(newProvider, getLanguageModel);
+
+      // Apply default disabled models based on known provider metadata
+      const all = modelCache.getAllCachedModels();
+      const modelsForProvider = all[providerId] ?? [];
+      settingsManager.applyDefaultDisabledModels(providerId, matchedProvider, modelsForProvider);
     } catch (error) {
       console.error('Failed to sync models for new provider:', error);
     }

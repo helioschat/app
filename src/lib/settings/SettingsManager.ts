@@ -1,4 +1,6 @@
 import { browser } from '$app/environment';
+import type { ModelInfo } from '$lib/providers/base';
+import { isModelDisabledByDefault } from '$lib/providers/known';
 import type { ProviderConfig, ProviderInstance, ProviderType, SelectedModel } from '$lib/types';
 import { get, writable } from 'svelte/store';
 import { v7 as uuidv7 } from 'uuid';
@@ -210,6 +212,30 @@ export class SettingsManager {
    * @param enable If true, enable all models; if false, disable all models
    * @param modelIds List of model IDs to toggle for this provider
    */
+  /**
+   * Apply default disabled models based on known provider metadata.
+   * Only runs if no models are disabled yet for this provider instance.
+   */
+  public applyDefaultDisabledModels(
+    providerInstanceId: string,
+    matchedProviderId: string | undefined,
+    models: ModelInfo[],
+  ): void {
+    if (!matchedProviderId) return;
+    this.disabledModels.update((map) => {
+      if (map[providerInstanceId] && map[providerInstanceId].length > 0) {
+        return map; // already set by user
+      }
+      const disabled = models
+        .filter((m) => isModelDisabledByDefault(matchedProviderId, m.id))
+        .map((m) => m.id);
+      if (disabled.length > 0) {
+        map[providerInstanceId] = disabled;
+      }
+      return map;
+    });
+  }
+
   public toggleAllModels(providerInstanceId: string, enable: boolean, modelIds: string[]): void {
     this.disabledModels.update((models) => {
       if (enable) {

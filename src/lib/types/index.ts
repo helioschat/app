@@ -42,7 +42,7 @@ export type Chat = {
   temporary?: boolean;
 };
 
-export type ProviderType = 'openai-compatible'; // | 'anthropic' | 'google-gemini' etc.
+export type ProviderType = 'openai-compatible';
 
 export const PROVIDER_TYPES: ProviderType[] = ['openai-compatible'];
 
@@ -50,6 +50,7 @@ export type ProviderConfig = {
   apiKey?: string;
   baseURL?: string;
   model?: string;
+  matchedProvider?: string;
   [key: string]: string | number | boolean | undefined;
 };
 

@@ -27,7 +27,10 @@ export interface ModelInfo {
   };
   createdAt?: number;
   contextWindow?: number;
+  deprecated?: boolean;
   huggingfaceId?: string;
+  supportsResponsesEndpoint?: boolean; // Whether the model supports the /v1/responses endpoint.
+  doesntSupportChatCompletionsEndpoint?: boolean; // Whether the model doesn't support the /v1/chat/completions endpoint.
 }
 
 export interface StreamMetrics {
