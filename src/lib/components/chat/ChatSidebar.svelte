@@ -1,7 +1,7 @@
 <script lang="ts">
   import { chats, isLoadingChats, deleteChatById, toggleChatPin } from '$lib/stores/chat';
   import { goto } from '$app/navigation';
-  import { CirclePlus, Settings, Pin, Trash, Menu, PinOff } from 'lucide-svelte';
+  import { CirclePlus, Settings, Pin, Trash, Menu, PinOff, Search } from 'lucide-svelte';
   import { page } from '$app/state';
   import { manifest } from '$lib';
   import Spinner from '$lib/components/common/Spinner.svelte';
@@ -15,6 +15,7 @@
   let { collapsed = $bindable(false) } = $props();
 
   let chatToDelete = $state<string | null>(null);
+  let searchQuery = $state('');
 
   function handleDeleteChat(chatId: string) {
     chatToDelete = chatId;
@@ -37,6 +38,12 @@
   async function handlePinChat(chatId: string) {
     await toggleChatPin(chatId);
   }
+
+  let filteredChats = $derived(
+    searchQuery.trim()
+      ? $chats.filter((chat) => !chat.temporary && chat.title.toLowerCase().includes(searchQuery.toLowerCase()))
+      : $chats.filter((chat) => !chat.temporary),
+  );
 </script>
 
 <aside
@@ -72,10 +79,15 @@
     </a>
   </div>
   {#if !collapsed}
+    <!-- Search input -->
+    <div class="relative text-[var(--color-11)]" transition:fade={{ duration: COLLAPSE_ANIMATION_DURATION * 0.75 }}>
+      <Search size={16} class="absolute top-1/2 left-3 -translate-y-1/2" />
+      <input type="text" bind:value={searchQuery} placeholder="Search chats..." class="w-full !py-1.5 !pl-8 text-sm" />
+    </div>
     <nav
       class="flex flex-1 flex-col gap-y-0.5 overflow-y-auto"
       transition:fade={{ duration: COLLAPSE_ANIMATION_DURATION * 0.75 }}>
-      {#each groupChatsByDate($chats.filter((chat) => !chat.temporary)) as { group, chats: groupChats }}
+      {#each groupChatsByDate(filteredChats) as { group, chats: groupChats }}
         <div class="group-section">
           {#if group}
             <h3 class="group-header mb-1 px-2.5 py-1 text-xs font-medium text-[var(--color-a11)]">{group}</h3>
