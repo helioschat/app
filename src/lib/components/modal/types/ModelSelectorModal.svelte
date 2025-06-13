@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import Modal from '../Modal.svelte';
+  import ModelItem from '$lib/components/common/ModelItem.svelte';
   import { Search } from 'lucide-svelte';
   import type { ModelInfo } from '$lib/providers/base';
   import type { ProviderInstance } from '$lib/types';
@@ -48,18 +49,11 @@
       {#if enabledAndFilteredModels.length > 0}
         <h3 class="text-primary mt-4 text-sm font-semibold first:mt-0">{instance.name}</h3>
         {#each enabledAndFilteredModels as model (model.id)}
-          <button
-            type="button"
-            on:click={() => handleSelect(instance.id, model.id)}
-            class="button button-secondary button-large w-full border-0 border-none"
-            class:active={model.id === currentModelId}>
-            <div class="flex-1 text-left">
-              <div class="text-primary font-medium">{model.name}</div>
-              {#if model.description}
-                <div class="text-secondary text-sm">{model.description}</div>
-              {/if}
-            </div>
-          </button>
+          <ModelItem
+            {model}
+            mode="select"
+            isActive={model.id === currentModelId}
+            onclick={() => handleSelect(instance.id, model.id)} />
         {/each}
       {/if}
     {/each}

@@ -20,6 +20,11 @@ export interface ModelInfo {
   id: string;
   name: string;
   description?: string;
+  architecture?: {
+    inputModalities?: string[];
+    outputModalities?: string[];
+    modality?: string;
+  };
   createdAt?: number;
   contextWindow?: number;
   huggingfaceId?: string;

@@ -6,6 +6,11 @@ import { toReadableStream } from './base';
 interface OpenAIModel extends OpenAI.Models.Model {
   name?: string;
   description?: string;
+  architecture?: {
+    input_modalities?: string[];
+    output_modalities?: string[];
+    modality?: string;
+  };
   context_length?: number;
   huggingface_id?: string;
 }
@@ -106,6 +111,11 @@ export class OpenAICompatibleProvider implements LanguageModel {
         id: model.id,
         name: model.name || model.id,
         description: model.description || `OpenAI-compatible model ${model.id}`,
+        architecture: {
+          inputModalities: model.architecture?.input_modalities,
+          outputModalities: model.architecture?.output_modalities,
+          modality: model.architecture?.modality,
+        },
         contextWindow: model.context_length,
         huggingfaceId: model.huggingface_id,
         createdAt: model.created,

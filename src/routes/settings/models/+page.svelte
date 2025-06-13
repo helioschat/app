@@ -1,5 +1,6 @@
 <script lang="ts">
   import Spinner from '$lib/components/common/Spinner.svelte';
+  import ModelItem from '$lib/components/common/ModelItem.svelte';
   import { settingsManager, providerInstances, disabledModels } from '$lib/settings/SettingsManager';
   import { availableModels, modelCache } from '$lib/stores/modelCache';
   import type { ModelInfo } from '$lib/providers';
@@ -123,26 +124,11 @@
             onchange={(e) => toggleAllModels(instance.id, e.currentTarget.checked)} />
           <label for={`select-all-${instance.id}`} class="select-none">Select All Models</label>
           {#each cachedModels[instance.id] as model (model.id)}
-            <div
-              class="button button-secondary button-large select-none"
-              onclick={() => toggleModel(instance.id, model.id)}>
-              <input
-                type="checkbox"
-                id={`${instance.id}-${model.id}`}
-                checked={isModelEnabled(instance.id, model.id)}
-                onchange={() => toggleModel(instance.id, model.id)} />
-              <div class="ml-3 h-full w-full flex-1 text-left">
-                <p class="font-medium">{model.name}</p>
-                {#if model.description}
-                  <p class="text-secondary">{model.description}</p>
-                {/if}
-              </div>
-              {#if model.contextWindow}
-                <div class="text-sm text-gray-500">
-                  Context: {model.contextWindow.toLocaleString()} tokens
-                </div>
-              {/if}
-            </div>
+            <ModelItem
+              {model}
+              mode="toggle"
+              isEnabled={isModelEnabled(instance.id, model.id)}
+              onchange={() => toggleModel(instance.id, model.id)} />
           {/each}
         {:else}
           <p class="text-gray-500">No models available. Check your API key and Base URL in the Providers tab.</p>
