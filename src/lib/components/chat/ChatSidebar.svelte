@@ -1,7 +1,7 @@
 <script lang="ts">
   import { chats, isLoadingChats, deleteChatById, toggleChatPin } from '$lib/stores/chat';
   import { goto } from '$app/navigation';
-  import { CirclePlus, Settings, Pin, Trash, Menu } from 'lucide-svelte';
+  import { CirclePlus, Settings, Pin, Trash, Menu, PinOff } from 'lucide-svelte';
   import { page } from '$app/state';
   import { manifest } from '$lib';
   import Spinner from '$lib/components/common/Spinner.svelte';
@@ -95,7 +95,11 @@
                   class="button button-secondary button-small"
                   on:click|preventDefault|stopPropagation={() => handlePinChat(chat.id)}
                   aria-label={chat.pinned ? 'Unpin chat' : 'Pin chat'}>
-                  <Pin size={16} class={!chat.pinned ? 'rotate-45' : ''} />
+                  {#if !chat.pinned}
+                    <Pin size={16}></Pin>
+                  {:else}
+                    <PinOff size={16}></PinOff>
+                  {/if}
                 </button>
                 <button
                   class="button button-secondary button-small"
