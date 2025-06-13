@@ -137,12 +137,6 @@ if (browser) {
           await saveChatAsThreadAndMessages(activeChat);
         }
       }
-
-      // Ensure chats are always sorted
-      const sortedChats = sortChats(chatList);
-      if (JSON.stringify(sortedChats) !== JSON.stringify(chatList)) {
-        chats.set(sortedChats);
-      }
     }
   });
 }
