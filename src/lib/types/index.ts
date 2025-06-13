@@ -1,7 +1,23 @@
+export type AttachmentType = 'image' | 'file';
+
+export type Attachment = {
+  id: string;
+  type: AttachmentType;
+  name: string;
+  size: number;
+  mimeType: string;
+  // Base64 encoded data for client-side storage
+  data: string;
+  // Optional preview URL for images
+  previewUrl?: string;
+};
+
 export type Message = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  // Optional attachments for user messages
+  attachments?: Attachment[];
   // Optional reasoning/thinking content emitted by some models
   reasoning?: string;
   providerInstanceId?: string;

@@ -6,7 +6,7 @@ import {
   saveChatAsThreadAndMessages,
   type Thread,
 } from '$lib/database';
-import type { Chat } from '$lib/types';
+import type { Attachment, Chat } from '$lib/types';
 import { get, writable, type Writable } from 'svelte/store';
 import { v7 as uuidv7 } from 'uuid';
 
@@ -154,8 +154,9 @@ const loadMutex: Record<string, Promise<Chat | null>> = {};
  * Creates a new chat and returns its ID
  * @param initialMessage Optional initial message to add to the chat
  * @param temporary Whether this chat should be temporary (not saved to IndexedDB)
+ * @param attachments Optional attachments for the initial message
  */
-export function createNewChat(initialMessage?: string, temporary?: boolean): string {
+export function createNewChat(initialMessage?: string, temporary?: boolean, attachments?: Attachment[]): string {
   const newChat: Chat = createInitialChat();
 
   // Mark as temporary if specified
@@ -173,6 +174,7 @@ export function createNewChat(initialMessage?: string, temporary?: boolean): str
       id: uuidv7(),
       role: 'user',
       content: initialMessage,
+      attachments: attachments,
       createdAt: new Date(),
       updatedAt: new Date(),
     });

@@ -35,10 +35,61 @@ export class OpenAICompatibleProvider implements LanguageModel {
     this.tokenCount = 0;
 
     const gen = async function* (this: OpenAICompatibleProvider) {
+      let hasFile = false;
+
+      const mappedMessages = messages.map((message) => {
+        const openaiMessage: OpenAI.Chat.Completions.ChatCompletionMessageParam = {
+          role: message.role,
+          content: message.content,
+        };
+
+        // Add attachments if present
+        if (message.attachments && message.attachments.length > 0) {
+          const contentParts: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
+
+          // Add text content if present
+          if (message.content) {
+            contentParts.push({
+              type: 'text',
+              text: message.content,
+            });
+          }
+
+          // Add attachments
+          for (const attachment of message.attachments) {
+            if (attachment.type === 'image') {
+              contentParts.push({
+                type: 'image_url',
+                image_url: {
+                  url: `data:${attachment.mimeType};base64,${attachment.data}`,
+                },
+              });
+            } else if (attachment.type === 'file') {
+              // Send file as structured content part (OpenRouter compatible)
+              contentParts.push({
+                type: 'file',
+                file: {
+                  filename: attachment.name,
+                  file_data: `data:${attachment.mimeType};base64,${attachment.data}`,
+                },
+              } as unknown as OpenAI.Chat.Completions.ChatCompletionContentPart);
+              hasFile = true;
+            }
+          }
+
+          if (contentParts.length > 0) {
+            openaiMessage.content = contentParts;
+          }
+        }
+
+        return openaiMessage;
+      });
+
       const response = await this.client.chat.completions.create({
         model: this.config.model as string,
-        messages: messages.map(({ role, content }) => ({ role, content })),
+        messages: mappedMessages,
         stream: true,
+        ...(hasFile ? { plugins: [{ id: 'file-parser' }] } : {}),
       });
 
       for await (const chunk of response) {

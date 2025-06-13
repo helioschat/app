@@ -1,7 +1,7 @@
 <script lang="ts">
   import { chats, loadChat, clearTemporaryChats } from '$lib/stores/chat';
   import { selectedModel } from '$lib/settings/SettingsManager';
-  import type { Message } from '$lib/types';
+  import type { Message, Attachment } from '$lib/types';
   import { page } from '$app/stores';
   import { tick, onMount, onDestroy } from 'svelte';
   import { streamStates, endStream } from '$lib/streaming';
@@ -21,41 +21,51 @@
   let userInput = '';
   let initialMessageProcessed = false;
 
-  const streamControllers: Record<string, StreamingController> = {};
+  // Map provides clearer semantics and easier cleanup than a plain object
+  const streamControllers = new Map<string, StreamingController>();
 
   /**
    * Retrieves or creates a StreamingController for a given chat ID.
    * This ensures that each chat has its own controller, allowing for concurrent streams.
    */
-  function getOrCreateStreamController(id: string): StreamingController | null {
-    if (streamControllers[id]) {
-      return streamControllers[id];
+  function getOrCreateStreamController(id: string): StreamingController {
+    let controller = streamControllers.get(id);
+    if (!controller) {
+      controller = new StreamingController(id);
+      streamControllers.set(id, controller);
     }
-
-    const newController = new StreamingController(id);
-    streamControllers[id] = newController;
-    return newController;
+    return controller;
   }
 
   /**
    * Handles the submission of a new message from the user.
    */
-  async function handleSubmit() {
+  async function handleSubmit(e: Event, attachments?: Attachment[]) {
     const messageContent = userInput;
-    if (!messageContent.trim() || !activeChat || isLoading || !$selectedModel) return;
+    if (
+      (!messageContent.trim() && (!attachments || attachments.length === 0)) ||
+      !activeChat ||
+      isLoading ||
+      !$selectedModel
+    )
+      return;
 
     const controller = getOrCreateStreamController(chatId);
-    if (!controller) return;
-
     userInput = ''; // Clear input
-    controller.handleSubmit(messageContent, activeChat, $selectedModel.providerInstanceId, $selectedModel.modelId);
+    controller.handleSubmit(
+      messageContent,
+      activeChat,
+      $selectedModel.providerInstanceId,
+      $selectedModel.modelId,
+      attachments,
+    );
   }
 
   /**
    * Handles the "Stop" button action to cancel an in-progress stream.
    */
   async function handleStop() {
-    const controller = getOrCreateStreamController(chatId);
+    const controller = streamControllers.get(chatId);
     if (controller) {
       await controller.cancelStream();
     } else {
@@ -92,6 +102,7 @@
     }
 
     const originalUserInput = previousMessage.content;
+    const originalAttachments = previousMessage.attachments;
 
     // Truncate chat history to the point *before* the user message we are regenerating from.
     const truncatedMessages = activeChat.messages.slice(0, messageIndex - 1);
@@ -113,12 +124,16 @@
 
     // Resubmit the original user prompt to the now-truncated chat.
     const controller = getOrCreateStreamController(chatId);
-    if (!controller) return;
-
     const updatedChat = $chats.find((c) => c.id === chatId);
     if (!updatedChat) return;
 
-    await controller.handleSubmit(originalUserInput, updatedChat, storedProviderInstanceId, storedModelId);
+    await controller.handleSubmit(
+      originalUserInput,
+      updatedChat,
+      storedProviderInstanceId,
+      storedModelId,
+      originalAttachments,
+    );
   }
 
   onMount(() => {
@@ -140,9 +155,9 @@
 
   onDestroy(() => {
     // Clean up the controller for this chat if it's not streaming, to save memory.
-    const controller = streamControllers[chatId];
+    const controller = streamControllers.get(chatId);
     if (controller && !$streamStates[chatId]?.isStreaming) {
-      delete streamControllers[chatId];
+      streamControllers.delete(chatId);
     }
 
     // Clean up temporary chats when navigating away
@@ -169,6 +184,7 @@
           activeChat,
           $selectedModel.providerInstanceId,
           $selectedModel.modelId,
+          activeChat.messages[0].attachments,
         );
       }
     }, 100);

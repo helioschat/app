@@ -3,15 +3,16 @@
   import { createNewChat } from '$lib/stores/chat';
   import { manifest } from '$lib';
   import ChatInput from '$lib/components/chat/ChatInput.svelte';
+  import type { Attachment } from '$lib/types';
 
   let searchInput = $state('');
   let isTemporary = $state(false);
 
-  async function handleSearch(e: Event) {
+  async function handleSearch(e: Event, attachments?: Attachment[]) {
     e.preventDefault();
-    if (!searchInput.trim()) return;
+    if (!searchInput.trim() && (!attachments || attachments.length === 0)) return;
 
-    const newChatId = createNewChat(searchInput, isTemporary);
+    const newChatId = createNewChat(searchInput, isTemporary, attachments);
     goto(`/${newChatId}`);
   }
 

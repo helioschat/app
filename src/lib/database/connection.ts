@@ -1,5 +1,5 @@
 import { browser } from '$app/environment';
-import { DB_NAME, DB_VERSION, MESSAGE_STORE, THREAD_STORE } from './types';
+import { ATTACHMENT_STORE, DB_NAME, DB_VERSION, MESSAGE_STORE, THREAD_STORE } from './types';
 
 // Database connection singleton
 let dbPromise: Promise<IDBDatabase> | null = null;
@@ -34,6 +34,14 @@ if (browser) {
         const messageStore = db.createObjectStore(MESSAGE_STORE, { keyPath: 'id' });
         messageStore.createIndex('threadId', 'threadId', { unique: false });
         messageStore.createIndex('timestamp', 'timestamp', { unique: false });
+      }
+
+      // Create the attachments store if it doesn't exist
+      if (!db.objectStoreNames.contains(ATTACHMENT_STORE)) {
+        const attachmentStore = db.createObjectStore(ATTACHMENT_STORE, { keyPath: 'id' });
+        attachmentStore.createIndex('messageId', 'messageId', { unique: false });
+        attachmentStore.createIndex('threadId', 'threadId', { unique: false });
+        attachmentStore.createIndex('createdAt', 'createdAt', { unique: false });
       }
     };
   });

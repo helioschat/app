@@ -1,5 +1,6 @@
 <script lang="ts">
   import MarkdownRenderer from '$lib/components/chat/MarkdownRenderer.svelte';
+  import MessageAttachments from '$lib/components/chat/MessageAttachments.svelte';
   import { likelyContainsMarkdown } from '$lib/utils/markdown';
   import type { Message } from '$lib/types';
   import { isMessageStreaming } from '$lib/streaming';
@@ -87,16 +88,21 @@
   {/if}
   <div class="message-container peer">
     <div class="message-content">
-      {#if shouldUseMarkdown}
-        <MarkdownRenderer content={message.content} isStreaming={isCurrentlyStreaming && message.role === 'assistant'}
-        ></MarkdownRenderer>
-      {:else}
-        <p class="whitespace-pre-wrap">
-          {message.content}
-          {#if isCurrentlyStreaming && message.role === 'assistant'}
-            <span class="cursor">▋</span>
-          {/if}
-        </p>
+      {#if message.attachments && message.attachments.length > 0}
+        <MessageAttachments attachments={message.attachments} isSent></MessageAttachments>
+      {/if}
+      {#if message.content}
+        {#if shouldUseMarkdown}
+          <MarkdownRenderer content={message.content} isStreaming={isCurrentlyStreaming && message.role === 'assistant'}
+          ></MarkdownRenderer>
+        {:else}
+          <p class="whitespace-pre-wrap">
+            {message.content}
+            {#if isCurrentlyStreaming && message.role === 'assistant'}
+              <span class="cursor">▋</span>
+            {/if}
+          </p>
+        {/if}
       {/if}
     </div>
   </div>

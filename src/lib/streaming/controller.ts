@@ -1,7 +1,7 @@
 import { getLanguageModel } from '$lib/providers/registry';
 import { chats } from '$lib/stores/chat';
 import { advancedSettings, providerInstances } from '$lib/stores/settings';
-import type { Chat, Message, ProviderInstance } from '$lib/types';
+import type { Attachment, Chat, Message, ProviderInstance } from '$lib/types';
 import { get } from 'svelte/store';
 import { v7 as uuidv7 } from 'uuid';
 import { MessageProcessor } from './messageProcessor';
@@ -106,8 +106,9 @@ export class StreamingController {
     activeChat: Chat,
     providerInstanceId: string,
     modelId: string,
+    attachments?: Attachment[],
   ): Promise<StreamControllerState> {
-    if (!userInput.trim() || !activeChat || this.isLoading) {
+    if ((!userInput.trim() && (!attachments || attachments.length === 0)) || !activeChat || this.isLoading) {
       return this.getState();
     }
 
@@ -141,12 +142,21 @@ export class StreamingController {
         updatedAt: new Date(),
       };
       updatedMessages = [...activeChat.messages, assistantMessage];
-      messagesForProvider.push(...activeChat.messages);
+
+      // Make sure to include attachments in the existing user message for the provider
+      const messagesWithAttachments = activeChat.messages.map((msg) => {
+        if (msg.role === 'user' && msg.content === userInput && attachments && attachments.length > 0) {
+          return { ...msg, attachments };
+        }
+        return msg;
+      });
+      messagesForProvider.push(...messagesWithAttachments);
     } else {
       const userMessage: Message = {
         id: uuidv7(),
         role: 'user',
         content: userInput,
+        attachments: attachments,
         createdAt: new Date(),
         updatedAt: new Date(),
       };

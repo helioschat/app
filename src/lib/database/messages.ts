@@ -1,5 +1,6 @@
 import { browser } from '$app/environment';
 import type { ChatError } from '$lib/types';
+import { getAttachmentsForMessage } from './attachments';
 import { getDB, getStore, promisify } from './connection';
 import { MESSAGE_STORE, type RawMessage, type StoredMessage } from './types';
 
@@ -10,14 +11,32 @@ export async function getMessagesForThread(threadId: string): Promise<StoredMess
     const store = getStore(db, MESSAGE_STORE);
     const rawMessages = (await promisify(store.index('threadId').getAll(threadId))) as RawMessage[];
 
-    return rawMessages
-      .map((msg) => ({
-        ...msg,
-        createdAt: new Date(msg.createdAt),
-        updatedAt: new Date(msg.updatedAt),
-        error: msg.error ? (JSON.parse(msg.error) as ChatError) : undefined,
-      }))
-      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    // Convert raw messages and load attachments separately
+    const messages = await Promise.all(
+      rawMessages.map(async (msg) => {
+        const attachments = await getAttachmentsForMessage(msg.id);
+
+        return {
+          ...msg,
+          createdAt: new Date(msg.createdAt),
+          updatedAt: new Date(msg.updatedAt),
+          error: msg.error ? (JSON.parse(msg.error) as ChatError) : undefined,
+          attachments:
+            attachments.length > 0
+              ? attachments.map((att) => ({
+                  id: att.id,
+                  name: att.name,
+                  size: att.size,
+                  mimeType: att.mimeType,
+                  data: att.data,
+                  type: att.type as 'image' | 'file',
+                }))
+              : undefined,
+        } as StoredMessage;
+      }),
+    );
+
+    return messages.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   } catch (error) {
     console.error('Error getting messages from IndexedDB:', error);
     return [];
