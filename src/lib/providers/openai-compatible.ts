@@ -30,32 +30,27 @@ export class OpenAICompatibleProvider implements LanguageModel {
     this.tokenCount = 0;
 
     const gen = async function* (this: OpenAICompatibleProvider) {
-      try {
-        const response = await this.client.chat.completions.create({
-          model: this.config.model as string,
-          messages: messages.map(({ role, content }) => ({ role, content })),
-          stream: true,
-        });
+      const response = await this.client.chat.completions.create({
+        model: this.config.model as string,
+        messages: messages.map(({ role, content }) => ({ role, content })),
+        stream: true,
+      });
 
-        for await (const chunk of response) {
-          const delta = chunk.choices[0]?.delta as {
-            content?: string;
-            reasoning?: string | null;
-          };
+      for await (const chunk of response) {
+        const delta = chunk.choices[0]?.delta as {
+          content?: string;
+          reasoning?: string | null;
+        };
 
-          // Handle reasoning if provided by model (e.g., :thinking models)
-          if (delta?.reasoning) {
-            yield `[REASONING]${delta.reasoning}`;
-          }
-
-          if (delta?.content) {
-            this.tokenCount++;
-            yield delta.content as string;
-          }
+        // Handle reasoning if provided by model (e.g., :thinking models)
+        if (delta?.reasoning) {
+          yield `[REASONING]${delta.reasoning}`;
         }
-      } catch (error) {
-        // Just rethrow the error, let the streaming controller handle it
-        throw error;
+
+        if (delta?.content) {
+          this.tokenCount++;
+          yield delta.content as string;
+        }
       }
     }.bind(this)();
     return toReadableStream(gen);
