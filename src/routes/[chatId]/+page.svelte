@@ -68,11 +68,20 @@
    * Handles the "Regenerate" button action for an assistant message.
    */
   async function handleRegenerate(messageToRegenerate: Message) {
-    if (!activeChat || isLoading || !$selectedModel) return;
+    if (!activeChat || isLoading) return;
 
     const messageIndex = activeChat.messages.findIndex((m) => m.id === messageToRegenerate.id);
     if (messageIndex < 1 || activeChat.messages[messageIndex].role !== 'assistant') {
       console.error('Cannot regenerate: not a valid assistant message.');
+      return;
+    }
+
+    // Use the message's stored provider and model information
+    const storedProviderInstanceId = messageToRegenerate.providerInstanceId;
+    const storedModelId = messageToRegenerate.model;
+
+    if (!storedProviderInstanceId || !storedModelId) {
+      console.error('Cannot regenerate: message does not have stored provider or model information.');
       return;
     }
 
@@ -109,12 +118,7 @@
     const updatedChat = $chats.find((c) => c.id === chatId);
     if (!updatedChat) return;
 
-    await controller.handleSubmit(
-      originalUserInput,
-      updatedChat,
-      $selectedModel.providerInstanceId,
-      $selectedModel.modelId,
-    );
+    await controller.handleSubmit(originalUserInput, updatedChat, storedProviderInstanceId, storedModelId);
   }
 
   onMount(() => {
