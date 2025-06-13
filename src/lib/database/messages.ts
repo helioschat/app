@@ -4,6 +4,18 @@ import { getAttachmentsForMessage } from './attachments';
 import { getDB, getStore, promisify } from './connection';
 import { MESSAGE_STORE, type RawMessage, type StoredMessage } from './types';
 
+// Helper to create a temporary object URL from base64 encoded data
+export function createPreviewUrl(base64Data: string, mimeType: string): string {
+  const binary = atob(base64Data);
+  const len = binary.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  const blob = new Blob([bytes], { type: mimeType });
+  return URL.createObjectURL(blob);
+}
+
 export async function getMessagesForThread(threadId: string): Promise<StoredMessage[]> {
   if (!browser) return [];
   try {
@@ -30,6 +42,7 @@ export async function getMessagesForThread(threadId: string): Promise<StoredMess
                   mimeType: att.mimeType,
                   data: att.data,
                   type: att.type as 'image' | 'file',
+                  previewUrl: att.type === 'image' ? createPreviewUrl(att.data, att.mimeType) : undefined,
                 }))
               : undefined,
         } as StoredMessage;

@@ -1,4 +1,5 @@
 import type { Attachment, AttachmentType } from '$lib/types';
+import { createPreviewUrl } from '$lib/database/messages';
 import { v7 as uuidv7 } from 'uuid';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -81,9 +82,9 @@ export async function createAttachment(file: File): Promise<Attachment | null> {
     data,
   };
 
-  // Create preview URL for images
+  // Create preview URL for images using shared helper
   if (attachmentType === 'image') {
-    attachment.previewUrl = URL.createObjectURL(file);
+    attachment.previewUrl = createPreviewUrl(data, file.type);
   }
 
   return attachment;
