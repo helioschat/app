@@ -79,7 +79,7 @@
           <button
             type="button"
             on:click={openModelSelector}
-            disabled={isLoading}
+            disabled={isLoading || !browser}
             class="button button-primary button-small !px-2">
             <span>{$selectedModel?.modelId || 'Select Model'}</span>
           </button>
