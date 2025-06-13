@@ -66,6 +66,17 @@ export class SettingsManager {
   }
 
   private getInitialSelectedModel(): SelectedModel | null {
+    if (browser) {
+      const storedValue = localStorage.getItem('selectedModel');
+      if (storedValue) {
+        try {
+          return JSON.parse(storedValue);
+        } catch (error) {
+          console.error('Error parsing selected model from localStorage', error);
+          return null;
+        }
+      }
+    }
     return null;
   }
 
