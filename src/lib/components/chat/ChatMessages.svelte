@@ -2,8 +2,8 @@
   import type { Chat, Message } from '$lib/types';
   import MessageItem from '$lib/components/chat/MessageItem.svelte';
   import ChatNotice from '$lib/components/chat/ChatNotice.svelte';
-  import { chatError } from '$lib/stores/error';
   import { scrollState } from '$lib/stores/scroll';
+  import { RefreshCw } from 'lucide-svelte';
   import { onMount } from 'svelte';
 
   export let chat: Chat;
@@ -56,13 +56,27 @@
   bind:this={messagesContainer}
   on:scroll={handleScroll}>
   {#each chat.messages as message (message.id)}
-    {#if message.role === 'assistant' && message.content === '' && $chatError}
+    {#if message.role === 'assistant' && message.error}
       <ChatNotice type="error">
-        <div class="flex flex-col gap-1">
-          <p class="font-medium">{$chatError.message}</p>
-          {#if $chatError.code}
-            <p class="text-sm opacity-75">Error code: {$chatError.code}</p>
-          {/if}
+        <div class="flex flex-col gap-3">
+          <div class="flex flex-col gap-1">
+            <p class="font-medium">{message.error.message}</p>
+            {#if message.error.code}
+              <p class="text-sm opacity-75">Error code: {message.error.code}</p>
+            {/if}
+            {#if message.content && message.content.length > 0}
+              <div class="mt-2 rounded bg-black/10 p-2 text-sm">
+                <p class="mb-1 font-medium opacity-75">Partial response:</p>
+                <p class="whitespace-pre-wrap">{message.content}</p>
+              </div>
+            {/if}
+          </div>
+          <div class="flex justify-end">
+            <button class="button button-secondary button-small" on:click={() => handleRegenerate(message)}>
+              <RefreshCw size={16}></RefreshCw>
+              Regenerate
+            </button>
+          </div>
         </div>
       </ChatNotice>
     {:else}

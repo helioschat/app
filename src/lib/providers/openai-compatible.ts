@@ -1,5 +1,4 @@
 import OpenAI from 'openai';
-import { setChatError } from '../stores/error';
 import type { Message, ProviderConfig } from '../types';
 import type { LanguageModel, ModelInfo } from './base';
 import { toReadableStream } from './base';
@@ -9,17 +8,6 @@ interface OpenAIModel extends OpenAI.Models.Model {
   description?: string;
   context_length?: number;
   huggingface_id?: string;
-}
-
-interface OpenAIErrorDetails {
-  message: string;
-  type: string;
-  param: string | null;
-  code: string;
-}
-
-export interface OpenAIError extends Error {
-  error: OpenAIErrorDetails;
 }
 
 export class OpenAICompatibleProvider implements LanguageModel {
@@ -66,42 +54,11 @@ export class OpenAICompatibleProvider implements LanguageModel {
           }
         }
       } catch (error) {
-        // Handle OpenAI API errors
-        if (this.isOpenAIError(error)) {
-          setChatError({
-            message: error.error.message,
-            type: error.error.type,
-            param: error.error.param,
-            code: error.error.code,
-            provider: this.id,
-          });
-        } else {
-          // Handle other errors
-          setChatError({
-            message: error instanceof Error ? error.message : 'An unknown error occurred',
-            type: 'unknown_error',
-            provider: this.id,
-          });
-        }
+        // Just rethrow the error, let the streaming controller handle it
         throw error;
       }
     }.bind(this)();
     return toReadableStream(gen);
-  }
-
-  private isOpenAIError(error: unknown): error is OpenAIError {
-    if (!(error instanceof Error)) return false;
-
-    const err = error as { error?: unknown };
-    if (!err.error || typeof err.error !== 'object') return false;
-
-    const details = err.error as Partial<OpenAIErrorDetails>;
-    return (
-      typeof details.message === 'string' &&
-      typeof details.type === 'string' &&
-      (details.param === null || typeof details.param === 'string') &&
-      typeof details.code === 'string'
-    );
   }
 
   // Get the actual completion token count from the stream
@@ -160,15 +117,6 @@ export class OpenAICompatibleProvider implements LanguageModel {
       }));
     } catch (error) {
       // Handle API errors for model listing
-      if (this.isOpenAIError(error)) {
-        setChatError({
-          message: error.error.message,
-          type: error.error.type,
-          param: error.error.param,
-          code: error.error.code,
-          provider: this.id,
-        });
-      }
       console.error('Error fetching OpenAI-compatible models:', error);
       // Fallback
       return [];

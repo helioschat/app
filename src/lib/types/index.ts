@@ -10,6 +10,8 @@ export type Message = {
   metrics?: StreamMetrics;
   createdAt: Date;
   updatedAt: Date;
+  // Error information for failed assistant messages
+  error?: ChatError;
 };
 
 export type Chat = {
@@ -67,4 +69,12 @@ export interface StreamMetrics {
 // Interface that language model implementations may satisfy for token counting
 export interface TokenCountable {
   countTokens(messages: Message[]): Promise<{ promptTokens: number; totalTokens: number }>;
+}
+
+export interface ChatError {
+  message: string;
+  type: string;
+  param?: string | null;
+  code?: string;
+  provider?: string;
 }

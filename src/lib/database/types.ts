@@ -25,7 +25,8 @@ export type RawThread = Omit<Thread, 'createdAt' | 'updatedAt' | 'lastMessageDat
   lastMessageDate: string;
 };
 
-export type RawMessage = Omit<StoredMessage, 'createdAt' | 'updatedAt'> & {
+export type RawMessage = Omit<StoredMessage, 'createdAt' | 'updatedAt' | 'error'> & {
   createdAt: string;
   updatedAt: string;
+  error?: string; // JSON serialized ChatError
 };

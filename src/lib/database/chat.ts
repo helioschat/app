@@ -32,6 +32,7 @@ export async function getChatFromThread(threadId: string): Promise<Chat | null> 
         model,
         usage,
         metrics,
+        error,
         createdAt,
         updatedAt,
       }) => ({
@@ -44,6 +45,7 @@ export async function getChatFromThread(threadId: string): Promise<Chat | null> 
         model,
         usage,
         metrics,
+        error,
         createdAt,
         updatedAt,
       }),

@@ -4,7 +4,6 @@ import { advancedSettings, providerInstances } from '$lib/stores/settings';
 import type { Chat, Message, ProviderInstance } from '$lib/types';
 import { get } from 'svelte/store';
 import { v7 as uuidv7 } from 'uuid';
-import { clearChatError } from '../stores/error';
 import { MessageProcessor } from './messageProcessor';
 import { endStream, startStream } from './state';
 import { StreamProcessor } from './streamProcessor';
@@ -111,8 +110,6 @@ export class StreamingController {
     if (!userInput.trim() || !activeChat || this.isLoading) {
       return this.getState();
     }
-
-    clearChatError();
 
     const isExistingUserMessage =
       activeChat.messages.length === 1 &&
@@ -239,6 +236,34 @@ export class StreamingController {
     console.error('Stream error:', error);
     this.currentReader = null;
 
+    // Extract error details based on the error type
+    let errorDetails: { message: string; type: string; param?: string | null; code?: string; provider?: string };
+
+    if (error && typeof error === 'object' && 'error' in error) {
+      const apiError = error as { error: Record<string, string | null> };
+      if (apiError.error && typeof apiError.error === 'object') {
+        errorDetails = {
+          message: String(apiError.error.message || 'An unknown error occurred'),
+          type: String(apiError.error.type || 'unknown_error'),
+          param: apiError.error.param || null,
+          code: apiError.error.code ? String(apiError.error.code) : undefined,
+          provider: 'openai-compatible',
+        };
+      } else {
+        errorDetails = {
+          message: error instanceof Error ? error.message : 'An unknown error occurred',
+          type: 'unknown_error',
+          provider: 'openai-compatible',
+        };
+      }
+    } else {
+      errorDetails = {
+        message: error instanceof Error ? error.message : 'An unknown error occurred',
+        type: 'unknown_error',
+        provider: 'openai-compatible',
+      };
+    }
+
     chats.update((allChats) => {
       return allChats.map((chat) => {
         if (chat.id !== this.chatId) return chat;
@@ -258,6 +283,7 @@ export class StreamingController {
             return {
               ...msg,
               content: hasPartialContent ? currentMessage!.content : fallbackContent,
+              error: errorDetails,
               updatedAt: new Date(),
               usage: {
                 promptTokens: this.streamMetrics.promptTokens,
@@ -270,10 +296,8 @@ export class StreamingController {
           return msg;
         });
 
-        if (!hasPartialContent) {
-          endStream(this.chatId);
-          this.currentlyStreamingMessageId = '';
-        }
+        endStream(this.chatId);
+        this.currentlyStreamingMessageId = '';
 
         return {
           ...chat,

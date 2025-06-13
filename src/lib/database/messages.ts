@@ -1,4 +1,5 @@
 import { browser } from '$app/environment';
+import type { ChatError } from '$lib/types';
 import { getDB, getStore, promisify } from './connection';
 import { MESSAGE_STORE, type RawMessage, type StoredMessage } from './types';
 
@@ -14,6 +15,7 @@ export async function getMessagesForThread(threadId: string): Promise<StoredMess
         ...msg,
         createdAt: new Date(msg.createdAt),
         updatedAt: new Date(msg.updatedAt),
+        error: msg.error ? (JSON.parse(msg.error) as ChatError) : undefined,
       }))
       .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   } catch (error) {
@@ -27,7 +29,16 @@ export async function saveMessage(message: StoredMessage): Promise<void> {
   try {
     const db = await getDB();
     const store = getStore(db, MESSAGE_STORE, 'readwrite');
-    await promisify(store.put(message));
+
+    // Serialize the message for storage, handling the error field
+    const messageToStore: RawMessage = {
+      ...message,
+      createdAt: message.createdAt.toISOString(),
+      updatedAt: message.updatedAt.toISOString(),
+      error: message.error ? JSON.stringify(message.error) : undefined,
+    };
+
+    await promisify(store.put(messageToStore));
   } catch (error) {
     console.error('Error saving message to IndexedDB:', error);
   }
