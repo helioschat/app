@@ -1,4 +1,6 @@
 import { browser } from '$app/environment';
+import { streamStates } from '$lib/streaming';
+import { get, writable, type Writable } from 'svelte/store';
 import {
   deleteThread,
   getAllThreads,
@@ -7,7 +9,6 @@ import {
   type Thread,
 } from '$lib/database';
 import type { Attachment, Chat } from '$lib/types';
-import { get, writable, type Writable } from 'svelte/store';
 import { v7 as uuidv7 } from 'uuid';
 
 // Initial chat template
@@ -130,11 +131,15 @@ if (browser) {
 
       // Only save the active chat to IndexedDB when it changes
       // This improves performance by not saving all chats every time
-      // Skip temporary chats as they shouldn't be saved
+      // Skip temporary chats and chats currently streaming to reduce writes
       if (currentActiveChatId) {
         const activeChat = chatList.find((chat) => chat.id === currentActiveChatId);
-        if (activeChat && !activeChat.temporary) {
-          await saveChatAsThreadAndMessages(activeChat);
+        if (activeChat) {
+          const streamingState = get(streamStates)[activeChat.id];
+          const isStreaming = streamingState?.isStreaming ?? false;
+          if (!activeChat.temporary && !isStreaming) {
+            await saveChatAsThreadAndMessages(activeChat);
+          }
         }
       }
     }
