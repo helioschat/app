@@ -55,6 +55,9 @@
         {#if modelFeatures.includes('image')}
           <Pill text="Image" size="sm" variant="secondary"></Pill>
         {/if}
+        {#if modelFeatures.includes('file')}
+          <Pill text="File" size="sm" variant="success"></Pill>
+        {/if}
       </div>
     {/if}
   </div>
