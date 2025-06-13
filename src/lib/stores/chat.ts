@@ -163,16 +163,24 @@ export function createNewChat(initialMessage?: string, temporary?: boolean, atta
     newChat.temporary = true;
   }
 
-  // If an initial message is provided, add it as a user message
-  if (initialMessage && initialMessage.trim()) {
-    initialMessage = initialMessage.trim();
+  // If an initial message is provided OR attachments exist, add it as a user message
+  const hasText = initialMessage && initialMessage.trim();
+  const hasAttachments = attachments && attachments.length > 0;
 
-    newChat.title = initialMessage.length > 30 ? initialMessage.substring(0, 30) + '...' : initialMessage;
+  if (hasText || hasAttachments) {
+    const trimmedText = hasText ? (initialMessage as string).trim() : '';
+
+    // Set chat title if not already set from text
+    if (hasText) {
+      newChat.title = trimmedText.length > 30 ? trimmedText.substring(0, 30) + '...' : trimmedText;
+    } else if (hasAttachments) {
+      newChat.title = 'Attachments';
+    }
 
     newChat.messages.push({
       id: uuidv7(),
       role: 'user',
-      content: initialMessage,
+      content: trimmedText,
       attachments: attachments,
       createdAt: new Date(),
       updatedAt: new Date(),
