@@ -8,6 +8,7 @@
   import ConfirmationModal from '$lib/components/modal/types/ConfirmationModal.svelte';
   import { fade } from 'svelte/transition';
   import { streamStates } from '$lib/streaming';
+  import { groupChatsByDate } from '$lib/utils/date';
 
   const COLLAPSE_ANIMATION_DURATION = 150; //ms
 
@@ -74,31 +75,38 @@
     <nav
       class="flex flex-1 flex-col gap-y-0.5 overflow-y-auto"
       transition:fade={{ duration: COLLAPSE_ANIMATION_DURATION * 0.75 }}>
-      {#each $chats.filter((chat) => !chat.temporary) as chat}
-        {@const isSelected = chat.id === page.params.chatId}
-        {@const isGenerating = $streamStates[chat.id]?.isStreaming ?? false}
-        <a
-          href="/{chat.id}"
-          class="thread-item group flex h-9 items-center justify-between rounded-[10px] py-2 pr-0.5 pl-2.5"
-          class:selected={isSelected}
-          class:generating={isGenerating}
-          title={chat.title}>
-          <span class="truncate text-sm transition-colors duration-200">{chat.title}</span>
-          <div class="hidden items-center group-hover:flex">
-            <button
-              class="button button-secondary button-small"
-              on:click|preventDefault|stopPropagation={() => handlePinChat(chat.id)}
-              aria-label={chat.pinned ? 'Unpin chat' : 'Pin chat'}>
-              <Pin size={16} class={!chat.pinned ? 'rotate-45' : ''} />
-            </button>
-            <button
-              class="button button-secondary button-small"
-              on:click|preventDefault|stopPropagation={() => handleDeleteChat(chat.id)}
-              aria-label={`Delete chat ${chat.title}`}>
-              <Trash size={16} />
-            </button>
-          </div>
-        </a>
+      {#each groupChatsByDate($chats.filter((chat) => !chat.temporary)) as { group, chats: groupChats }}
+        <div class="group-section">
+          {#if group}
+            <h3 class="group-header mb-1 px-2.5 py-1 text-xs font-medium text-[var(--color-a11)]">{group}</h3>
+          {/if}
+          {#each groupChats as chat}
+            {@const isSelected = chat.id === page.params.chatId}
+            {@const isGenerating = $streamStates[chat.id]?.isStreaming ?? false}
+            <a
+              href="/{chat.id}"
+              class="thread-item group flex h-9 items-center justify-between rounded-[10px] py-2 pr-0.5 pl-2.5"
+              class:selected={isSelected}
+              class:generating={isGenerating}
+              title={chat.title}>
+              <span class="truncate text-sm transition-colors duration-200">{chat.title}</span>
+              <div class="hidden items-center group-hover:flex">
+                <button
+                  class="button button-secondary button-small"
+                  on:click|preventDefault|stopPropagation={() => handlePinChat(chat.id)}
+                  aria-label={chat.pinned ? 'Unpin chat' : 'Pin chat'}>
+                  <Pin size={16} class={!chat.pinned ? 'rotate-45' : ''} />
+                </button>
+                <button
+                  class="button button-secondary button-small"
+                  on:click|preventDefault|stopPropagation={() => handleDeleteChat(chat.id)}
+                  aria-label={`Delete chat ${chat.title}`}>
+                  <Trash size={16} />
+                </button>
+              </div>
+            </a>
+          {/each}
+        </div>
       {/each}
       {#if $isLoadingChats}
         <div class="flex justify-center py-2">
@@ -125,6 +133,24 @@
 
   aside {
     transition: width var(--collapse-animation-duration) cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .group-section {
+    margin-bottom: 0.75rem;
+  }
+
+  .group-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .group-header {
+    color: var(--color-a9);
+    font-weight: 500;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
   }
 
   .thread-item.selected {
