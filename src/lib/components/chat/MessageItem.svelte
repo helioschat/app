@@ -87,7 +87,7 @@
     {/if}
   {/if}
   <div class="message-container peer">
-    <div class="message-content">
+    <div class="message-content flex flex-col gap-2">
       {#if message.attachments && message.attachments.length > 0}
         <MessageAttachments attachments={message.attachments} isSent></MessageAttachments>
       {/if}

@@ -66,7 +66,7 @@
 {/snippet}
 
 {#if attachments && attachments.length > 0}
-  <div class="mb-2 flex flex-wrap gap-2">
+  <div class="flex flex-wrap gap-2">
     {#each attachments as attachment (attachment.id)}
       <div
         class="attachment relative flex h-fit w-full max-w-full items-center gap-3 rounded-lg border border-[var(--color-6)] bg-[var(--color-3)] p-3 sm:w-fit sm:max-w-48 md:max-w-64 lg:max-w-96"
