@@ -334,4 +334,77 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
     baseUrlPatterns: [/https?:\/\/openrouter\.ai\/api/],
     apiKeyPrefixes: ['sk-or-v1-'],
   },
+  anthropic: {
+    id: 'anthropic',
+    name: 'Anthropic',
+    disabledModels: ['claude-3-5-sonnet-20240620'],
+    modelOverrides: {
+      // https://docs.anthropic.com/en/docs/about-claude/models/overview
+      'claude-opus-4-20250514': {
+        name: 'Claude Opus 4',
+        description: 'Our most capable model',
+        contextWindow: 200000,
+        architecture: {
+          inputModalities: ['text', 'image'],
+          outputModalities: ['text'],
+        },
+      },
+      'claude-sonnet-4-20250514': {
+        name: 'Claude Sonnet 4',
+        description: 'High-performance model',
+        contextWindow: 200000,
+        architecture: {
+          inputModalities: ['text', 'image'],
+          outputModalities: ['text'],
+        },
+      },
+      'claude-3-7-sonnet-20250219': {
+        name: 'Claude 3.7 Sonnet',
+        description: 'High-performance model with early extended thinking',
+        contextWindow: 200000,
+        architecture: {
+          inputModalities: ['text', 'image'],
+          outputModalities: ['text'],
+        },
+      },
+      'claude-3-5-sonnet-20241022': {
+        name: 'Claude 3.5 Sonnet',
+        description: 'Our previous intelligent model',
+        contextWindow: 200000,
+        architecture: {
+          inputModalities: ['text', 'image'],
+          outputModalities: ['text'],
+        },
+      },
+      'claude-3-5-haiku-20241022': {
+        name: 'Claude 3.5 Haiku',
+        description: 'Our fastest model',
+        contextWindow: 200000,
+        architecture: {
+          inputModalities: ['text', 'image'],
+          outputModalities: ['text'],
+        },
+      },
+      'claude-3-opus-20240229': {
+        name: 'Claude 3 Opus',
+        description: 'Powerful model for complex tasks',
+        contextWindow: 200000,
+        architecture: {
+          inputModalities: ['text', 'image'],
+          outputModalities: ['text'],
+        },
+      },
+      'claude-3-haiku-20240307': {
+        name: 'Claude 3 Haiku',
+        description: 'Fast and compact model for near-instant responsiveness',
+        contextWindow: 200000,
+        architecture: {
+          inputModalities: ['text', 'image'],
+          outputModalities: ['text'],
+        },
+      },
+    },
+    baseUrlPatterns: [/https?:\/\/api\.anthropic\.com/],
+    apiKeyPrefixes: ['sk-ant-api'],
+  },
 };

@@ -5,6 +5,7 @@ import { toReadableStream } from './base';
 
 interface OpenAIModel extends OpenAI.Models.Model {
   name?: string;
+  display_name?: string;
   description?: string;
   architecture?: {
     input_modalities?: string[];
@@ -12,6 +13,7 @@ interface OpenAIModel extends OpenAI.Models.Model {
     modality?: string;
   };
   context_length?: number;
+  created_at?: string;
   huggingface_id?: string;
 }
 
@@ -27,6 +29,16 @@ export class OpenAICompatibleProvider implements LanguageModel {
       apiKey: config.apiKey,
       baseURL: config.baseURL,
       dangerouslyAllowBrowser: true,
+
+      ...(config.matchedProvider === 'anthropic'
+        ? {
+            defaultHeaders: {
+              'anthropic-dangerous-direct-browser-access': 'true',
+              'anthropic-version': '2023-06-01',
+              'x-api-key': config.apiKey,
+            },
+          }
+        : {}),
     });
     this.config = config;
   }
@@ -160,7 +172,7 @@ export class OpenAICompatibleProvider implements LanguageModel {
 
       return response.data.map((model: OpenAIModel) => ({
         id: model.id,
-        name: model.name || model.id,
+        name: model.name || model.display_name || model.id,
         description: model.description || `OpenAI-compatible model ${model.id}`,
         architecture: {
           inputModalities: model.architecture?.input_modalities,
@@ -169,7 +181,14 @@ export class OpenAICompatibleProvider implements LanguageModel {
         },
         contextWindow: model.context_length,
         huggingfaceId: model.huggingface_id,
-        createdAt: model.created,
+        createdAt:
+          model.created ||
+          (() => {
+            if (!model.created_at) return undefined;
+            const date = new Date(model.created_at);
+            if (date.getFullYear() < 2010) return undefined;
+            return date.getTime();
+          })(),
       }));
     } catch (error) {
       // Handle API errors for model listing
