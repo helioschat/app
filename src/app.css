@@ -313,7 +313,7 @@ html {
 textarea,
 input,
 select {
-  @apply rounded-[28px] p-3;
+  @apply resize-none rounded-[28px] p-3 outline-none;
 }
 
 .button {

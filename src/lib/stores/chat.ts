@@ -343,3 +343,44 @@ export async function toggleChatPin(id: string): Promise<void> {
     return sortChats([...allChats]);
   });
 }
+
+/**
+ * Edits a message and truncates messages after it
+ * @param chatId The ID of the chat containing the message
+ * @param messageId The ID of the message to edit
+ * @param newContent The new content for the message
+ */
+export function editMessage(chatId: string, messageId: string, newContent: string): void {
+  chats.update((allChats) => {
+    const chatIndex = allChats.findIndex((c) => c.id === chatId);
+    if (chatIndex === -1) return allChats;
+
+    const chat = allChats[chatIndex];
+    const messageIndex = chat.messages.findIndex((m) => m.id === messageId);
+    if (messageIndex === -1) return allChats;
+
+    // Create new messages array with the edit and truncate after
+    const newMessages = chat.messages.slice(0, messageIndex + 1);
+    newMessages[messageIndex] = {
+      ...newMessages[messageIndex],
+      content: newContent,
+      updatedAt: new Date(),
+    };
+
+    // Update the chat
+    const updatedChat = {
+      ...chat,
+      messages: newMessages,
+      updatedAt: new Date(),
+    };
+
+    allChats[chatIndex] = updatedChat;
+
+    // Save to IndexedDB if not temporary
+    if (browser && !updatedChat.temporary) {
+      saveChatAsThreadAndMessages(updatedChat);
+    }
+
+    return [...allChats];
+  });
+}

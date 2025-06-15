@@ -243,6 +243,113 @@ export class StreamingController {
     return this.getState();
   }
 
+  /**
+   * Regenerates response from the current conversation state without adding a new user message
+   * Used for message editing where we want to generate from the existing (edited) conversation
+   */
+  async handleRegenerate(
+    activeChat: Chat,
+    providerInstanceId: string,
+    modelId: string,
+  ): Promise<StreamControllerState> {
+    if (!activeChat || this.isLoading || activeChat.messages.length === 0) {
+      return this.getState();
+    }
+
+    const model = this.buildModel(providerInstanceId, modelId);
+    const systemPrompt = get(advancedSettings).systemPrompt;
+
+    // Create assistant message
+    const assistantMessage: MessageWithAttachments = {
+      id: uuidv7(),
+      role: 'assistant',
+      content: '',
+      providerInstanceId: providerInstanceId,
+      model: modelId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const updatedMessages = [...activeChat.messages, assistantMessage];
+
+    // Prepare messages for provider
+    const messagesForProvider = [];
+    if (systemPrompt) {
+      messagesForProvider.push({
+        role: 'system',
+        content: systemPrompt,
+      });
+    }
+    messagesForProvider.push(...activeChat.messages);
+
+    const updatedChat = {
+      ...activeChat,
+      providerInstanceId: activeChat.providerInstanceId || providerInstanceId,
+      model: modelId,
+      messages: updatedMessages,
+      updatedAt: new Date(),
+    };
+
+    chats.update((allChats) => allChats.map((chat) => (chat.id === this.chatId ? updatedChat : chat)));
+
+    this.isLoading = true;
+    this.currentlyStreamingMessageId = assistantMessage.id;
+
+    const contextMessages: StreamContextMessage[] = updatedMessages.map((m) => ({
+      id: m.id,
+      role: m.role,
+      content: m.content,
+      providerInstanceId: m.providerInstanceId,
+      model: m.model,
+      usage: m.usage,
+      metrics: m.metrics,
+      reasoning: m.reasoning,
+      attachmentIds: m.attachments?.map((att) => att.id),
+      createdAt: m.createdAt,
+      updatedAt: m.updatedAt,
+    }));
+
+    startStream(this.chatId, assistantMessage.id, contextMessages);
+
+    try {
+      this.streamMetrics = {
+        startTime: Date.now(),
+        promptTokens: 0,
+        completionTokens: 0,
+        totalTokens: 0,
+      };
+
+      try {
+        this.streamMetrics.promptTokens = await MessageProcessor.estimatePromptTokens(updatedMessages, model);
+        this.streamMetrics.totalTokens = this.streamMetrics.promptTokens;
+      } catch (e) {
+        console.error('Error estimating tokens:', e);
+      }
+
+      const stream = model.stream(messagesForProvider as MessageWithAttachments[]);
+      this.currentReader = stream.getReader();
+
+      const streamProcessor = new StreamProcessor(
+        this.chatId,
+        assistantMessage.id,
+        this.updateAssistantMessage.bind(this),
+      );
+
+      const { accumulatedContent, accumulatedReasoning, thinkingTime } = await streamProcessor.processStream(
+        this.currentReader,
+      );
+
+      this.streamMetrics.thinkingTime = thinkingTime;
+      this.finalizeAssistantMessage(assistantMessage.id, accumulatedContent, accumulatedReasoning, model);
+    } catch (error) {
+      await this.handleStreamError(error, assistantMessage.id, '');
+    } finally {
+      this.isLoading = false;
+    }
+
+    return this.getState();
+  }
+
   private async handleStreamError(error: unknown, assistantMessageId: string, fallbackContent: string) {
     console.error('Stream error:', error);
     this.currentReader = null;

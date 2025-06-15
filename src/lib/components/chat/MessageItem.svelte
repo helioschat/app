@@ -5,16 +5,21 @@
   import type { MessageWithAttachments } from '$lib/types';
   import { isMessageStreaming } from '$lib/streaming';
   import { page } from '$app/state';
-  import { ChevronDown, ChevronUp, Copy, RefreshCw } from 'lucide-svelte';
-  import { createEventDispatcher } from 'svelte';
-  import { providerInstances } from '$lib/settings/SettingsManager';
+  import { ChevronDown, ChevronUp, Copy, RefreshCw, Check, X, Edit } from 'lucide-svelte';
+  import { createEventDispatcher, tick } from 'svelte';
+  import { providerInstances, selectedModel } from '$lib/settings/SettingsManager';
+  import { availableModels } from '$lib/stores/modelCache';
+  import ModelSelectorModal from '$lib/components/modal/types/ModelSelectorModal.svelte';
+  import type { ModelInfo } from '$lib/providers/base';
 
   export let message: MessageWithAttachments;
   export let isStreaming: boolean = false;
   export let isThinking: boolean = false;
+  export let canEdit: boolean = false; // Whether this message can be edited
 
   const dispatch = createEventDispatcher<{
     regenerate: { message: MessageWithAttachments };
+    edit: { message: MessageWithAttachments; newContent: string; providerInstanceId: string; modelId: string };
   }>();
 
   $: isCurrentlyStreaming =
@@ -33,6 +38,22 @@
     : '';
 
   let copyButtonText = 'Copy';
+  let isEditing = false;
+  let editContent = '';
+  let editTextarea: HTMLTextAreaElement;
+  let showEditModelSelector = false;
+  let editProviderInstanceId = '';
+  let editModelId = '';
+  let cachedModels: Record<string, ModelInfo[]> = {};
+
+  $: cachedModels = $availableModels;
+
+  $: if (isEditing && editTextarea) {
+    tick().then(() => {
+      editTextarea.focus();
+      resizeTextarea({ target: editTextarea } as unknown as Event);
+    });
+  }
 
   async function copyMessageContent() {
     try {
@@ -53,9 +74,64 @@
   function handleRegenerate() {
     dispatch('regenerate', { message });
   }
+
+  function startEdit() {
+    if (isCurrentlyStreaming) return;
+
+    isEditing = true;
+    editContent = message.content;
+
+    // Default to the message's original provider and model, or fall back to selected model
+    editProviderInstanceId = message.providerInstanceId || $selectedModel?.providerInstanceId || '';
+    editModelId = message.model || $selectedModel?.modelId || '';
+  }
+
+  function cancelEdit() {
+    isEditing = false;
+    editContent = '';
+    editProviderInstanceId = '';
+    editModelId = '';
+  }
+
+  function confirmEdit() {
+    if (!editContent.trim()) return;
+
+    dispatch('edit', {
+      message,
+      newContent: editContent.trim(),
+      providerInstanceId: editProviderInstanceId,
+      modelId: editModelId,
+    });
+
+    isEditing = false;
+  }
+
+  function resizeTextarea(e: Event) {
+    const target = e.target as HTMLTextAreaElement;
+    target.style.height = 'auto';
+    target.style.height = target.scrollHeight + 'px';
+  }
+
+  function handleEditKeydown(e: KeyboardEvent) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      confirmEdit();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      cancelEdit();
+    }
+  }
+
+  async function openEditModelSelector() {
+    await tick();
+    showEditModelSelector = true;
+  }
 </script>
 
-<div class="message {message.role === 'assistant' ? 'assistant' : 'user'} group" data-message-id={message.id}>
+<div
+  class="message {message.role === 'assistant' ? 'assistant' : 'user'} group"
+  class:editing={isEditing}
+  data-message-id={message.id}>
   {#if hasReasoning}
     <button
       class="reasoning-button button button-secondary text-sm"
@@ -91,7 +167,49 @@
       {#if message.attachments && message.attachments.length > 0}
         <MessageAttachments attachments={message.attachments} isSent></MessageAttachments>
       {/if}
-      {#if message.content}
+      {#if isEditing}
+        <!-- Edit Mode -->
+        <div class="edit-container flex w-full flex-col gap-2">
+          <textarea
+            bind:this={editTextarea}
+            bind:value={editContent}
+            rows="3"
+            placeholder="Edit your message..."
+            class="w-full !rounded-2xl"
+            on:input={resizeTextarea}
+            on:keydown={handleEditKeydown}></textarea>
+
+          <div class="flex items-center justify-between gap-4 sm:gap-8">
+            <button
+              type="button"
+              on:click={openEditModelSelector}
+              class="button button-primary button-small !rounded-l-2xl !px-2">
+              <span>{editModelId || 'Select Model'}</span>
+            </button>
+
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                on:click={cancelEdit}
+                class="button button-secondary button-small !px-2"
+                aria-label="Cancel edit">
+                <X size={16} />
+                <span class="hidden md:block"> Cancel </span>
+              </button>
+              <button
+                type="button"
+                on:click={confirmEdit}
+                disabled={!editContent.trim()}
+                class="button button-primary button-small !rounded-t !rounded-r-2xl !px-2"
+                aria-label="Save edit">
+                <Check size={16} />
+                <span class="hidden sm:block"> Save </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      {:else if message.content}
+        <!-- Display Mode -->
         {#if shouldUseMarkdown}
           <MarkdownRenderer content={message.content} isStreaming={isCurrentlyStreaming && message.role === 'assistant'}
           ></MarkdownRenderer>
@@ -110,18 +228,29 @@
   <div
     class="message-actions flex h-[44px] max-h-[44px] items-center opacity-0 group-hover:opacity-100 peer-hover:opacity-100 hover:opacity-100">
     <div class="flex gap-2 p-2">
-      <div class="flex items-center gap-2">
-        <button class="button button-secondary button-small" on:click={copyMessageContent}>
-          <Copy size={16}></Copy>
-          {copyButtonText}
-        </button>
-        {#if message.role === 'assistant' && !isCurrentlyStreaming}
-          <button class="button button-secondary button-small" on:click={handleRegenerate}>
-            <RefreshCw size={16}></RefreshCw>
-            Regenerate
+      {#if !isEditing}
+        <div class="flex items-center gap-2">
+          <button class="button button-secondary button-small" on:click={copyMessageContent}>
+            <Copy size={16}></Copy>
+            {copyButtonText}
           </button>
-        {/if}
-      </div>
+          {#if message.role === 'assistant' && !isCurrentlyStreaming}
+            <button class="button button-secondary button-small" on:click={handleRegenerate}>
+              <RefreshCw size={16}></RefreshCw>
+              Regenerate
+            </button>
+          {/if}
+          {#if message.role === 'user'}
+            <button
+              class="button button-secondary button-small"
+              disabled={!canEdit || isCurrentlyStreaming}
+              on:click={startEdit}>
+              <Edit size={16}></Edit>
+              Edit
+            </button>
+          {/if}
+        </div>
+      {/if}
       {#if message.role === 'assistant' && (providerName || message.model || generationTime || tokensPerSecond)}
         <div class="text-secondary flex items-center gap-1 text-xs">
           {#if providerName}
@@ -151,12 +280,31 @@
   </div>
 </div>
 
+<ModelSelectorModal
+  id="message-edit-model-selector"
+  isOpen={showEditModelSelector}
+  providerInstances={$providerInstances}
+  availableModels={cachedModels}
+  currentModelId={editModelId}
+  on:close={() => (showEditModelSelector = false)}
+  on:select={(e) => {
+    const { providerInstanceId, modelId } = e.detail;
+    editProviderInstanceId = providerInstanceId;
+    editModelId = modelId;
+    showEditModelSelector = false;
+  }}>
+</ModelSelectorModal>
+
 <style lang="postcss">
   @reference "tailwindcss";
 
   .message .message-container {
     @apply w-fit max-w-full rounded-3xl px-5 py-2.5;
     background-color: var(--color-a2);
+  }
+
+  .message.editing .message-container {
+    @apply min-w-2/3 px-2.5;
   }
 
   .message.assistant {

@@ -9,6 +9,12 @@
   export let chat: Chat;
   export let currentlyStreamingMessageId: string = '';
   export let handleRegenerate: (message: Message) => Promise<void>;
+  export let handleEdit: (
+    message: Message,
+    newContent: string,
+    providerInstanceId: string,
+    modelId: string,
+  ) => Promise<void>;
 
   let messagesContainer: HTMLDivElement;
 
@@ -86,7 +92,10 @@
         isThinking={currentlyStreamingMessageId === message.id &&
           message.content.length === 0 &&
           message.role === 'assistant'}
-        on:regenerate={({ detail }) => handleRegenerate(detail.message)}></MessageItem>
+        canEdit={!currentlyStreamingMessageId}
+        on:regenerate={({ detail }) => handleRegenerate(detail.message)}
+        on:edit={({ detail }) =>
+          handleEdit(detail.message, detail.newContent, detail.providerInstanceId, detail.modelId)}></MessageItem>
     {/if}
   {/each}
 </div>

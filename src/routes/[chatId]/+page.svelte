@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { chats, loadChat, clearTemporaryChats } from '$lib/stores/chat';
+  import { chats, loadChat, clearTemporaryChats, editMessage } from '$lib/stores/chat';
   import { selectedModel } from '$lib/settings/SettingsManager';
   import type { Message, Attachment } from '$lib/types';
   import { page } from '$app/stores';
@@ -136,6 +136,36 @@
     );
   }
 
+  /**
+   * Handles editing a message and regenerating from that point
+   */
+  async function handleEdit(messageToEdit: Message, newContent: string, providerInstanceId: string, modelId: string) {
+    if (!activeChat || isLoading) return;
+
+    const messageIndex = activeChat.messages.findIndex((m) => m.id === messageToEdit.id);
+    if (messageIndex === -1) {
+      console.error('Message to edit not found.');
+      return;
+    }
+
+    const wasLastMessage = messageIndex === activeChat.messages.length - 1;
+
+    // Edit the message and truncate messages after it
+    editMessage(chatId, messageToEdit.id, newContent);
+
+    // Wait for Svelte to process the store update
+    await tick();
+
+    // If this was not the last message, regenerate from this point
+    if (!wasLastMessage) {
+      const controller = getOrCreateStreamController(chatId);
+      const updatedChat = $chats.find((c) => c.id === chatId);
+      if (!updatedChat) return;
+
+      await controller.handleRegenerate(updatedChat, providerInstanceId, modelId);
+    }
+  }
+
   onMount(() => {
     async function setupChat() {
       const chat = await loadChat(chatId);
@@ -198,7 +228,7 @@
     </div>
 
     <div class="messages-container -mb-30 h-full overflow-y-auto">
-      <ChatMessages chat={activeChat} {currentlyStreamingMessageId} {handleRegenerate}></ChatMessages>
+      <ChatMessages chat={activeChat} {currentlyStreamingMessageId} {handleRegenerate} {handleEdit}></ChatMessages>
     </div>
 
     <div class="input-container z-[1]">
