@@ -409,4 +409,11 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
     baseUrlPatterns: [/https?:\/\/api\.anthropic\.com/],
     apiKeyPrefixes: ['sk-ant-api'],
   },
+  'google-openai': {
+    id: 'google-openai',
+    name: 'Google (OpenAI compatible)',
+    disabledModels: [/^embedding-.*$/, /^text-embedding-.*$/, /^veo-.*$/],
+    baseUrlPatterns: [/https?:\/\/generativelanguage\.googleapis.com\/v1beta\/openai\//],
+    apiKeyPrefixes: undefined, // Google doesn't have a specific API key prefix that identifies it
+  },
 };
