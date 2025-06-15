@@ -2,6 +2,7 @@
   import MarkdownRenderer from '$lib/components/chat/MarkdownRenderer.svelte';
   import MessageAttachments from '$lib/components/chat/MessageAttachments.svelte';
   import { likelyContainsMarkdown } from '$lib/utils/markdown';
+  import { formatMessageTimestamp } from '$lib/utils/date';
   import type { MessageWithAttachments } from '$lib/types';
   import { isMessageStreaming } from '$lib/streaming';
   import { page } from '$app/state';
@@ -233,6 +234,9 @@
   <div
     class="message-actions flex h-[44px] max-h-[44px] items-center opacity-0 group-hover:opacity-100 peer-hover:opacity-100 hover:opacity-100">
     <div class="flex gap-2 p-2">
+      <div class="text-secondary flex items-center gap-1 text-xs">
+        <span>{formatMessageTimestamp(message.createdAt)}</span>
+      </div>
       {#if !isEditing}
         <div class="flex items-center gap-2">
           <button class="button button-secondary button-small" on:click={copyMessageContent}>

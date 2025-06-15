@@ -19,6 +19,29 @@ export function getRelativeDateGroup(date: Date): string {
   }
 }
 
+export function formatMessageTimestamp(date: Date): string {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  // If message is from today, show only time
+  if (messageDate.getTime() === today.getTime()) {
+    return date.toLocaleTimeString(undefined, {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  }
+
+  // If message is older than today, show full date and time
+  return date.toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
 export function groupChatsByDate<T extends { updatedAt: Date; pinned?: boolean }>(
   chats: T[],
 ): Array<{ group: string; chats: T[] }> {
@@ -65,5 +88,6 @@ export function groupChatsByDate<T extends { updatedAt: Date; pinned?: boolean }
 
 export default {
   getRelativeDateGroup,
+  formatMessageTimestamp,
   groupChatsByDate,
 };
