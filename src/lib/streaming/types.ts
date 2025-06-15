@@ -13,7 +13,7 @@ export interface StreamMetrics {
 
 export interface StreamContextMessage {
   id: string;
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   provider?: string;
   providerInstanceId?: string;

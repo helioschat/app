@@ -8,6 +8,7 @@ import {
 } from '$lib/database';
 import { streamStates } from '$lib/streaming';
 import type { Attachment, Chat } from '$lib/types';
+import { generateChatTitle } from '$lib/utils/titleGeneration';
 import { get, writable, type Writable } from 'svelte/store';
 import { v7 as uuidv7 } from 'uuid';
 
@@ -150,12 +151,54 @@ if (browser) {
 const loadMutex: Record<string, Promise<Chat | null>> = {};
 
 /**
+ * Generates and updates the title for a chat asynchronously
+ * @param chatId The ID of the chat to update
+ * @param userMessage The user message to generate title from
+ * @param providerInstanceId Optional provider instance ID to use for generation
+ */
+async function generateTitleForChat(chatId: string, userMessage: string, providerInstanceId?: string): Promise<void> {
+  try {
+    const generatedTitle = await generateChatTitle(userMessage, providerInstanceId);
+
+    // Update the chat title in the store
+    chats.update((allChats) => {
+      const chatIndex = allChats.findIndex((c) => c.id === chatId);
+      if (chatIndex === -1) return allChats;
+
+      const updatedChat = {
+        ...allChats[chatIndex],
+        title: generatedTitle,
+        updatedAt: new Date(),
+      };
+
+      allChats[chatIndex] = updatedChat;
+
+      // Save to IndexedDB if not temporary
+      if (browser && !updatedChat.temporary) {
+        saveChatAsThreadAndMessages(updatedChat);
+      }
+
+      return [...allChats];
+    });
+  } catch (error) {
+    console.error('Failed to generate chat title:', error);
+    // Title generation failure is not critical, so we don't need to do anything
+  }
+}
+
+/**
  * Creates a new chat and returns its ID
  * @param initialMessage Optional initial message to add to the chat
  * @param temporary Whether this chat should be temporary (not saved to IndexedDB)
  * @param attachments Optional attachments for the initial message
+ * @param providerInstanceId Optional provider instance ID for title generation
  */
-export function createNewChat(initialMessage?: string, temporary?: boolean, attachments?: Attachment[]): string {
+export function createNewChat(
+  initialMessage?: string,
+  temporary?: boolean,
+  attachments?: Attachment[],
+  providerInstanceId?: string,
+): string {
   const newChat: Chat = createInitialChat();
 
   // Mark as temporary if specified
@@ -170,7 +213,7 @@ export function createNewChat(initialMessage?: string, temporary?: boolean, atta
   if (hasText || hasAttachments) {
     const trimmedText = hasText ? (initialMessage as string).trim() : '';
 
-    // Set chat title if not already set from text
+    // Set initial title - this may be updated by generateTitleForChat
     if (hasText) {
       newChat.title = trimmedText.length > 30 ? trimmedText.substring(0, 30) + '...' : trimmedText;
     } else if (hasAttachments) {
@@ -185,6 +228,11 @@ export function createNewChat(initialMessage?: string, temporary?: boolean, atta
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+
+    // Generate a better title asynchronously if we have text
+    if (hasText && !temporary) {
+      generateTitleForChat(newChat.id, trimmedText, providerInstanceId);
+    }
   }
 
   chats.update((allChats) => sortChats([...allChats, newChat]));

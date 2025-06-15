@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { createNewChat } from '$lib/stores/chat';
+  import { selectedModel } from '$lib/settings/SettingsManager';
   import { manifest } from '$lib';
   import ChatInput from '$lib/components/chat/ChatInput.svelte';
   import type { Attachment } from '$lib/types';
@@ -12,7 +13,7 @@
     e.preventDefault();
     if (!searchInput.trim() && (!attachments || attachments.length === 0)) return;
 
-    const newChatId = createNewChat(searchInput, isTemporary, attachments);
+    const newChatId = createNewChat(searchInput, isTemporary, attachments, $selectedModel?.providerInstanceId);
     goto(`/${newChatId}`);
   }
 

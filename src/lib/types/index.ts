@@ -14,7 +14,7 @@ export type Attachment = {
 
 export type Message = {
   id: string;
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   // Optional attachment IDs for user messages - full attachments loaded separately
   attachmentIds?: string[];

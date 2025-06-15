@@ -17,6 +17,8 @@ export interface KnownProviderMetadata {
   /** Optional api-key prefix patterns that can be used to auto-detect
    * the provider from the key alone. */
   apiKeyPrefixes?: string[];
+  /** Default model to use for title generation (should be fast and cheap) */
+  defaultTitleModel?: string;
 }
 
 export function getKnownProviderMeta(id: string): KnownProviderMetadata | undefined {
@@ -74,10 +76,16 @@ export function detectKnownProvider(config: ProviderConfig): string | undefined 
   return undefined;
 }
 
+export function getDefaultTitleModel(providerId: string): string | undefined {
+  const provider = KNOWN_PROVIDERS[providerId];
+  return provider?.defaultTitleModel;
+}
+
 export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
   openai: {
     id: 'openai',
     name: 'OpenAI',
+    defaultTitleModel: 'gpt-4.1-nano',
     disabledModels: [
       'gpt-3.5-turbo-0125',
       'gpt-3.5-turbo-1106',
@@ -333,12 +341,14 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
   openrouter: {
     id: 'openrouter',
     name: 'OpenRouter',
+    defaultTitleModel: 'meta-llama/llama-3.3-8b-instruct:free',
     baseUrlPatterns: [/https?:\/\/openrouter\.ai\/api/],
     apiKeyPrefixes: ['sk-or-v1-'],
   },
   anthropic: {
     id: 'anthropic',
     name: 'Anthropic',
+    defaultTitleModel: 'claude-3-haiku-20240307',
     disabledModels: ['claude-3-5-sonnet-20240620'],
     modelOverrides: {
       // https://docs.anthropic.com/en/docs/about-claude/models/overview
@@ -412,6 +422,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
   'google-openai': {
     id: 'google-openai',
     name: 'Google (OpenAI compatible)',
+    defaultTitleModel: 'gemini-2.0-flash',
     disabledModels: [/^embedding-.*$/, /^text-embedding-.*$/, /^veo-.*$/],
     baseUrlPatterns: [/https?:\/\/generativelanguage\.googleapis.com\/v1beta\/openai\//],
     apiKeyPrefixes: undefined, // Google doesn't have a specific API key prefix that identifies it

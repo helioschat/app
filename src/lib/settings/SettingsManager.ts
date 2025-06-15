@@ -8,6 +8,8 @@ import { v7 as uuidv7 } from 'uuid';
 // Advanced settings interface
 export interface AdvancedSettings {
   systemPrompt: string;
+  titleGenerationEnabled: boolean;
+  titleGenerationModel: string | null; // null means use default
 }
 
 export class SettingsManager {
@@ -18,6 +20,8 @@ export class SettingsManager {
 
   private static readonly defaultAdvancedSettings: AdvancedSettings = {
     systemPrompt: 'You are a helpful AI assistant.',
+    titleGenerationEnabled: true,
+    titleGenerationModel: null, // Will use provider default
   };
 
   // Stores
