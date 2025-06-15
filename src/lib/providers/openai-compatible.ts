@@ -73,8 +73,8 @@ export class OpenAICompatibleProvider implements LanguageModel {
   }
 
   private streamImageGeneration(messages: MessageWithAttachments[]) {
-    const size = '1024x1024'; // Use defualt
-    const quality = 'low'; // Use default
+    const size = undefined; // Use defualt
+    const quality = undefined; // Use default
     const n = 1; // Only generate one image
 
     const gen = async function* (this: OpenAICompatibleProvider) {
