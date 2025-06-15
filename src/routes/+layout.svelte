@@ -1,6 +1,8 @@
 <script lang="ts">
   import '../app.css';
   import '@fontsource/inter';
+  import '$lib/styles/github-dark.css';
+
   import ChatSidebar from '$lib/components/chat/ChatSidebar.svelte';
   import { onMount, onDestroy } from 'svelte';
   import { modelCache } from '$lib/stores/modelCache';

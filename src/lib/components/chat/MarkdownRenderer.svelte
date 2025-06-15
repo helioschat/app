@@ -1,77 +1,71 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { marked } from 'marked';
-  import { markedHighlight } from 'marked-highlight';
-  import { getHighlighter } from 'shiki-es';
+  import rehypeHighlight from 'rehype-highlight';
+  import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
+  import rehypeStringify from 'rehype-stringify';
+  import remarkFrontmatter from 'remark-frontmatter';
+  import remarkGemoji from 'remark-gemoji';
+  import remarkGfm from 'remark-gfm';
+  import remarkParse from 'remark-parse';
+  import remarkRehype from 'remark-rehype';
+  import { unified } from 'unified';
 
   export let content: string = '';
   export let isStreaming: boolean = false;
 
   let renderedHtml = '';
-  let highlighter: any;
+  let processor: ReturnType<typeof createMarkdownProcessor> | null = null;
 
-  async function initializeRenderer() {
-    highlighter = await getHighlighter({
-      themes: ['github-dark'],
-      langs: ['javascript', 'typescript', 'html', 'css', 'json', 'python', 'bash', 'markdown'],
-    });
+  const baseSanitizationSchema = {
+    ...defaultSchema,
+  };
 
-    marked.use(
-      markedHighlight({
-        async: true,
-        highlight(code, language) {
-          try {
-            if (!language || language === 'plaintext') {
-              return `<pre><code>${code}</code></pre>`;
-            }
-
-            const supportedLang = highlighter.getLoadedLanguages().includes(language) ? language : 'plaintext';
-
-            return highlighter.codeToHtml(code, {
-              lang: supportedLang,
-              theme: 'github-dark',
-            });
-          } catch (error) {
-            console.error('Highlighting error:', error);
-            return `<pre><code>${code}</code></pre>`;
-          }
+  function createMarkdownProcessor() {
+    return unified()
+      .use(remarkParse)
+      .use(remarkFrontmatter)
+      .use(remarkGfm)
+      .use(remarkGemoji)
+      .use(remarkRehype)
+      .use(rehypeSanitize, {
+        ...baseSanitizationSchema,
+        attributes: {
+          ...baseSanitizationSchema.attributes,
+          '*': ['class'],
         },
-      }),
-    );
-
-    marked.setOptions({
-      gfm: true, // GitHub Flavored Markdown
-      breaks: true, // Convert line breaks to <br>
-      async: true,
-    });
-
-    renderMarkdown();
+      })
+      .use(rehypeHighlight)
+      .use(rehypeStringify);
   }
 
   async function renderMarkdown() {
-    if (!content) {
+    if (!content || !processor) {
       renderedHtml = '';
       return;
     }
 
-    try {
-      renderedHtml = await marked.parse(content, { async: true });
-    } catch (error) {
-      console.error('Markdown rendering error:', error);
-      renderedHtml = `<p>${content}</p>`;
-    }
+    const result = await processor.process(content);
+    renderedHtml = String(result);
+    // try {
+    //   const result = await processor.process(content);
+    //   renderedHtml = String(result);
+    // } catch (error) {
+    //   console.error('Markdown rendering error:', error);
+    //   renderedHtml = `<p>${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`;
+    // }
   }
 
   // Re-render when content changes
-  $: if (highlighter && content) {
+  $: if (processor && content) {
     renderMarkdown();
   }
 
   onMount(() => {
-    initializeRenderer();
+    processor = createMarkdownProcessor();
+    renderMarkdown();
 
     return () => {
-      highlighter = null;
+      processor = null;
     };
   });
 </script>
@@ -122,6 +116,7 @@
   .markdown-content :global(h4),
   .markdown-content :global(h5),
   .markdown-content :global(h6) {
+    @apply font-semibold break-words;
     color: var(--color-12);
   }
 
@@ -145,6 +140,22 @@
     word-wrap: break-word;
   }
 
+  .markdown-content :global(strong) {
+    @apply font-bold;
+  }
+
+  .markdown-content :global(em) {
+    @apply italic;
+  }
+
+  .markdown-content :global(del) {
+    @apply line-through;
+  }
+
+  .markdown-content :global(a) {
+    @apply text-blue-400 transition-colors hover:text-blue-300 active:text-blue-500;
+  }
+
   .markdown-content :global(ul),
   .markdown-content :global(ol) {
     @apply pl-8;
@@ -164,12 +175,12 @@
 
   .markdown-content :global(pre),
   .markdown-content :global(p > code) {
-    background: var(--color-2);
+    background: var(--color-3);
     @apply text-sm;
   }
 
   .markdown-content :global(pre) {
-    @apply overflow-auto rounded-2xl p-4;
+    @apply overflow-auto rounded-2xl p-3;
   }
 
   .markdown-content :global(p > code) {
