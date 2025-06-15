@@ -15,6 +15,7 @@
     providerInstanceId: string,
     modelId: string,
   ) => Promise<void>;
+  export let handleBranch: (message: Message) => void;
 
   let messagesContainer: HTMLDivElement;
 
@@ -95,7 +96,8 @@
         canEdit={!currentlyStreamingMessageId}
         on:regenerate={({ detail }) => handleRegenerate(detail.message)}
         on:edit={({ detail }) =>
-          handleEdit(detail.message, detail.newContent, detail.providerInstanceId, detail.modelId)}></MessageItem>
+          handleEdit(detail.message, detail.newContent, detail.providerInstanceId, detail.modelId)}
+        on:branch={({ detail }) => handleBranch(detail.message)}></MessageItem>
     {/if}
   {/each}
 </div>

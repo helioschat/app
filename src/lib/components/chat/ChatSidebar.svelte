@@ -1,7 +1,7 @@
 <script lang="ts">
   import { chats, isLoadingChats, deleteChatById, toggleChatPin } from '$lib/stores/chat';
   import { goto } from '$app/navigation';
-  import { CirclePlus, Settings, Pin, Trash, Menu, PinOff, Search } from 'lucide-svelte';
+  import { CirclePlus, Settings, Pin, Trash, Menu, PinOff, Search, GitBranch } from 'lucide-svelte';
   import { page } from '$app/state';
   import { manifest } from '$lib';
   import Spinner from '$lib/components/common/Spinner.svelte';
@@ -101,7 +101,11 @@
               class:selected={isSelected}
               class:generating={isGenerating}
               title={chat.title}>
-              <span class="truncate text-sm transition-colors duration-200">{chat.title}</span>
+              <span class="truncate text-sm transition-colors duration-200">
+                {#if chat.branchedFrom !== undefined}
+                  <GitBranch class="text-secondary inline-block" size={14}></GitBranch>
+                {/if}
+                {chat.title}</span>
               <div class="hidden items-center group-hover:flex">
                 <button
                   class="button button-secondary button-small"

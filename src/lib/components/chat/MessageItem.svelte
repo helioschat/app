@@ -5,7 +5,7 @@
   import type { MessageWithAttachments } from '$lib/types';
   import { isMessageStreaming } from '$lib/streaming';
   import { page } from '$app/state';
-  import { ChevronDown, ChevronUp, Copy, RefreshCw, Check, X, Edit } from 'lucide-svelte';
+  import { ChevronDown, ChevronUp, Copy, RefreshCw, Check, X, Edit, GitBranch } from 'lucide-svelte';
   import { createEventDispatcher, tick } from 'svelte';
   import { providerInstances, selectedModel } from '$lib/settings/SettingsManager';
   import { availableModels } from '$lib/stores/modelCache';
@@ -20,6 +20,7 @@
   const dispatch = createEventDispatcher<{
     regenerate: { message: MessageWithAttachments };
     edit: { message: MessageWithAttachments; newContent: string; providerInstanceId: string; modelId: string };
+    branch: { message: MessageWithAttachments };
   }>();
 
   $: isCurrentlyStreaming =
@@ -125,6 +126,10 @@
   async function openEditModelSelector() {
     await tick();
     showEditModelSelector = true;
+  }
+
+  function handleBranch() {
+    dispatch('branch', { message });
   }
 </script>
 
@@ -249,6 +254,10 @@
               Edit
             </button>
           {/if}
+          <button class="button button-secondary button-small" on:click={handleBranch}>
+            <GitBranch size={16}></GitBranch>
+            Branch off
+          </button>
         </div>
       {/if}
       {#if message.role === 'assistant' && (providerName || message.model || generationTime || tokensPerSecond)}

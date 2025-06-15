@@ -311,6 +311,7 @@ function createEmptyChatFromThread(thread: Thread): Chat {
     providerInstanceId: thread.providerInstanceId,
     model: thread.model,
     pinned: thread.pinned,
+    branchedFrom: thread.branchedFrom,
   };
 }
 
@@ -383,4 +384,52 @@ export function editMessage(chatId: string, messageId: string, newContent: strin
 
     return [...allChats];
   });
+}
+
+/**
+ * Creates a new chat by branching off from an existing chat up to a specific message
+ * @param sourceChatId The ID of the chat to branch from
+ * @param upToMessageId The ID of the message to branch up to (inclusive)
+ * @returns The ID of the new branched chat
+ */
+export function branchOffChat(sourceChatId: string, upToMessageId: string): string {
+  const sourceChat = get(chats).find((c) => c.id === sourceChatId);
+  if (!sourceChat) {
+    throw new Error('Source chat not found');
+  }
+
+  const messageIndex = sourceChat.messages.findIndex((m) => m.id === upToMessageId);
+  if (messageIndex === -1) {
+    throw new Error('Message not found in source chat');
+  }
+
+  // Create messages up to and including the specified message
+  const branchedMessages = sourceChat.messages.slice(0, messageIndex + 1);
+
+  const newChat: Chat = {
+    ...sourceChat,
+    id: uuidv7(),
+    messages: branchedMessages.map((msg) => ({
+      ...msg,
+      id: uuidv7(), // Generate new IDs for the copied messages
+    })),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    branchedFrom: {
+      threadId: sourceChat.id,
+      messageId: upToMessageId,
+    },
+    temporary: false, // Branches are not temporary
+    pinned: false, // New branches are not pinned by default
+  };
+
+  chats.update((allChats) => sortChats([...allChats, newChat]));
+  activeChatId.set(newChat.id);
+
+  // Save to IndexedDB
+  if (browser) {
+    saveChatAsThreadAndMessages(newChat);
+  }
+
+  return newChat.id;
 }

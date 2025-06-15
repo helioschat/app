@@ -45,6 +45,10 @@ export type Chat = {
   model?: string;
   pinned?: boolean;
   temporary?: boolean;
+  branchedFrom?: {
+    threadId: string;
+    messageId: string;
+  };
 };
 
 export type ProviderType = 'openai-compatible';

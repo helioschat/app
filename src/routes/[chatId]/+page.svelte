@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { chats, loadChat, clearTemporaryChats, editMessage } from '$lib/stores/chat';
+  import { chats, loadChat, clearTemporaryChats, editMessage, branchOffChat } from '$lib/stores/chat';
   import { selectedModel } from '$lib/settings/SettingsManager';
   import type { Message, Attachment } from '$lib/types';
   import { page } from '$app/stores';
+  import { goto } from '$app/navigation';
   import { tick, onMount, onDestroy } from 'svelte';
   import { streamStates, endStream } from '$lib/streaming';
   import { browser } from '$app/environment';
@@ -166,6 +167,21 @@
     }
   }
 
+  /**
+   * Handles branching off a conversation up to a specific message
+   */
+  function handleBranch(message: Message) {
+    if (!activeChat) return;
+
+    try {
+      const newChatId = branchOffChat(chatId, message.id);
+      // Navigate to the new branched chat
+      goto(`/${newChatId}`);
+    } catch (error) {
+      console.error('Failed to branch off chat:', error);
+    }
+  }
+
   onMount(() => {
     async function setupChat() {
       const chat = await loadChat(chatId);
@@ -228,7 +244,8 @@
     </div>
 
     <div class="messages-container -mb-30 h-full overflow-y-auto">
-      <ChatMessages chat={activeChat} {currentlyStreamingMessageId} {handleRegenerate} {handleEdit}></ChatMessages>
+      <ChatMessages chat={activeChat} {currentlyStreamingMessageId} {handleRegenerate} {handleEdit} {handleBranch}
+      ></ChatMessages>
     </div>
 
     <div class="input-container z-[1]">
