@@ -193,7 +193,7 @@
 
 <main class="chat relative flex h-full flex-1 flex-col">
   {#if activeChat}
-    <div class="header-container absolute top-0 left-1/2 w-full -translate-x-1/2">
+    <div class="header-container absolute top-0 left-1/2 z-[1] w-full -translate-x-1/2">
       <ChatHeader chat={activeChat}></ChatHeader>
     </div>
 
@@ -201,7 +201,7 @@
       <ChatMessages chat={activeChat} {currentlyStreamingMessageId} {handleRegenerate}></ChatMessages>
     </div>
 
-    <div class="input-container">
+    <div class="input-container z-[1]">
       <ChatInput bind:userInput {isLoading} {handleSubmit} {handleStop}></ChatInput>
     </div>
   {:else}
