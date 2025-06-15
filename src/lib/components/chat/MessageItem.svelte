@@ -34,10 +34,10 @@
   $: reasoningUsesMarkdown = hasReasoning && likelyContainsMarkdown(message.reasoning || '');
 
   $: providerName = $providerInstances.find((p) => p.id === message.providerInstanceId)?.name;
-  $: generationTime = message.metrics?.totalTime ? `${(message.metrics.totalTime / 1000).toFixed(2)}s` : '';
+  $: generationTime = message.metrics?.totalTime ? `${(message.metrics.totalTime / 1000).toFixed(2)}s` : null;
   $: tokensPerSecond = message.metrics?.tokensPerSecond
     ? `${message.metrics.tokensPerSecond.toFixed(2)} tokens/sec`
-    : '';
+    : null;
 
   let copyButtonText = 'Copy';
   let isEditing = false;
@@ -232,21 +232,18 @@
   </div>
 
   <div
-    class="message-actions flex h-[44px] max-h-[44px] items-center opacity-0 group-hover:opacity-100 peer-hover:opacity-100 hover:opacity-100">
-    <div class="flex gap-2 p-2">
-      <div class="text-secondary flex items-center gap-1 text-xs">
-        <span>{formatMessageTimestamp(message.createdAt)}</span>
-      </div>
+    class="message-actions flex h-[64px] max-h-[64px] items-center opacity-0 group-hover:opacity-100 peer-hover:opacity-100 hover:opacity-100 xl:h-[44px]">
+    <div class="flex flex-col gap-1 p-2 xl:flex-row">
       {#if !isEditing}
-        <div class="flex items-center gap-2">
+        <div class="buttons flex items-center gap-2">
           <button class="button button-secondary button-small" on:click={copyMessageContent}>
             <Copy size={16}></Copy>
-            {copyButtonText}
+            <span>{copyButtonText}</span>
           </button>
           {#if message.role === 'assistant' && !isCurrentlyStreaming}
             <button class="button button-secondary button-small" on:click={handleRegenerate}>
               <RefreshCw size={16}></RefreshCw>
-              Regenerate
+              <span>Regenerate</span>
             </button>
           {/if}
           {#if message.role === 'user'}
@@ -255,40 +252,34 @@
               disabled={!canEdit || isCurrentlyStreaming}
               on:click={startEdit}>
               <Edit size={16}></Edit>
-              Edit
+              <span>Edit</span>
             </button>
           {/if}
           <button class="button button-secondary button-small" on:click={handleBranch}>
             <GitBranch size={16}></GitBranch>
-            Branch off
+            <span>Branch off</span>
           </button>
         </div>
       {/if}
-      {#if message.role === 'assistant' && (providerName || message.model || generationTime || tokensPerSecond)}
-        <div class="text-secondary flex items-center gap-1 text-xs">
-          {#if providerName}
-            <span>{providerName}</span>
-            {#if message.model}
-              /
-            {/if}
-          {/if}
-          {#if message.model}
-            <span>{message.model}</span>
-          {/if}
-          {#if generationTime}
-            <span>
-              &bull;
-              {generationTime}
-            </span>
-          {/if}
-          {#if tokensPerSecond}
-            <span>
-              &bull;
-              {tokensPerSecond}
-            </span>
-          {/if}
+
+      <div class="text-secondary flex items-center gap-1 text-xs">
+        <div class="flex items-center">
+          <span>{formatMessageTimestamp(message.createdAt)}</span>
         </div>
-      {/if}
+        {#if message.role === 'assistant' && (providerName || message.model || generationTime || tokensPerSecond)}
+          <span>&bull;</span>
+          <div
+            class="text-secondary flex items-center gap-1 text-xs"
+            title={[
+              ...[generationTime ? `${generationTime}` : null],
+              ...[tokensPerSecond ? `${tokensPerSecond}` : null],
+            ]
+              .filter((x) => Boolean(x))
+              .join(' • ')}>
+            {[...[providerName ? `${providerName}` : null], ...[message.model ? `${message.model}` : null]].join('/')}
+          </div>
+        {/if}
+      </div>
     </div>
   </div>
 </div>
@@ -329,7 +320,7 @@
     background-color: var(--color-2);
   }
 
-  .message.assistant .message-actions {
+  .message.assistant .message-actions > .flex {
     @apply justify-start;
   }
 
@@ -342,8 +333,16 @@
     background-color: var(--blue-10);
   }
 
-  .message.user .message-actions {
+  .message.user .message-actions > .flex {
     @apply justify-end;
+  }
+
+  .message-actions .buttons {
+    @apply gap-1 xl:gap-2;
+  }
+
+  .message-actions .buttons .button span {
+    @apply hidden xl:block;
   }
 
   .cursor {
