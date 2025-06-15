@@ -313,26 +313,30 @@ export class OpenAICompatibleProvider implements LanguageModel {
     try {
       const response = await this.client.models.list();
 
-      return response.data.map((model: OpenAIModel) => ({
-        id: model.id,
-        name: model.name || model.display_name || model.id,
-        description: model.description || `OpenAI-compatible model ${model.id}`,
-        architecture: {
-          inputModalities: model.architecture?.input_modalities,
-          outputModalities: model.architecture?.output_modalities,
-          modality: model.architecture?.modality,
-        },
-        contextWindow: model.context_length,
-        huggingfaceId: model.huggingface_id,
-        createdAt:
-          model.created ||
-          (() => {
-            if (!model.created_at) return undefined;
-            const date = new Date(model.created_at);
-            if (date.getFullYear() < 2010) return undefined;
-            return date.getTime();
-          })(),
-      }));
+      return response.data.map((model: OpenAIModel) => {
+        const id = model.id.startsWith('models/') ? model.id.replace('models/', '') : model.id;
+
+        return {
+          id,
+          name: model.name || model.display_name || id,
+          description: model.description || `OpenAI-compatible model ${id}`,
+          architecture: {
+            inputModalities: model.architecture?.input_modalities,
+            outputModalities: model.architecture?.output_modalities,
+            modality: model.architecture?.modality,
+          },
+          contextWindow: model.context_length,
+          huggingfaceId: model.huggingface_id,
+          createdAt:
+            model.created ||
+            (() => {
+              if (!model.created_at) return undefined;
+              const date = new Date(model.created_at);
+              if (date.getFullYear() < 2010) return undefined;
+              return date.getTime();
+            })(),
+        };
+      });
     } catch (error) {
       // Handle API errors for model listing
       console.error('Error fetching OpenAI-compatible models:', error);
