@@ -12,6 +12,7 @@
   import ChatMessages from '$lib/components/chat/ChatMessages.svelte';
   import ChatInput from '$lib/components/chat/ChatInput.svelte';
   import Spinner from '$lib/components/common/Spinner.svelte';
+  import { manifest } from '$lib';
 
   $: chatId = $page.params.chatId;
   $: activeChat = $chats.find((chat) => chat.id === chatId);
@@ -236,6 +237,10 @@
     }, 100);
   }
 </script>
+
+<svelte:head>
+  <title>{activeChat ? `${activeChat.title} • ${manifest.name}` : manifest.name}</title>
+</svelte:head>
 
 <main class="chat relative flex h-full flex-1 flex-col">
   {#if activeChat}

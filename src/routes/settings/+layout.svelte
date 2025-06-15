@@ -4,6 +4,7 @@
   import Tabs from '$lib/components/common/Tabs.svelte';
   import { goto } from '$app/navigation';
   import { activeChatId } from '$lib/stores/chat';
+  import { manifest } from '$lib';
 
   const tabs = [
     { id: 'providers', text: 'Providers', path: '/settings/providers' },
@@ -17,6 +18,10 @@
     goto(`/settings/${(e.target as HTMLInputElement).value}`);
   };
 </script>
+
+<svelte:head>
+  <title>{manifest.name}</title>
+</svelte:head>
 
 <div class="settings p-4">
   <button onclick={() => goto(`/${$activeChatId}`)} class="button button-secondary">

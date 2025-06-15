@@ -24,6 +24,10 @@
   ];
 </script>
 
+<svelte:head>
+  <title>{manifest.name}</title>
+</svelte:head>
+
 <div class="landing flex h-full w-full flex-col items-center justify-center gap-y-8 px-4 text-center">
   <div class="flex flex-col items-center">
     <h1 class="mb-2 text-5xl font-bold">{manifest.name}</h1>
