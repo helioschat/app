@@ -92,6 +92,8 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
       'o1-pro-2025-03-19',
       'o4-mini-2025-04-16',
       'o3-mini-2025-01-31',
+      'o3-2025-04-16',
+      'o3-pro-2025-06-10',
       'gpt-4.1-2025-04-14',
       'gpt-4.1-nano-2025-04-14',
       'gpt-4.1-mini-2025-04-14',
