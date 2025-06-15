@@ -45,7 +45,11 @@
   {/if}
 
   <div class="flex-1 text-left" class:ml-3={mode === 'toggle'}>
-    <div class="text-primary font-medium">{model.name}</div>
+    <div class="text-primary flex items-center gap-2 font-medium">
+      {model.name}{#if model.deprecated}
+        <Pill text="Deprecated" size="xs" variant="warning"></Pill>
+      {/if}
+    </div>
     {#if model.description}
       <div class="text-secondary text-sm">{model.description}</div>
     {/if}

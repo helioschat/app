@@ -4,7 +4,7 @@
 
   export let text: string = '';
   export let variant: 'default' | 'secondary' | 'success' | 'warning' | 'error' = 'default';
-  export let size: 'sm' | 'md' | 'lg' = 'md';
+  export let size: 'xs' | 'sm' | 'md' | 'lg' = 'md';
   export let icon: ComponentType<Icon> | undefined = undefined;
 
   const variantClasses = {
@@ -16,12 +16,14 @@
   };
 
   const sizeClasses = {
+    xs: 'px-1.5 py-0.5 text-xs',
     sm: 'px-2 py-1 text-xs',
     md: 'px-2.5 py-1.5 text-sm',
     lg: 'px-3 py-2 text-base',
   };
 
   const iconSizes = {
+    xs: 10,
     sm: 12,
     md: 14,
     lg: 16,
