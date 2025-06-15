@@ -245,6 +245,10 @@
               <RefreshCw size={16}></RefreshCw>
               <span>Regenerate</span>
             </button>
+            <button class="button button-secondary button-small" on:click={handleBranch}>
+              <GitBranch size={16}></GitBranch>
+              <span>Branch off</span>
+            </button>
           {/if}
           {#if message.role === 'user'}
             <button
@@ -255,10 +259,6 @@
               <span>Edit</span>
             </button>
           {/if}
-          <button class="button button-secondary button-small" on:click={handleBranch}>
-            <GitBranch size={16}></GitBranch>
-            <span>Branch off</span>
-          </button>
         </div>
       {/if}
 
