@@ -100,10 +100,17 @@
               class="thread-item group flex h-9 items-center justify-between rounded-[10px] py-2 pr-0.5 pl-2.5"
               class:selected={isSelected}
               class:generating={isGenerating}
+              class:!pl-2={chat.branchedFrom !== undefined}
               title={chat.title}>
-              <span class="truncate text-sm transition-colors duration-200">
+              <span class="flex items-center gap-0.5 truncate text-sm transition-colors duration-200">
                 {#if chat.branchedFrom !== undefined}
-                  <GitBranch class="text-secondary inline-block" size={14}></GitBranch>
+                  <button
+                    class="button button-secondary button-small text-secondary inline-block h-full"
+                    on:click|preventDefault|stopPropagation={() =>
+                      goto(`/${chat.branchedFrom?.threadId}#${chat.branchedFrom?.messageId}`)}
+                    title="Branched from chat">
+                    <GitBranch size={14}></GitBranch>
+                  </button>
                 {/if}
                 {chat.title}</span>
               <div class="hidden items-center group-hover:flex">
