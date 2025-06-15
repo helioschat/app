@@ -1,6 +1,4 @@
 import { browser } from '$app/environment';
-import { streamStates } from '$lib/streaming';
-import { get, writable, type Writable } from 'svelte/store';
 import {
   deleteThread,
   getAllThreads,
@@ -8,7 +6,9 @@ import {
   saveChatAsThreadAndMessages,
   type Thread,
 } from '$lib/database';
+import { streamStates } from '$lib/streaming';
 import type { Attachment, Chat } from '$lib/types';
+import { get, writable, type Writable } from 'svelte/store';
 import { v7 as uuidv7 } from 'uuid';
 
 // Initial chat template

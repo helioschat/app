@@ -226,9 +226,7 @@ export class SettingsManager {
       if (map[providerInstanceId] && map[providerInstanceId].length > 0) {
         return map; // already set by user
       }
-      const disabled = models
-        .filter((m) => isModelDisabledByDefault(matchedProviderId, m.id))
-        .map((m) => m.id);
+      const disabled = models.filter((m) => isModelDisabledByDefault(matchedProviderId, m.id)).map((m) => m.id);
       if (disabled.length > 0) {
         map[providerInstanceId] = disabled;
       }
