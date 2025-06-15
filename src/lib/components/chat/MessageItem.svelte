@@ -2,19 +2,19 @@
   import MarkdownRenderer from '$lib/components/chat/MarkdownRenderer.svelte';
   import MessageAttachments from '$lib/components/chat/MessageAttachments.svelte';
   import { likelyContainsMarkdown } from '$lib/utils/markdown';
-  import type { Message } from '$lib/types';
+  import type { MessageWithAttachments } from '$lib/types';
   import { isMessageStreaming } from '$lib/streaming';
   import { page } from '$app/state';
   import { ChevronDown, ChevronUp, Copy, RefreshCw } from 'lucide-svelte';
   import { createEventDispatcher } from 'svelte';
   import { providerInstances } from '$lib/settings/SettingsManager';
 
-  export let message: Message;
+  export let message: MessageWithAttachments;
   export let isStreaming: boolean = false;
   export let isThinking: boolean = false;
 
   const dispatch = createEventDispatcher<{
-    regenerate: { message: Message };
+    regenerate: { message: MessageWithAttachments };
   }>();
 
   $: isCurrentlyStreaming =

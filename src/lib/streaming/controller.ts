@@ -1,7 +1,7 @@
 import { getLanguageModel } from '$lib/providers/registry';
 import { chats } from '$lib/stores/chat';
 import { advancedSettings, providerInstances } from '$lib/stores/settings';
-import type { Attachment, Chat, Message, ProviderInstance } from '$lib/types';
+import type { Attachment, Chat, MessageWithAttachments, ProviderInstance } from '$lib/types';
 import { get } from 'svelte/store';
 import { v7 as uuidv7 } from 'uuid';
 import { MessageProcessor } from './messageProcessor';
@@ -35,7 +35,7 @@ export class StreamingController {
     return getLanguageModel(providerInstance.providerType, effectiveConfig);
   }
 
-  private updateAssistantMessage(messageId: string, updater: (msg: Message) => Message) {
+  private updateAssistantMessage(messageId: string, updater: (msg: MessageWithAttachments) => MessageWithAttachments) {
     chats.update((allChats) =>
       allChats.map((chat) => {
         if (chat.id !== this.chatId) return chat;
@@ -117,8 +117,8 @@ export class StreamingController {
       activeChat.messages[0].role === 'user' &&
       activeChat.messages[0].content === userInput;
 
-    let updatedMessages;
-    let assistantMessage: Message;
+    let updatedMessages: MessageWithAttachments[];
+    let assistantMessage: MessageWithAttachments;
 
     const model = this.buildModel(providerInstanceId, modelId);
     const systemPrompt = get(advancedSettings).systemPrompt;
@@ -152,7 +152,7 @@ export class StreamingController {
       });
       messagesForProvider.push(...messagesWithAttachments);
     } else {
-      const userMessage: Message = {
+      const userMessage: MessageWithAttachments = {
         id: uuidv7(),
         role: 'user',
         content: userInput,
@@ -197,6 +197,7 @@ export class StreamingController {
       usage: m.usage,
       metrics: m.metrics,
       reasoning: m.reasoning,
+      attachmentIds: m.attachments?.map((att) => att.id),
       createdAt: m.createdAt,
       updatedAt: m.updatedAt,
     }));
@@ -216,7 +217,7 @@ export class StreamingController {
         console.error('Error estimating tokens:', e);
       }
 
-      const stream = model.stream(messagesForProvider as Message[]);
+      const stream = model.stream(messagesForProvider as MessageWithAttachments[]);
       this.currentReader = stream.getReader();
 
       startStream(this.chatId, assistantMessage.id, contextMessages);

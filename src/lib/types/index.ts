@@ -16,8 +16,8 @@ export type Message = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  // Optional attachments for user messages
-  attachments?: Attachment[];
+  // Optional attachment IDs for user messages - full attachments loaded separately
+  attachmentIds?: string[];
   // Optional reasoning/thinking content emitted by some models
   reasoning?: string;
   providerInstanceId?: string;
@@ -30,10 +30,15 @@ export type Message = {
   error?: ChatError;
 };
 
+// Message with populated attachments for UI usage
+export type MessageWithAttachments = Omit<Message, 'attachmentIds'> & {
+  attachments?: Attachment[];
+};
+
 export type Chat = {
   id: string;
   title: string;
-  messages: Message[];
+  messages: MessageWithAttachments[];
   createdAt: Date;
   updatedAt: Date;
   providerInstanceId?: string;
@@ -86,7 +91,7 @@ export interface StreamMetrics {
 
 // Interface that language model implementations may satisfy for token counting
 export interface TokenCountable {
-  countTokens(messages: Message[]): Promise<{ promptTokens: number; totalTokens: number }>;
+  countTokens(messages: MessageWithAttachments[]): Promise<{ promptTokens: number; totalTokens: number }>;
 }
 
 export interface ChatError {

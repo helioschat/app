@@ -1,7 +1,7 @@
 import { modelCache } from '$lib/stores/modelCache';
 import OpenAI, { toFile } from 'openai';
 import { v7 as uuidv7 } from 'uuid';
-import type { Attachment, Message, ProviderConfig } from '../types';
+import type { Attachment, MessageWithAttachments, ProviderConfig } from '../types';
 import { supportsImageGeneration } from '../utils/attachments';
 import type { LanguageModel, ModelInfo } from './base';
 import { toReadableStream } from './base';
@@ -61,7 +61,7 @@ export class OpenAICompatibleProvider implements LanguageModel {
     return false;
   }
 
-  stream(messages: Message[]) {
+  stream(messages: MessageWithAttachments[]) {
     this.tokenCount = 0;
 
     // Check if this is an image generation model
@@ -72,7 +72,7 @@ export class OpenAICompatibleProvider implements LanguageModel {
     return this.streamTextGeneration(messages);
   }
 
-  private streamImageGeneration(messages: Message[]) {
+  private streamImageGeneration(messages: MessageWithAttachments[]) {
     const size = '1024x1024'; // Use defualt
     const quality = 'low'; // Use default
     const n = 1; // Only generate one image
@@ -173,7 +173,7 @@ export class OpenAICompatibleProvider implements LanguageModel {
     return toReadableStream(gen);
   }
 
-  private streamTextGeneration(messages: Message[]) {
+  private streamTextGeneration(messages: MessageWithAttachments[]) {
     const gen = async function* (this: OpenAICompatibleProvider) {
       let hasFile = false;
 
@@ -257,7 +257,7 @@ export class OpenAICompatibleProvider implements LanguageModel {
     return this.tokenCount;
   }
 
-  async countTokens(messages: Message[]): Promise<{
+  async countTokens(messages: MessageWithAttachments[]): Promise<{
     promptTokens: number;
     completionTokens?: number;
     totalTokens: number;

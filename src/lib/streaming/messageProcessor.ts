@@ -1,8 +1,8 @@
-import type { Message } from '$lib/types';
+import type { MessageWithAttachments } from '$lib/types';
 import type { StreamMetrics, TokenCountable } from './types';
 
 export class MessageProcessor {
-  static async estimatePromptTokens(messages: Message[], model: unknown): Promise<number> {
+  static async estimatePromptTokens(messages: MessageWithAttachments[], model: unknown): Promise<number> {
     // Type guard for TokenCountable
     if (this.isTokenCountable(model)) {
       const tokenInfo = await model.countTokens(messages);

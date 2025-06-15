@@ -1,4 +1,4 @@
-import type { Message } from '$lib/types';
+import type { MessageWithAttachments } from '$lib/types';
 
 export interface StreamMetrics {
   startTime: number;
@@ -31,6 +31,7 @@ export interface StreamContextMessage {
     thinkingTime?: number;
   };
   reasoning?: string;
+  attachmentIds?: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -51,5 +52,5 @@ export interface StreamControllerState {
 }
 
 export interface TokenCountable {
-  countTokens(messages: Message[]): Promise<{ promptTokens: number }>;
+  countTokens(messages: MessageWithAttachments[]): Promise<{ promptTokens: number }>;
 }

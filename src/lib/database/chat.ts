@@ -1,6 +1,6 @@
-import type { Chat } from '$lib/types';
-import { deleteAttachmentsForMessage, saveAttachments } from './attachments';
-import { deleteMessage, getMessagesForThread, saveMessage } from './messages';
+import type { Chat, MessageWithAttachments } from '$lib/types';
+import { deleteAttachmentsForMessage, getAttachmentsForMessage, saveAttachments } from './attachments';
+import { createPreviewUrl, deleteMessage, getMessagesForThread, saveMessage } from './messages';
 import { deleteThread, getThread, saveThread } from './threads';
 import type { StoredAttachment, StoredMessage, Thread } from './types';
 
@@ -17,45 +17,34 @@ export async function getChatFromThread(threadId: string): Promise<Chat | null> 
     return null;
   }
 
+  // Load attachments for all messages that have attachment IDs
+  const messagesWithAttachments: MessageWithAttachments[] = await Promise.all(
+    messages.map(async (message) => {
+      if (message.attachmentIds && message.attachmentIds.length > 0) {
+        const attachments = await getAttachmentsForMessage(message.id);
+        const processedAttachments = attachments.map((att) => ({
+          id: att.id,
+          type: att.type as 'image' | 'file',
+          name: att.name,
+          size: att.size,
+          mimeType: att.mimeType,
+          data: att.data,
+          previewUrl: att.type === 'image' ? createPreviewUrl(att.data, att.mimeType) : undefined,
+        }));
+
+        return {
+          ...message,
+          attachments: processedAttachments,
+        };
+      }
+
+      return message;
+    }),
+  );
+
   return {
-    id: thread.id,
-    title: thread.title,
-    createdAt: thread.createdAt,
-    updatedAt: thread.updatedAt,
-    messages: messages.map(
-      ({
-        id,
-        role,
-        content,
-        attachments,
-        reasoning,
-        provider,
-        providerInstanceId,
-        model,
-        usage,
-        metrics,
-        error,
-        createdAt,
-        updatedAt,
-      }) => ({
-        id,
-        role,
-        content,
-        attachments,
-        reasoning,
-        provider,
-        providerInstanceId,
-        model,
-        usage,
-        metrics,
-        error,
-        createdAt,
-        updatedAt,
-      }),
-    ),
-    providerInstanceId: thread.providerInstanceId,
-    model: thread.model,
-    pinned: thread.pinned,
+    ...thread,
+    messages: messagesWithAttachments,
   };
 }
 
@@ -87,12 +76,24 @@ export async function saveChatAsThreadAndMessages(chat: Chat): Promise<void> {
 
       // Save messages and their attachments
       const savePromises = chat.messages.map(async (message) => {
-        // Save the message first
-        const storedMessage: StoredMessage = {
-          ...message,
+        // Extract attachment IDs and save message with only IDs
+        const attachmentIds = message.attachments?.map((att) => att.id);
+        const messageToStore: StoredMessage = {
+          id: message.id,
+          role: message.role,
+          content: message.content,
+          attachmentIds,
+          reasoning: message.reasoning,
+          providerInstanceId: message.providerInstanceId,
+          model: message.model,
+          usage: message.usage,
+          metrics: message.metrics,
+          error: message.error,
+          createdAt: message.createdAt,
+          updatedAt: message.updatedAt,
           threadId: chat.id,
         };
-        await saveMessage(storedMessage);
+        await saveMessage(messageToStore);
 
         // Save attachments separately if they exist
         if (message.attachments && message.attachments.length > 0) {

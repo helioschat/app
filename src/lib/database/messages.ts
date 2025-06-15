@@ -1,6 +1,5 @@
 import { browser } from '$app/environment';
 import type { ChatError } from '$lib/types';
-import { getAttachmentsForMessage } from './attachments';
 import { getDB, getStore, promisify } from './connection';
 import { MESSAGE_STORE, type RawMessage, type StoredMessage } from './types';
 
@@ -23,30 +22,15 @@ export async function getMessagesForThread(threadId: string): Promise<StoredMess
     const store = getStore(db, MESSAGE_STORE);
     const rawMessages = (await promisify(store.index('threadId').getAll(threadId))) as RawMessage[];
 
-    // Convert raw messages and load attachments separately
-    const messages = await Promise.all(
-      rawMessages.map(async (msg) => {
-        const attachments = await getAttachmentsForMessage(msg.id);
-
-        return {
+    // Convert raw messages without loading attachments
+    const messages = rawMessages.map(
+      (msg) =>
+        ({
           ...msg,
           createdAt: new Date(msg.createdAt),
           updatedAt: new Date(msg.updatedAt),
           error: msg.error ? (JSON.parse(msg.error) as ChatError) : undefined,
-          attachments:
-            attachments.length > 0
-              ? attachments.map((att) => ({
-                  id: att.id,
-                  name: att.name,
-                  size: att.size,
-                  mimeType: att.mimeType,
-                  data: att.data,
-                  type: att.type as 'image' | 'file',
-                  previewUrl: att.type === 'image' ? createPreviewUrl(att.data, att.mimeType) : undefined,
-                }))
-              : undefined,
-        } as StoredMessage;
-      }),
+        }) as StoredMessage,
     );
 
     return messages.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());

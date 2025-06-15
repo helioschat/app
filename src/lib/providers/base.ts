@@ -1,12 +1,12 @@
-import type { Message } from '../types';
+import type { MessageWithAttachments } from '../types';
 
 export interface LanguageModel {
   id: string;
   name: string;
-  stream: (messages: Message[]) => ReadableStream<string>;
+  stream: (messages: MessageWithAttachments[]) => ReadableStream<string>;
   getAvailableModels: () => Promise<ModelInfo[]>;
   fallbackModel?: string;
-  countTokens?: (messages: Message[]) => Promise<{
+  countTokens?: (messages: MessageWithAttachments[]) => Promise<{
     promptTokens: number;
     completionTokens?: number;
     totalTokens: number;

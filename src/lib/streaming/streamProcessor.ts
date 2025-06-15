@@ -1,16 +1,22 @@
-import type { Message } from '$lib/types';
+import type { MessageWithAttachments } from '$lib/types';
 import { MessageProcessor } from './messageProcessor';
 import { updateStreamContent, updateStreamReasoning } from './state';
 
 export class StreamProcessor {
   private chatId: string;
   private messageId: string;
-  private updateMessageCallback: (messageId: string, updater: (msg: Message) => Message) => void;
+  private updateMessageCallback: (
+    messageId: string,
+    updater: (msg: MessageWithAttachments) => MessageWithAttachments,
+  ) => void;
 
   constructor(
     chatId: string,
     messageId: string,
-    updateMessageCallback: (messageId: string, updater: (msg: Message) => Message) => void,
+    updateMessageCallback: (
+      messageId: string,
+      updater: (msg: MessageWithAttachments) => MessageWithAttachments,
+    ) => void,
   ) {
     this.chatId = chatId;
     this.messageId = messageId;
