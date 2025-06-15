@@ -232,7 +232,7 @@
   </div>
 
   <div
-    class="message-actions flex h-[64px] max-h-[64px] items-center opacity-0 group-hover:opacity-100 peer-hover:opacity-100 hover:opacity-100 xl:h-[44px]">
+    class="message-actions flex h-[64px] max-h-[64px] opacity-0 group-hover:opacity-100 peer-hover:opacity-100 hover:opacity-100 xl:h-[44px]">
     <div class="flex flex-col gap-1 p-2 xl:flex-row">
       {#if !isEditing}
         <div class="buttons flex items-center gap-2">
@@ -320,8 +320,9 @@
     background-color: var(--color-2);
   }
 
+  .message.assistant .message-actions,
   .message.assistant .message-actions > .flex {
-    @apply justify-start;
+    @apply items-start justify-start xl:items-center;
   }
 
   .message.user {
@@ -333,8 +334,9 @@
     background-color: var(--blue-10);
   }
 
+  .message.user .message-actions,
   .message.user .message-actions > .flex {
-    @apply justify-end;
+    @apply items-end justify-end xl:items-center;
   }
 
   .message-actions .buttons {
