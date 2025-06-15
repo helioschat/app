@@ -8,7 +8,12 @@
   import { browser } from '$app/environment';
   import type { Attachment } from '$lib/types';
   import type { ModelInfo } from '$lib/providers/base';
-  import { createAttachment, getSupportedModalities, getAcceptForModalities } from '$lib/utils/attachments';
+  import {
+    createAttachment,
+    getSupportedModalities,
+    getAcceptForModalities,
+    supportsImageGeneration,
+  } from '$lib/utils/attachments';
 
   export let userInput: string = '';
   export let isLoading: boolean = false;
@@ -29,7 +34,8 @@
     : null;
   $: modelFeatures = currentModel?.architecture?.inputModalities || [];
   $: ({ supportsImages, supportsFiles } = getSupportedModalities(modelFeatures));
-  $: canAttachFiles = supportsImages || supportsFiles;
+  $: isImageGenerationModel = currentModel ? supportsImageGeneration(currentModel) : false;
+  $: canAttachFiles = supportsImages || supportsFiles || isImageGenerationModel;
 
   onMount(() => {
     cachedModels = $availableModels;
@@ -126,7 +132,7 @@
           bind:this={userInputComponent}
           bind:value={userInput}
           rows="1"
-          placeholder="Ask anything..."
+          placeholder={isImageGenerationModel ? 'Describe the image you want to generate...' : 'Ask anything...'}
           disabled={isLoading}
           class="max-h-52 min-h-6 flex-1 resize-none !rounded-none !p-0 outline-none"
           on:input={resizeTextarea}

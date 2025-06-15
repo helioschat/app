@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { ModelInfo } from '$lib/providers/base';
   import Pill from './Pill.svelte';
+  import { supportsImageGeneration } from '$lib/utils/attachments';
 
   export let model: ModelInfo;
   export let isActive = false;
@@ -10,6 +11,7 @@
   export let onchange: ((enabled: boolean) => void) | undefined = undefined;
 
   $: modelFeatures = [...(model.architecture?.inputModalities || [])];
+  $: isImageGeneration = supportsImageGeneration(model);
 
   function handleClick() {
     if (mode === 'select' && onclick) {
@@ -47,7 +49,7 @@
     {#if model.description}
       <div class="text-secondary text-sm">{model.description}</div>
     {/if}
-    {#if modelFeatures.length > 0}
+    {#if modelFeatures.length > 0 || isImageGeneration}
       <div class="mt-2 flex flex-wrap gap-1">
         {#if modelFeatures.includes('text')}
           <Pill text="Text" size="sm"></Pill>
@@ -57,6 +59,9 @@
         {/if}
         {#if modelFeatures.includes('file')}
           <Pill text="File" size="sm" variant="success"></Pill>
+        {/if}
+        {#if isImageGeneration}
+          <Pill text="Image Generation" size="sm" variant="warning"></Pill>
         {/if}
       </div>
     {/if}

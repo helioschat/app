@@ -1,5 +1,8 @@
-import OpenAI from 'openai';
-import type { Message, ProviderConfig } from '../types';
+import { modelCache } from '$lib/stores/modelCache';
+import OpenAI, { toFile } from 'openai';
+import { v7 as uuidv7 } from 'uuid';
+import type { Attachment, Message, ProviderConfig } from '../types';
+import { supportsImageGeneration } from '../utils/attachments';
 import type { LanguageModel, ModelInfo } from './base';
 import { toReadableStream } from './base';
 
@@ -43,9 +46,134 @@ export class OpenAICompatibleProvider implements LanguageModel {
     this.config = config;
   }
 
+  private isImageGenerationModel(): boolean {
+    if (this.config.providerInstanceId && this.config.model) {
+      const cachedModels = modelCache.getAllCachedModels();
+      const models = cachedModels[this.config.providerInstanceId];
+      if (models) {
+        const model = models.find((m) => m.id === this.config.model);
+        if (model) {
+          return supportsImageGeneration(model);
+        }
+      }
+    }
+
+    return false;
+  }
+
   stream(messages: Message[]) {
     this.tokenCount = 0;
 
+    // Check if this is an image generation model
+    if (this.isImageGenerationModel()) {
+      return this.streamImageGeneration(messages);
+    }
+
+    return this.streamTextGeneration(messages);
+  }
+
+  private streamImageGeneration(messages: Message[]) {
+    const size = '1024x1024'; // Use defualt
+    const quality = 'low'; // Use default
+    const n = 1; // Only generate one image
+
+    const gen = async function* (this: OpenAICompatibleProvider) {
+      const lastUserMessage = messages.filter((msg) => msg.role === 'user').pop();
+      const prompt = lastUserMessage?.content || 'Generate an image';
+
+      // Check for image attachment in the last user message
+      let imageAttachment = lastUserMessage?.attachments?.find((att) => att.type.startsWith('image'));
+      let hasImageAttachment = !!imageAttachment;
+
+      // If no image attachment in last user message, recursively check previous messages
+      if (!hasImageAttachment && messages.length > 1) {
+        const findImageAttachment = (
+          index: number,
+          depth: number = 0,
+        ): { attachment: Attachment | undefined; hasAttachment: boolean } => {
+          if (index < 0 || depth >= 32) {
+            return { attachment: undefined, hasAttachment: false };
+          }
+
+          const message = messages[index];
+          if (message.error === undefined) {
+            const attachment = message.attachments?.find((att) => att.type.startsWith('image'));
+            if (attachment) return { attachment, hasAttachment: true };
+          }
+
+          // If it's an error message, skip to the previous one
+          return findImageAttachment(index - 1, depth + 1);
+        };
+
+        const lastIndex = messages.length - 1;
+        const result = findImageAttachment(lastIndex - 1);
+        imageAttachment = result.attachment;
+        hasImageAttachment = result.hasAttachment;
+      }
+
+      let response;
+      if (hasImageAttachment) {
+        if (!imageAttachment) throw new Error('No image attachment for editing');
+
+        let imageBase64 = imageAttachment.data; // Base64 string
+        const imageMimeType = imageAttachment.mimeType;
+        if (imageBase64.includes(',')) {
+          imageBase64 = imageBase64.split(',')[1];
+        }
+
+        // Decode base64 to binary
+        const byteCharacters = atob(imageBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: imageMimeType });
+        const blobFile = await toFile(blob, null, { type: imageMimeType });
+
+        response = await this.client.images.edit({
+          image: blobFile,
+          prompt,
+          model: this.config.model as string,
+          size,
+          quality,
+          n,
+        });
+      } else {
+        response = await this.client.images.generate({
+          model: this.config.model as string,
+          prompt,
+          size,
+          quality,
+          n,
+        });
+      }
+
+      if (response.data && response.data.length > 0) {
+        const imageBase64 = response.data[0].b64_json;
+        if (imageBase64) {
+          const mimeType = 'image/png'; // TODO: Replace this -- Assume PNG for now
+
+          const attachment: Attachment = {
+            id: uuidv7(),
+            name: hasImageAttachment ? 'Edited Image.png' : 'Generated Image.png',
+            type: 'image',
+            mimeType,
+            data: imageBase64,
+            previewUrl: `data:${mimeType};base64,${imageBase64}`,
+            size: Math.round(imageBase64.length * 0.75), // TODO: Replace this -- Rough estimate of decoded size
+          };
+          yield JSON.stringify({ type: 'attachment', data: attachment });
+        } else {
+          throw new Error('No image data returned from API');
+        }
+      }
+    }.bind(this)();
+
+    return toReadableStream(gen);
+  }
+
+  private streamTextGeneration(messages: Message[]) {
     const gen = async function* (this: OpenAICompatibleProvider) {
       let hasFile = false;
 

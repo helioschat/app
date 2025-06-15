@@ -51,6 +51,7 @@ export type ProviderConfig = {
   baseURL?: string;
   model?: string;
   matchedProvider?: string;
+  providerInstanceId?: string;
   [key: string]: string | number | boolean | undefined;
 };
 

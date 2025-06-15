@@ -165,7 +165,8 @@ async function syncModels(
 
   for (const instance of instances) {
     try {
-      const model = getLanguageModel(instance.providerType, instance.config);
+      const configWithInstanceId = { ...instance.config, providerInstanceId: instance.id };
+      const model = getLanguageModel(instance.providerType, configWithInstanceId);
       let models = await model.getAvailableModels();
       const matched = instance.config.matchedProvider;
       if (matched) {
@@ -209,7 +210,8 @@ async function syncSpecificProvider(
   }));
 
   try {
-    const model = getLanguageModel(instance.providerType, instance.config);
+    const configWithInstanceId = { ...instance.config, providerInstanceId: instance.id };
+    const model = getLanguageModel(instance.providerType, configWithInstanceId);
     let models = await model.getAvailableModels();
     const matched =
       (instance.config as ProviderConfig & { matchedProvider?: string }).matchedProvider ??

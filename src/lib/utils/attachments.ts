@@ -1,5 +1,5 @@
-import type { Attachment, AttachmentType } from '$lib/types';
 import { createPreviewUrl } from '$lib/database/messages';
+import type { Attachment, AttachmentType } from '$lib/types';
 import { v7 as uuidv7 } from 'uuid';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -105,4 +105,8 @@ export function getSupportedModalities(modelFeatures: string[]): { supportsImage
     supportsImages: modelFeatures.includes('image'),
     supportsFiles: modelFeatures.includes('file'),
   };
+}
+
+export function supportsImageGeneration(model: { architecture?: { outputModalities?: string[] } }): boolean {
+  return model.architecture?.outputModalities?.includes('image') ?? false;
 }

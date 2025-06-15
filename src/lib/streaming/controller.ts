@@ -31,7 +31,7 @@ export class StreamingController {
 
   private buildModel(providerInstanceId: string, modelId: string) {
     const providerInstance = this.getProviderInstance(providerInstanceId);
-    const effectiveConfig = { ...providerInstance.config, model: modelId };
+    const effectiveConfig = { ...providerInstance.config, model: modelId, providerInstanceId };
     return getLanguageModel(providerInstance.providerType, effectiveConfig);
   }
 

@@ -35,35 +35,49 @@ export class StreamProcessor {
       const { done, value } = await reader.read();
       if (done) break;
 
-      const result = await MessageProcessor.processStreamChunk(
-        value,
-        accumulatedContent,
-        accumulatedReasoning,
-        firstContentReceived,
-        startTime,
-      );
+      try {
+        const parsedValue = JSON.parse(value);
+        if (parsedValue.type === 'attachment' && parsedValue.data) {
+          // Handle attachment by adding it to the message
+          this.updateMessageCallback(this.messageId, (m) => ({
+            ...m,
+            attachments: m.attachments ? [...m.attachments, parsedValue.data] : [parsedValue.data],
+          }));
+        } else {
+          throw new Error('Not an attachment JSON');
+        }
+      } catch (e) {
+        // Not a valid JSON or not an attachment, treat as text or reasoning chunk
+        const result = await MessageProcessor.processStreamChunk(
+          value,
+          accumulatedContent,
+          accumulatedReasoning,
+          firstContentReceived,
+          startTime,
+        );
 
-      accumulatedContent = result.accumulatedContent;
-      accumulatedReasoning = result.accumulatedReasoning;
-      firstContentReceived = result.firstContentReceived;
+        accumulatedContent = result.accumulatedContent;
+        accumulatedReasoning = result.accumulatedReasoning;
+        firstContentReceived = result.firstContentReceived;
 
-      if (result.thinkingTime !== undefined) {
-        thinkingTime = result.thinkingTime;
-      }
+        if (result.thinkingTime !== undefined) {
+          thinkingTime = result.thinkingTime;
+        }
 
-      if (result.isReasoningChunk) {
-        updateStreamReasoning(this.chatId, accumulatedReasoning);
-        this.updateMessageCallback(this.messageId, (m) => ({
-          ...m,
-          reasoning: accumulatedReasoning,
-        }));
-      } else {
-        updateStreamContent(this.chatId, accumulatedContent);
-        const contentSnapshot = accumulatedContent; // closure capture for immutability
-        this.updateMessageCallback(this.messageId, (m) => ({
-          ...m,
-          content: contentSnapshot,
-        }));
+        if (result.isReasoningChunk) {
+          updateStreamReasoning(this.chatId, accumulatedReasoning);
+          this.updateMessageCallback(this.messageId, (m) => ({
+            ...m,
+            reasoning: accumulatedReasoning,
+          }));
+        } else {
+          updateStreamContent(this.chatId, accumulatedContent);
+          const contentSnapshot = accumulatedContent; // closure capture for immutability
+          this.updateMessageCallback(this.messageId, (m) => ({
+            ...m,
+            content: contentSnapshot,
+          }));
+        }
       }
     }
 
