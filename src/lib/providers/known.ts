@@ -85,6 +85,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
   openai: {
     id: 'openai',
     name: 'OpenAI',
+    icon: '/assets/providers/openai.svg',
     defaultTitleModel: 'gpt-4.1-nano',
     disabledModels: [
       'gpt-3.5-turbo-0125',
@@ -341,6 +342,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
   openrouter: {
     id: 'openrouter',
     name: 'OpenRouter',
+    icon: '/assets/providers/openrouter.svg',
     defaultTitleModel: 'meta-llama/llama-3.3-8b-instruct:free',
     baseUrlPatterns: [/https?:\/\/openrouter\.ai\/api/],
     apiKeyPrefixes: ['sk-or-v1-'],
@@ -348,6 +350,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
   anthropic: {
     id: 'anthropic',
     name: 'Anthropic',
+    icon: '/assets/providers/anthropic.svg',
     defaultTitleModel: 'claude-3-haiku-20240307',
     disabledModels: ['claude-3-5-sonnet-20240620'],
     modelOverrides: {
@@ -422,6 +425,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
   'google-openai': {
     id: 'google-openai',
     name: 'Google (OpenAI compatible)',
+    icon: '/assets/providers/google.svg',
     defaultTitleModel: 'gemini-2.0-flash',
     disabledModels: [/^embedding-.*$/, /^text-embedding-.*$/, /^veo-.*$/],
     baseUrlPatterns: [/https?:\/\/generativelanguage\.googleapis.com\/v1beta\/openai\//],

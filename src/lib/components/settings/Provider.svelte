@@ -5,8 +5,11 @@
   import { Pencil, Trash } from 'lucide-svelte';
   import ProviderEditModal from '../modal/types/ProviderEditModal.svelte';
   import ConfirmationModal from '../modal/types/ConfirmationModal.svelte';
+  import { KNOWN_PROVIDERS } from '$lib/providers/known';
 
   export let provider: ProviderInstance;
+
+  $: matchedProvider = provider.config.matchedProvider ? KNOWN_PROVIDERS[provider.config.matchedProvider] : null;
 
   $: showEditModal = false;
 
@@ -66,9 +69,13 @@
 <div
   class="button button-secondary button-large flex w-full !justify-between !text-left"
   on:click={() => (showEditModal = true)}>
-  <div class="flex">
-    <div></div>
-    <div>
+  <div class="flex gap-3">
+    {#if matchedProvider && matchedProvider.icon}
+      <div class="flex items-center">
+        <div class="provider-icon h-8 w-8 bg-white" style="--icon: url({matchedProvider.icon});"></div>
+      </div>
+    {/if}
+    <div class="flex flex-col justify-center">
       <h3 class="font-semibold">{provider.name}</h3>
       <h4 class="text-secondary">{provider.config.baseURL}</h4>
     </div>
@@ -102,3 +109,12 @@
   isOpen={providerToDelete !== null}
   on:confirm={handleConfirmDelete}
   on:cancel={handleCancelDelete} />
+
+<style lang="postcss">
+  .provider-icon {
+    mask-position: center;
+    mask-size: 100%;
+    mask-repeat: no-repeat;
+    mask-image: var(--icon);
+  }
+</style>
