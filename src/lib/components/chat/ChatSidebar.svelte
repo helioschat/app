@@ -9,10 +9,39 @@
   import { fade } from 'svelte/transition';
   import { streamStates } from '$lib/streaming';
   import { groupChatsByDate } from '$lib/utils/date';
+  import { onMount, onDestroy } from 'svelte';
 
   const COLLAPSE_ANIMATION_DURATION = 150; //ms
 
   let { collapsed = $bindable(false) } = $props();
+
+  // Track if user manually toggled to disable auto-collapse
+  let manualMode = $state(false);
+
+  function handleToggle() {
+    collapsed = !collapsed;
+    manualMode = true;
+  }
+
+  // Add resize handling to auto-collapse sidebar on small screens
+  function handleResize() {
+    if (window.innerWidth >= 1024) {
+      // If window is wide enough, reset manual mode
+      manualMode = false;
+    }
+
+    if (manualMode) return; // Don't auto-collapse if user is in manual mode
+    collapsed = window.innerWidth < 1024;
+  }
+
+  onMount(() => {
+    handleResize();
+    window.addEventListener('resize', handleResize);
+  });
+
+  onDestroy(() => {
+    window.removeEventListener('resize', handleResize);
+  });
 
   let chatToDelete = $state<string | null>(null);
   let searchQuery = $state('');
@@ -53,7 +82,7 @@
   style="--collapse-animation-duration: {COLLAPSE_ANIMATION_DURATION}ms">
   <div class="flex flex-col items-center gap-3.5">
     <div class="flex w-full items-center justify-between">
-      <button class="button button-secondary h-10 min-h-10 w-10 min-w-10" on:click={() => (collapsed = !collapsed)}>
+      <button class="button button-secondary h-10 min-h-10 w-10 min-w-10" on:click={handleToggle}>
         <Menu size={20}></Menu>
       </button>
       {#if !collapsed}
