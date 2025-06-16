@@ -1,6 +1,6 @@
 {
-  "name": "llmchat",
-  "description": "Performant, elegant and open-source AI chat app",
+  "name": "helios",
+  "description": "Blazing-fast, private & open-source SvelteKit LLM chat app",
   "author": {
     "name": "Szalovszky Dávid",
     "email": "david@szalovszky.com",
@@ -11,11 +11,11 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/szalovszky/llmchat"
+    "url": "https://github.com/helioschat/app.git"
   },
-  "homepage": "https://github.com/szalovszky/llmchat#readme",
+  "homepage": "https://github.com/helioschat/app#readme",
   "bugs": {
-    "url": "https://github.com/szalovszky/llmchat/issues"
+    "url": "https://github.com/helioschat/app/issues"
   },
   "scripts": {
     "dev": "vite dev",
