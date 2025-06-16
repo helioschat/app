@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { VenetianMask } from 'lucide-svelte';
+  import { CirclePlus, VenetianMask } from 'lucide-svelte';
   import type { Chat } from '$lib/types';
 
   export let chat: Chat;
@@ -12,7 +12,15 @@
         <VenetianMask size={16}></VenetianMask>
       </div>
     {/if}
-    <h2 class="text-lg font-semibold drop-shadow-md">{chat.title}</h2>
+    <h2 class="line-clamp-1 text-lg font-semibold break-words drop-shadow-md">{chat.title}</h2>
+  </div>
+  <div>
+    <a
+      href="/"
+      class="new-chat-btn button button-secondary button-small !flex w-full !p-0 opacity-100 transition-opacity lg:!hidden"
+      title="New Chat">
+      <CirclePlus size={20} class="min-w-5"></CirclePlus>
+    </a>
   </div>
 </header>
 
@@ -21,5 +29,9 @@
 
   header {
     background: linear-gradient(to bottom, var(--color-1), transparent);
+  }
+
+  :global(.small) header {
+    @apply pl-14;
   }
 </style>

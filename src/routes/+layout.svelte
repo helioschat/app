@@ -9,9 +9,15 @@
   import { settingsManager } from '$lib/settings/SettingsManager';
   import { getLanguageModel } from '$lib/providers/registry';
   import { get } from 'svelte/store';
+  import { browser } from '$app/environment';
+
+  const SMALL_SCREEN_WIDTH = 1024; //px
 
   let { children } = $props();
   let collapsed = $state(false);
+
+  let innerWidth = $state(browser ? window.innerWidth : 0);
+  let smallScreen = $derived(browser ? innerWidth < SMALL_SCREEN_WIDTH : false);
 
   onMount(() => {
     // Start background model sync
@@ -25,11 +31,13 @@
   });
 </script>
 
+<svelte:window bind:innerWidth />
+
 <div class="flex h-screen">
-  <ChatSidebar bind:collapsed></ChatSidebar>
+  <ChatSidebar bind:collapsed {smallScreen}></ChatSidebar>
 
   <div class="flex h-full w-full flex-1 flex-col items-center overflow-y-auto">
-    <div class="h-full w-full max-w-7xl">
+    <div class="h-full w-full max-w-7xl" class:small={smallScreen}>
       {@render children()}
     </div>
   </div>

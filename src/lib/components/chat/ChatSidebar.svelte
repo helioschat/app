@@ -9,11 +9,12 @@
   import { fade } from 'svelte/transition';
   import { streamStates } from '$lib/streaming';
   import { groupChatsByDate } from '$lib/utils/date';
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount } from 'svelte';
+  import { browser } from '$app/environment';
 
   const COLLAPSE_ANIMATION_DURATION = 150; //ms
 
-  let { collapsed = $bindable(false) } = $props();
+  let { collapsed = $bindable(false), smallScreen } = $props();
 
   // Track if user manually toggled to disable auto-collapse
   let manualMode = $state(false);
@@ -25,22 +26,19 @@
 
   // Add resize handling to auto-collapse sidebar on small screens
   function handleResize() {
-    if (window.innerWidth >= 1024) {
-      // If window is wide enough, reset manual mode
-      manualMode = false;
-    }
+    if (!browser) return;
+
+    const initialCollapsed = collapsed;
 
     if (manualMode) return; // Don't auto-collapse if user is in manual mode
-    collapsed = window.innerWidth < 1024;
+    collapsed = smallScreen;
+    if (collapsed && !initialCollapsed) {
+      manualMode = false;
+    }
   }
 
   onMount(() => {
     handleResize();
-    window.addEventListener('resize', handleResize);
-  });
-
-  onDestroy(() => {
-    window.removeEventListener('resize', handleResize);
   });
 
   let chatToDelete = $state<string | null>(null);
@@ -75,16 +73,31 @@
   );
 </script>
 
+<svelte:window on:resize={handleResize} />
+
+{#if smallScreen && !collapsed}
+  <div
+    class="fixed z-[10] h-screen w-screen bg-black/50"
+    transition:fade={{ duration: COLLAPSE_ANIMATION_DURATION * 0.75 }}
+    on:click={() => (collapsed = true)}>
+  </div>
+{/if}
+
 <aside
-  class="flex w-64 flex-col gap-4 p-4"
-  class:w-64={!collapsed}
-  class:w-20={collapsed}
+  class="z-[11] flex w-64 flex-col gap-4 p-2.5"
+  class:w-64={!collapsed && !smallScreen}
+  class:w-15={collapsed}
+  class:w-full={!collapsed && smallScreen}
+  class:md:w-128={!collapsed && smallScreen}
+  class:collapsed
+  class:small={smallScreen}
   style="--collapse-animation-duration: {COLLAPSE_ANIMATION_DURATION}ms">
   <div class="flex flex-col items-center gap-3.5">
-    <div class="flex w-full items-center justify-between">
-      <button class="button button-secondary h-10 min-h-10 w-10 min-w-10" on:click={handleToggle}>
+    <div class="relative flex w-full items-center justify-between">
+      <button class="button button-secondary absolute top-0 left-0" on:click={handleToggle}>
         <Menu size={20}></Menu>
       </button>
+      <div class="h-10 min-h-10 w-10 min-w-10"></div>
       {#if !collapsed}
         <h1 class="text-xl font-bold" transition:fade={{ duration: COLLAPSE_ANIMATION_DURATION * 0.75 }}>
           <a href="/">{manifest.name}</a>
@@ -98,14 +111,21 @@
         </a>
       {/if}
     </div>
-    <a href="/" class="button button-primary w-full" class:justify-center={collapsed} title="New Chat">
-      <CirclePlus size={20} class="min-w-5" />
-      {#if !collapsed}
-        <p class="line-clamp-1 break-words" transition:fade={{ duration: COLLAPSE_ANIMATION_DURATION * 0.5 }}>
-          New Chat
-        </p>
-      {/if}
-    </a>
+    {#if (smallScreen && !collapsed) || !smallScreen}
+      <a
+        href="/"
+        class="button button-primary w-full"
+        class:justify-center={collapsed}
+        title="New Chat"
+        transition:fade={{ duration: COLLAPSE_ANIMATION_DURATION * 0.75 }}>
+        <CirclePlus size={20} class="min-w-5"></CirclePlus>
+        {#if !collapsed}
+          <p class="line-clamp-1 break-words" transition:fade={{ duration: COLLAPSE_ANIMATION_DURATION * 0.25 }}>
+            New Chat
+          </p>
+        {/if}
+      </a>
+    {/if}
   </div>
   {#if !collapsed}
     <!-- Search input -->
@@ -189,6 +209,14 @@
 
   aside {
     transition: width var(--collapse-animation-duration) cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  aside.small {
+    @apply absolute top-0 left-0 h-screen;
+  }
+
+  aside.small:not(.collapsed) {
+    background: var(--color-1);
   }
 
   .group-section {
