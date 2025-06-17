@@ -11,6 +11,8 @@
   import { getLanguageModel } from '$lib/providers/registry';
   import { get } from 'svelte/store';
   import { browser } from '$app/environment';
+  import { goto } from '$app/navigation';
+  import { page } from '$app/state';
 
   const SMALL_SCREEN_WIDTH = 1024; //px
 
@@ -24,6 +26,8 @@
   const isFirstTime = $derived($setupStore.isFirstTime);
 
   onMount(() => {
+    if (isFirstTime && page.url.pathname !== '/') goto('/');
+
     // Start background model sync
     const getProviderInstances = () => get(settingsManager.providerInstances);
     modelCache.startBackgroundSync(getProviderInstances, getLanguageModel);
