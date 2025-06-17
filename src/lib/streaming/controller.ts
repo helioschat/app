@@ -1,5 +1,7 @@
+import type { ModelInfo } from '$lib/providers/base';
 import { getLanguageModel } from '$lib/providers/registry';
 import { chats } from '$lib/stores/chat';
+import { availableModels } from '$lib/stores/modelCache';
 import { advancedSettings, providerInstances } from '$lib/stores/settings';
 import type { Attachment, Chat, MessageWithAttachments, ProviderInstance } from '$lib/types';
 import { get } from 'svelte/store';
@@ -29,9 +31,19 @@ export class StreamingController {
     return instance;
   }
 
-  private buildModel(providerInstanceId: string, modelId: string) {
+  private buildModel(providerInstanceId: string, modelId: string, webSearchEnabled?: boolean) {
     const providerInstance = this.getProviderInstance(providerInstanceId);
-    const effectiveConfig = { ...providerInstance.config, model: modelId, providerInstanceId };
+
+    // Check if we should use a redirect model for web search
+    let effectiveModelId = modelId;
+    if (webSearchEnabled) {
+      const redirectModel = this.getWebSearchRedirectModel(providerInstanceId, modelId);
+      if (redirectModel) {
+        effectiveModelId = redirectModel;
+      }
+    }
+
+    const effectiveConfig = { ...providerInstance.config, model: effectiveModelId, providerInstanceId };
     return getLanguageModel(providerInstance.providerType, effectiveConfig);
   }
 
@@ -107,6 +119,8 @@ export class StreamingController {
     providerInstanceId: string,
     modelId: string,
     attachments?: Attachment[],
+    webSearchEnabled?: boolean,
+    webSearchContextSize?: 'low' | 'medium' | 'high',
   ): Promise<StreamControllerState> {
     if ((!userInput.trim() && (!attachments || attachments.length === 0)) || !activeChat || this.isLoading) {
       return this.getState();
@@ -120,8 +134,17 @@ export class StreamingController {
     let updatedMessages: MessageWithAttachments[];
     let assistantMessage: MessageWithAttachments;
 
-    const model = this.buildModel(providerInstanceId, modelId);
+    const model = this.buildModel(providerInstanceId, modelId, webSearchEnabled);
     const systemPrompt = get(advancedSettings).systemPrompt;
+
+    // Get the effective model ID (with redirect if web search is enabled)
+    let effectiveModelId = modelId;
+    if (webSearchEnabled) {
+      const redirectModel = this.getWebSearchRedirectModel(providerInstanceId, modelId);
+      if (redirectModel) {
+        effectiveModelId = redirectModel;
+      }
+    }
 
     const messagesForProvider = [];
     if (systemPrompt) {
@@ -137,7 +160,9 @@ export class StreamingController {
         role: 'assistant',
         content: '',
         providerInstanceId: providerInstanceId,
-        model: modelId,
+        model: effectiveModelId,
+        webSearchEnabled: webSearchEnabled,
+        webSearchContextSize: webSearchContextSize,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -166,7 +191,9 @@ export class StreamingController {
         role: 'assistant',
         content: '',
         providerInstanceId: providerInstanceId,
-        model: modelId,
+        model: effectiveModelId,
+        webSearchEnabled: webSearchEnabled,
+        webSearchContextSize: webSearchContextSize,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -178,7 +205,7 @@ export class StreamingController {
     const updatedChat = {
       ...activeChat,
       providerInstanceId: activeChat.providerInstanceId || providerInstanceId,
-      model: modelId,
+      model: effectiveModelId,
       messages: updatedMessages,
       updatedAt: new Date(),
     };
@@ -217,7 +244,13 @@ export class StreamingController {
         console.error('Error estimating tokens:', e);
       }
 
-      const stream = model.stream(messagesForProvider as MessageWithAttachments[]);
+      // Check if web search should be enabled for this model
+      const webSearchOptions =
+        webSearchEnabled && this.supportsWebSearch(providerInstanceId, effectiveModelId)
+          ? { enabled: true, searchContextSize: webSearchContextSize || 'low' }
+          : undefined;
+
+      const stream = model.stream(messagesForProvider as MessageWithAttachments[], webSearchOptions);
       this.currentReader = stream.getReader();
 
       startStream(this.chatId, assistantMessage.id, contextMessages);
@@ -251,13 +284,24 @@ export class StreamingController {
     activeChat: Chat,
     providerInstanceId: string,
     modelId: string,
+    webSearchEnabled?: boolean,
+    webSearchContextSize?: 'low' | 'medium' | 'high',
   ): Promise<StreamControllerState> {
     if (!activeChat || this.isLoading || activeChat.messages.length === 0) {
       return this.getState();
     }
 
-    const model = this.buildModel(providerInstanceId, modelId);
+    const model = this.buildModel(providerInstanceId, modelId, webSearchEnabled);
     const systemPrompt = get(advancedSettings).systemPrompt;
+
+    // Get the effective model ID (with redirect if web search is enabled)
+    let effectiveModelId = modelId;
+    if (webSearchEnabled) {
+      const redirectModel = this.getWebSearchRedirectModel(providerInstanceId, modelId);
+      if (redirectModel) {
+        effectiveModelId = redirectModel;
+      }
+    }
 
     // Create assistant message
     const assistantMessage: MessageWithAttachments = {
@@ -265,7 +309,9 @@ export class StreamingController {
       role: 'assistant',
       content: '',
       providerInstanceId: providerInstanceId,
-      model: modelId,
+      model: effectiveModelId,
+      webSearchEnabled: webSearchEnabled,
+      webSearchContextSize: webSearchContextSize,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -285,7 +331,7 @@ export class StreamingController {
     const updatedChat = {
       ...activeChat,
       providerInstanceId: activeChat.providerInstanceId || providerInstanceId,
-      model: modelId,
+      model: effectiveModelId,
       messages: updatedMessages,
       updatedAt: new Date(),
     };
@@ -326,7 +372,13 @@ export class StreamingController {
         console.error('Error estimating tokens:', e);
       }
 
-      const stream = model.stream(messagesForProvider as MessageWithAttachments[]);
+      // Check if web search should be enabled for this model
+      const webSearchOptions =
+        webSearchEnabled && this.supportsWebSearch(providerInstanceId, effectiveModelId)
+          ? { enabled: true, searchContextSize: webSearchContextSize || 'low' }
+          : undefined;
+
+      const stream = model.stream(messagesForProvider as MessageWithAttachments[], webSearchOptions);
       this.currentReader = stream.getReader();
 
       const streamProcessor = new StreamProcessor(
@@ -424,6 +476,32 @@ export class StreamingController {
         };
       });
     });
+  }
+
+  private getWebSearchRedirectModel(providerInstanceId: string, modelId: string): string | undefined {
+    const cachedModels = get(availableModels);
+    const models = cachedModels[providerInstanceId];
+    if (models) {
+      const model = models.find((m: ModelInfo) => m.id === modelId);
+      return model?.webSearchModelRedirect;
+    }
+    return undefined;
+  }
+
+  private supportsWebSearch(providerInstanceId: string, modelId: string): boolean {
+    const instances = get(providerInstances) as ProviderInstance[];
+    const instance = instances.find((inst: ProviderInstance) => inst.id === providerInstanceId);
+    if (!instance) return false;
+
+    const cachedModels = get(availableModels);
+    const models = cachedModels[instance.id];
+    if (models) {
+      const model = models.find((m: ModelInfo) => m.id === modelId);
+      // Model supports web search if it explicitly supports it OR has a redirect model for web search
+      return model?.supportsWebSearch || !!model?.webSearchModelRedirect;
+    }
+
+    return false;
   }
 
   getState(): StreamControllerState {

@@ -28,6 +28,9 @@ export type Message = {
   updatedAt: Date;
   // Error information for failed assistant messages
   error?: ChatError;
+  // Web search settings used for this message
+  webSearchEnabled?: boolean;
+  webSearchContextSize?: 'low' | 'medium' | 'high';
 };
 
 // Message with populated attachments for UI usage
@@ -49,6 +52,8 @@ export type Chat = {
     threadId: string;
     messageId: string;
   };
+  webSearchEnabled?: boolean;
+  webSearchContextSize?: 'low' | 'medium' | 'high';
 };
 
 export type ProviderType = 'openai-compatible';
@@ -104,4 +109,9 @@ export interface ChatError {
   param?: string | null;
   code?: string;
   provider?: string;
+}
+
+export interface WebSearchOptions {
+  enabled: boolean;
+  searchContextSize?: 'low' | 'medium' | 'high';
 }

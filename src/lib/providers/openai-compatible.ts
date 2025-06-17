@@ -76,7 +76,10 @@ export class OpenAICompatibleProvider implements LanguageModel {
     return false;
   }
 
-  stream(messages: MessageWithAttachments[]) {
+  stream(
+    messages: MessageWithAttachments[],
+    webSearchOptions?: { enabled: boolean; searchContextSize?: 'low' | 'medium' | 'high' },
+  ) {
     this.tokenCount = 0;
 
     // Check if this is an image generation model
@@ -84,7 +87,7 @@ export class OpenAICompatibleProvider implements LanguageModel {
       return this.streamImageGeneration(messages);
     }
 
-    return this.streamTextGeneration(messages);
+    return this.streamTextGeneration(messages, webSearchOptions);
   }
 
   private streamImageGeneration(messages: MessageWithAttachments[]) {
@@ -188,7 +191,10 @@ export class OpenAICompatibleProvider implements LanguageModel {
     return toReadableStream(gen);
   }
 
-  private streamTextGeneration(messages: MessageWithAttachments[]) {
+  private streamTextGeneration(
+    messages: MessageWithAttachments[],
+    webSearchOptions?: { enabled: boolean; searchContextSize?: 'low' | 'medium' | 'high' },
+  ) {
     const gen = async function* (this: OpenAICompatibleProvider) {
       let hasFile = false;
 
@@ -240,12 +246,31 @@ export class OpenAICompatibleProvider implements LanguageModel {
         return openaiMessage;
       });
 
-      const response = await this.client.chat.completions.create({
-        model: this.config.model as string,
+      // Determine which model to use - redirect if web search is enabled
+      let modelToUse = this.config.model as string;
+      if (webSearchOptions?.enabled) {
+        const redirectModel = this.getWebSearchRedirectModel();
+        if (redirectModel) {
+          modelToUse = redirectModel;
+        }
+      }
+
+      const requestOptions: OpenAI.Chat.Completions.ChatCompletionCreateParams = {
+        model: modelToUse,
         messages: mappedMessages,
         stream: true,
         ...(hasFile ? { plugins: [{ id: 'file-parser' }] } : {}),
-      });
+        ...(webSearchOptions?.enabled
+          ? {
+              web_search_options: {
+                search_context_size: webSearchOptions.searchContextSize || 'low',
+              },
+            }
+          : {}),
+      };
+      console.error('OpenAI request options:', requestOptions);
+
+      const response = await this.client.chat.completions.create(requestOptions);
 
       for await (const chunk of response) {
         const delta = chunk.choices[0]?.delta as {
@@ -343,5 +368,17 @@ export class OpenAICompatibleProvider implements LanguageModel {
       // Fallback
       return [];
     }
+  }
+
+  private getWebSearchRedirectModel(): string | undefined {
+    if (this.config.providerInstanceId && this.config.model) {
+      const cachedModels = modelCache.getAllCachedModels();
+      const models = cachedModels[this.config.providerInstanceId];
+      if (models) {
+        const model = models.find((m) => m.id === this.config.model);
+        return model?.webSearchModelRedirect;
+      }
+    }
+    return undefined;
   }
 }

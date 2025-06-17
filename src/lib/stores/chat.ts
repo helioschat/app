@@ -192,18 +192,30 @@ async function generateTitleForChat(chatId: string, userMessage: string, provide
  * @param temporary Whether this chat should be temporary (not saved to IndexedDB)
  * @param attachments Optional attachments for the initial message
  * @param providerInstanceId Optional provider instance ID for title generation
+ * @param webSearchEnabled Whether web search should be enabled for this chat
+ * @param webSearchContextSize Web search context size
  */
 export function createNewChat(
   initialMessage?: string,
   temporary?: boolean,
   attachments?: Attachment[],
   providerInstanceId?: string,
+  webSearchEnabled?: boolean,
+  webSearchContextSize?: 'low' | 'medium' | 'high',
 ): string {
   const newChat: Chat = createInitialChat();
 
   // Mark as temporary if specified
   if (temporary) {
     newChat.temporary = true;
+  }
+
+  // Set web search options if specified
+  if (webSearchEnabled !== undefined) {
+    newChat.webSearchEnabled = webSearchEnabled;
+  }
+  if (webSearchContextSize !== undefined) {
+    newChat.webSearchContextSize = webSearchContextSize;
   }
 
   // If an initial message is provided OR attachments exist, add it as a user message

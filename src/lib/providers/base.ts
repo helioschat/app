@@ -3,7 +3,10 @@ import type { MessageWithAttachments } from '../types';
 export interface LanguageModel {
   id: string;
   name: string;
-  stream: (messages: MessageWithAttachments[]) => ReadableStream<string>;
+  stream: (
+    messages: MessageWithAttachments[],
+    webSearchOptions?: { enabled: boolean; searchContextSize?: 'low' | 'medium' | 'high' },
+  ) => ReadableStream<string>;
   getAvailableModels: () => Promise<ModelInfo[]>;
   fallbackModel?: string;
   countTokens?: (messages: MessageWithAttachments[]) => Promise<{
@@ -29,6 +32,8 @@ export interface ModelInfo {
   contextWindow?: number;
   deprecated?: boolean;
   huggingfaceId?: string;
+  supportsWebSearch?: boolean; // Whether the model supports web search capabilities.
+  webSearchModelRedirect?: string; // Model ID to use instead when web search is enabled
   supportsResponsesEndpoint?: boolean; // Whether the model supports the /v1/responses endpoint.
   doesntSupportChatCompletionsEndpoint?: boolean; // Whether the model doesn't support the /v1/chat/completions endpoint.
 }

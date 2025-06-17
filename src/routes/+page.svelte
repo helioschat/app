@@ -10,15 +10,29 @@
 
   let searchInput = $state('');
   let isTemporary = $state(false);
+  let webSearchEnabled = $state(false);
+  let webSearchContextSize: 'low' | 'medium' | 'high' = $state('low');
 
   // Check if this is first-time setup
   const isFirstTime = $derived($setupStore.isFirstTime);
 
-  async function handleSearch(e: Event, attachments?: Attachment[]) {
+  async function handleSearch(
+    e: Event,
+    attachments?: Attachment[],
+    webSearchEnabled?: boolean,
+    webSearchContextSize?: 'low' | 'medium' | 'high',
+  ) {
     e.preventDefault();
     if (!searchInput.trim() && (!attachments || attachments.length === 0)) return;
 
-    const newChatId = createNewChat(searchInput, isTemporary, attachments, $selectedModel?.providerInstanceId);
+    const newChatId = createNewChat(
+      searchInput,
+      isTemporary,
+      attachments,
+      $selectedModel?.providerInstanceId,
+      webSearchEnabled,
+      webSearchContextSize,
+    );
     goto(`/${newChatId}`);
   }
 
@@ -46,6 +60,8 @@
     <ChatInput
       bind:userInput={searchInput}
       bind:isTemporary
+      bind:webSearchEnabled
+      bind:webSearchContextSize
       handleSubmit={handleSearch}
       handleStop={async () => {}}
       showTemporaryToggle={true}></ChatInput>

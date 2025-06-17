@@ -67,6 +67,9 @@
         {#if isImageGeneration}
           <Pill text="Image Generation" size="sm" variant="warning"></Pill>
         {/if}
+        {#if model.supportsWebSearch}
+          <Pill text="Web Search" size="sm" variant="error"></Pill>
+        {/if}
       </div>
     {/if}
   </div>

@@ -23,6 +23,10 @@
   let userInput = '';
   let initialMessageProcessed = false;
 
+  // Use web search options from the chat object, with fallback defaults
+  $: webSearchEnabled = activeChat?.webSearchEnabled ?? false;
+  $: webSearchContextSize = activeChat?.webSearchContextSize ?? 'low';
+
   // Map provides clearer semantics and easier cleanup than a plain object
   const streamControllers = new Map<string, StreamingController>();
 
@@ -42,7 +46,12 @@
   /**
    * Handles the submission of a new message from the user.
    */
-  async function handleSubmit(_: Event, attachments?: Attachment[]) {
+  async function handleSubmit(
+    _: Event,
+    attachments?: Attachment[],
+    webSearchEnabled?: boolean,
+    webSearchContextSize?: 'low' | 'medium' | 'high',
+  ) {
     const messageContent = userInput;
     if (
       (!messageContent.trim() && (!attachments || attachments.length === 0)) ||
@@ -60,6 +69,8 @@
       $selectedModel.providerInstanceId,
       $selectedModel.modelId,
       attachments,
+      webSearchEnabled,
+      webSearchContextSize,
     );
   }
 
@@ -106,6 +117,10 @@
     const originalUserInput = previousMessage.content;
     const originalAttachments = previousMessage.attachments;
 
+    // Extract web search settings from the original assistant message
+    const originalWebSearchEnabled = messageToRegenerate.webSearchEnabled || false;
+    const originalWebSearchContextSize = messageToRegenerate.webSearchContextSize || 'low';
+
     // Truncate chat history to the point *before* the user message we are regenerating from.
     const truncatedMessages = activeChat.messages.slice(0, messageIndex - 1);
 
@@ -135,6 +150,8 @@
       storedProviderInstanceId,
       storedModelId,
       originalAttachments,
+      originalWebSearchEnabled, // Use original web search settings
+      originalWebSearchContextSize, // Use original web search context size
     );
   }
 
@@ -164,7 +181,19 @@
       const updatedChat = $chats.find((c) => c.id === chatId);
       if (!updatedChat) return;
 
-      await controller.handleRegenerate(updatedChat, providerInstanceId, modelId);
+      // Find the next assistant message to get its web search settings
+      const nextAssistantMessage = activeChat.messages.slice(messageIndex + 1).find((m) => m.role === 'assistant');
+
+      const originalWebSearchEnabled = nextAssistantMessage?.webSearchEnabled || false;
+      const originalWebSearchContextSize = nextAssistantMessage?.webSearchContextSize || 'low';
+
+      await controller.handleRegenerate(
+        updatedChat,
+        providerInstanceId,
+        modelId,
+        originalWebSearchEnabled, // Use original web search settings
+        originalWebSearchContextSize, // Use original web search context size
+      );
     }
   }
 
@@ -181,6 +210,25 @@
     } catch (error) {
       console.error('Failed to branch off chat:', error);
     }
+  }
+
+  function handleWebSearchToggle(e: CustomEvent<{ enabled: boolean; contextSize: 'low' | 'medium' | 'high' }>) {
+    if (!activeChat) return;
+
+    // Update the chat object with new web search settings
+    chats.update((allChats) =>
+      allChats.map((chat) => {
+        if (chat.id === chatId) {
+          return {
+            ...chat,
+            webSearchEnabled: e.detail.enabled,
+            webSearchContextSize: e.detail.contextSize,
+            updatedAt: new Date(),
+          };
+        }
+        return chat;
+      }),
+    );
   }
 
   onMount(() => {
@@ -232,6 +280,8 @@
           $selectedModel.providerInstanceId,
           $selectedModel.modelId,
           activeChat.messages[0].attachments,
+          webSearchEnabled, // Pass the web search options
+          webSearchContextSize, // Pass the web search context size
         );
       }
     }, 100);
@@ -254,7 +304,15 @@
     </div>
 
     <div class="input-container z-[1]">
-      <ChatInput bind:userInput {isLoading} {handleSubmit} {handleStop}></ChatInput>
+      <ChatInput
+        bind:userInput
+        {webSearchEnabled}
+        {webSearchContextSize}
+        {isLoading}
+        {handleSubmit}
+        {handleStop}
+        on:webSearchToggle={handleWebSearchToggle}>
+      </ChatInput>
     </div>
   {:else}
     <div class="flex flex-1 items-center justify-center">

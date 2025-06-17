@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Send, Square, VenetianMask, Paperclip } from 'lucide-svelte';
+  import { Send, Square, VenetianMask, Paperclip, Search } from 'lucide-svelte';
   import { providerInstances, selectedModel, settingsManager } from '$lib/settings/SettingsManager';
   import { availableModels } from '$lib/stores/modelCache';
-  import { onMount, tick } from 'svelte';
+  import { onMount, tick, createEventDispatcher } from 'svelte';
   import ModelSelectorModal from '$lib/components/modal/types/ModelSelectorModal.svelte';
   import MessageAttachments from './MessageAttachments.svelte';
   import { browser } from '$app/environment';
@@ -16,12 +16,23 @@
   } from '$lib/utils/attachments';
   import { getDefaultModel, detectKnownProvider } from '$lib/providers/known';
 
+  const dispatch = createEventDispatcher<{
+    webSearchToggle: { enabled: boolean; contextSize: 'low' | 'medium' | 'high' };
+  }>();
+
   export let userInput: string = '';
   export let isLoading: boolean = false;
-  export let handleSubmit: (e: Event, attachments?: Attachment[]) => Promise<void>;
+  export let handleSubmit: (
+    e: Event,
+    attachments?: Attachment[],
+    webSearchEnabled?: boolean,
+    webSearchContextSize?: 'low' | 'medium' | 'high',
+  ) => Promise<void>;
   export let handleStop: () => Promise<void>;
   export let showTemporaryToggle: boolean = false;
   export let isTemporary: boolean = false;
+  export let webSearchEnabled: boolean = false;
+  export let webSearchContextSize: 'low' | 'medium' | 'high' = 'low';
 
   let userInputComponent: HTMLTextAreaElement;
   let fileInput: HTMLInputElement;
@@ -37,6 +48,7 @@
   $: ({ supportsImages, supportsFiles } = getSupportedModalities(modelFeatures));
   $: isImageGenerationModel = currentModel ? supportsImageGeneration(currentModel) : false;
   $: canAttachFiles = supportsImages || supportsFiles || isImageGenerationModel;
+  $: supportsWebSearch = currentModel?.supportsWebSearch || !!currentModel?.webSearchModelRedirect;
 
   onMount(() => {
     cachedModels = $availableModels;
@@ -101,7 +113,7 @@
 
   async function submit(e: Event) {
     e.preventDefault();
-    await handleSubmit(e, attachments);
+    await handleSubmit(e, attachments, webSearchEnabled, webSearchContextSize);
     attachments = []; // Clear attachments after submit
     resizeTextarea({ target: userInputComponent } as unknown as Event);
   }
@@ -148,6 +160,15 @@
   function handleRemoveAttachment(e: CustomEvent<{ id: string }>) {
     attachments = attachments.filter((a) => a.id !== e.detail.id);
   }
+
+  function handleWebSearchToggle() {
+    const newEnabled = !webSearchEnabled;
+    webSearchEnabled = newEnabled;
+    dispatch('webSearchToggle', {
+      enabled: newEnabled,
+      contextSize: webSearchContextSize,
+    });
+  }
 </script>
 
 <form on:submit={(e) => submit(e)} class="mx-auto mb-8 w-full max-w-4xl px-4">
@@ -192,19 +213,34 @@
             class="button button-primary button-small !px-2">
             <span>{$selectedModel?.modelId || 'Select Model'}</span>
           </button>
-          {#if showTemporaryToggle}
-            <button
-              type="button"
-              on:click={() => (isTemporary = !isTemporary)}
-              disabled={isLoading}
-              class="button button-small !px-2"
-              class:button-secondary={!isTemporary}
-              class:button-primary={isTemporary}
-              title={isTemporary ? "Temporary chat (won't be saved)" : 'Regular chat (will be saved)'}>
-              <VenetianMask size={16}></VenetianMask>
-              <span class="hidden lg:block">Temporary</span>
-            </button>
-          {/if}
+          <div class="flex items-center gap-0.5">
+            {#if showTemporaryToggle}
+              <button
+                type="button"
+                on:click={() => (isTemporary = !isTemporary)}
+                disabled={isLoading}
+                class="button button-small !px-2"
+                class:button-secondary={!isTemporary}
+                class:button-primary={isTemporary}
+                title={isTemporary ? "Temporary chat (won't be saved)" : 'Regular chat (will be saved)'}>
+                <VenetianMask size={16}></VenetianMask>
+                <span class="hidden lg:block">Temporary</span>
+              </button>
+            {/if}
+            {#if supportsWebSearch}
+              <button
+                type="button"
+                on:click={handleWebSearchToggle}
+                disabled={isLoading}
+                class="button button-small !px-2"
+                class:button-secondary={!webSearchEnabled}
+                class:button-primary={webSearchEnabled}
+                title={webSearchEnabled ? 'Web search enabled' : 'Web search disabled'}>
+                <Search size={16}></Search>
+                <span class="hidden lg:block">Search</span>
+              </button>
+            {/if}
+          </div>
         </div>
         <div class="flex items-center gap-2">
           {#if canAttachFiles}
