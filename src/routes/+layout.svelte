@@ -7,6 +7,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { modelCache } from '$lib/stores/modelCache';
   import { settingsManager } from '$lib/settings/SettingsManager';
+  import { setupStore } from '$lib/stores/setup';
   import { getLanguageModel } from '$lib/providers/registry';
   import { get } from 'svelte/store';
   import { browser } from '$app/environment';
@@ -18,6 +19,9 @@
 
   let innerWidth = $state(browser ? window.innerWidth : 0);
   let smallScreen = $derived(browser ? innerWidth < SMALL_SCREEN_WIDTH : false);
+
+  // Check if this is first-time setup to hide sidebar
+  const isFirstTime = $derived($setupStore.isFirstTime);
 
   onMount(() => {
     // Start background model sync
@@ -34,7 +38,9 @@
 <svelte:window bind:innerWidth />
 
 <div class="flex h-screen">
-  <ChatSidebar bind:collapsed {smallScreen}></ChatSidebar>
+  {#if !isFirstTime}
+    <ChatSidebar bind:collapsed {smallScreen}></ChatSidebar>
+  {/if}
 
   <div class="flex h-full w-full flex-1 flex-col items-center overflow-y-auto">
     <div class="h-full w-full max-w-7xl" class:small={smallScreen}>

@@ -4,6 +4,8 @@
   import { getDefaultTitleModel } from '$lib/providers/known';
   import type { ProviderInstance } from '$lib/types';
   import type { ModelInfo } from '$lib/providers/base';
+  import { resetSetup } from '$lib/stores/setup';
+  import { goto } from '$app/navigation';
 
   $: currentSettings = $advancedSettings;
   $: instances = $providerInstances;
@@ -62,6 +64,11 @@
     modelCache.clearCache();
     alert('Model cache cleared');
   }
+
+  function resetSetupStatus() {
+    resetSetup();
+    goto('/');
+  }
 </script>
 
 <div>
@@ -110,5 +117,6 @@
   <p>Developer Options</p>
   <div class="flex flex-wrap gap-2">
     <button class="button button-primary" on:click={clearModelCache}>Clear model cache</button>
+    <button class="button button-primary" on:click={resetSetupStatus}>Reset setup status</button>
   </div>
 </div>

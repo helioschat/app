@@ -2,12 +2,17 @@
   import { goto } from '$app/navigation';
   import { createNewChat } from '$lib/stores/chat';
   import { selectedModel } from '$lib/settings/SettingsManager';
+  import { setupStore } from '$lib/stores/setup';
   import { manifest } from '$lib';
   import ChatInput from '$lib/components/chat/ChatInput.svelte';
+  import SetupFlow from '$lib/components/setup/SetupFlow.svelte';
   import type { Attachment } from '$lib/types';
 
   let searchInput = $state('');
   let isTemporary = $state(false);
+
+  // Check if this is first-time setup
+  const isFirstTime = $derived($setupStore.isFirstTime);
 
   async function handleSearch(e: Event, attachments?: Attachment[]) {
     e.preventDefault();
@@ -29,32 +34,36 @@
   <title>{manifest.name}</title>
 </svelte:head>
 
-<div class="landing flex h-full w-full flex-col items-center justify-center gap-y-8 px-4 text-center">
-  <div class="flex flex-col items-center">
-    <h1 class="mb-2 text-5xl font-bold">{manifest.name}</h1>
-    <p>{manifest.description}</p>
-  </div>
+{#if isFirstTime}
+  <SetupFlow></SetupFlow>
+{:else}
+  <div class="landing flex h-full w-full flex-col items-center justify-center gap-y-8 px-4 text-center">
+    <div class="flex flex-col items-center">
+      <h1 class="mb-2 text-5xl font-bold">{manifest.name}</h1>
+      <p>{manifest.description}</p>
+    </div>
 
-  <ChatInput
-    bind:userInput={searchInput}
-    bind:isTemporary
-    handleSubmit={handleSearch}
-    handleStop={async () => {}}
-    showTemporaryToggle={true}></ChatInput>
+    <ChatInput
+      bind:userInput={searchInput}
+      bind:isTemporary
+      handleSubmit={handleSearch}
+      handleStop={async () => {}}
+      showTemporaryToggle={true}></ChatInput>
 
-  <div class="text-left">
-    <h2 class="mb-3 text-lg font-medium">Try asking about:</h2>
-    <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
-      {#each sampleQueries as query}
-        <button
-          onclick={(e) => {
-            searchInput = query;
-            handleSearch(e);
-          }}
-          class="button button-secondary button-large !h-full">
-          <p class="text-sm">{query}</p>
-        </button>
-      {/each}
+    <div class="text-left">
+      <h2 class="mb-3 text-lg font-medium">Try asking about:</h2>
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+        {#each sampleQueries as query}
+          <button
+            onclick={(e) => {
+              searchInput = query;
+              handleSearch(e);
+            }}
+            class="button button-secondary button-large !h-full">
+            <p class="text-sm">{query}</p>
+          </button>
+        {/each}
+      </div>
     </div>
   </div>
-</div>
+{/if}
