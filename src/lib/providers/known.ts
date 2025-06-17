@@ -19,6 +19,8 @@ export interface KnownProviderMetadata {
   apiKeyPrefixes?: string[];
   /** Default model to use for title generation (should be fast and cheap) */
   defaultTitleModel?: string;
+  /** Default model to use for general chat purposes */
+  defaultModel?: string;
 }
 
 export function getKnownProviderMeta(id: string): KnownProviderMetadata | undefined {
@@ -81,12 +83,27 @@ export function getDefaultTitleModel(providerId: string): string | undefined {
   return provider?.defaultTitleModel;
 }
 
+export function getDefaultModel(providerId: string, cachedModels?: ModelInfo[]): string | undefined {
+  const provider = KNOWN_PROVIDERS[providerId];
+  if (provider?.defaultModel) {
+    return provider.defaultModel;
+  }
+
+  // Fall back to the first model in cache if no default is set
+  if (cachedModels && cachedModels.length > 0) {
+    return cachedModels[0].id;
+  }
+
+  return undefined;
+}
+
 export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
   openai: {
     id: 'openai',
     name: 'OpenAI',
     icon: '/assets/providers/openai.svg',
     defaultTitleModel: 'gpt-4.1-nano',
+    defaultModel: 'gpt-4o',
     disabledModels: [
       'gpt-3.5-turbo-0125',
       'gpt-3.5-turbo-1106',
@@ -344,6 +361,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
     name: 'OpenRouter',
     icon: '/assets/providers/openrouter.svg',
     defaultTitleModel: 'meta-llama/llama-3.3-8b-instruct:free',
+    defaultModel: 'openai/gpt-4o',
     baseUrlPatterns: [/https?:\/\/openrouter\.ai\/api/],
     apiKeyPrefixes: ['sk-or-v1-'],
   },
@@ -352,6 +370,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
     name: 'Anthropic',
     icon: '/assets/providers/anthropic.svg',
     defaultTitleModel: 'claude-3-haiku-20240307',
+    defaultModel: 'claude-sonnet-4-20250514',
     disabledModels: ['claude-3-5-sonnet-20240620'],
     modelOverrides: {
       // https://docs.anthropic.com/en/docs/about-claude/models/overview
@@ -427,6 +446,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
     name: 'Google (OpenAI compatible)',
     icon: '/assets/providers/google.svg',
     defaultTitleModel: 'gemini-2.0-flash',
+    defaultModel: 'gemini-2.0-flash',
     disabledModels: [/^embedding-.*$/, /^text-embedding-.*$/, /^veo-.*$/],
     baseUrlPatterns: [/https?:\/\/generativelanguage\.googleapis.com\/v1beta\/openai\//],
     apiKeyPrefixes: undefined, // Google doesn't have a specific API key prefix that identifies it

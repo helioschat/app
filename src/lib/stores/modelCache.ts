@@ -1,6 +1,6 @@
 import { browser } from '$app/environment';
 import type { LanguageModel, ModelInfo } from '$lib/providers/base';
-import { applyModelOverrides, detectKnownProvider } from '$lib/providers/known';
+import { applyModelOverrides, detectKnownProvider, getDefaultModel } from '$lib/providers/known';
 import type { ProviderConfig, ProviderInstance, ProviderType } from '$lib/types';
 import { derived, writable } from 'svelte/store';
 
@@ -252,3 +252,15 @@ export const modelCache = createModelCache();
 export const availableModels = derived([modelCache], () => {
   return modelCache.getAllCachedModels();
 });
+
+/**
+ * Get the default model for a provider instance, falling back to the first cached model
+ */
+export function getProviderDefaultModel(
+  providerInstanceId: string, 
+  matchedProviderId: string | undefined,
+  cachedModels?: Record<string, ModelInfo[]>
+): string | undefined {
+  const models = cachedModels?.[providerInstanceId] || modelCache.getAllCachedModels()[providerInstanceId];
+  return getDefaultModel(matchedProviderId || '', models);
+}

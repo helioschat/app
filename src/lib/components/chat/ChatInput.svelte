@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Send, Square, VenetianMask, Paperclip } from 'lucide-svelte';
-  import { providerInstances, selectedModel } from '$lib/settings/SettingsManager';
+  import { providerInstances, selectedModel, settingsManager } from '$lib/settings/SettingsManager';
   import { availableModels } from '$lib/stores/modelCache';
   import { onMount, tick } from 'svelte';
   import ModelSelectorModal from '$lib/components/modal/types/ModelSelectorModal.svelte';
@@ -14,6 +14,7 @@
     getAcceptForModalities,
     supportsImageGeneration,
   } from '$lib/utils/attachments';
+  import { getDefaultModel, detectKnownProvider } from '$lib/providers/known';
 
   export let userInput: string = '';
   export let isLoading: boolean = false;
@@ -43,12 +44,55 @@
     // Subscribe to model cache changes
     const unsubscribe = availableModels.subscribe((models) => {
       cachedModels = models;
+      // Try to set default model if none is selected
+      trySetDefaultModel();
     });
 
     if (browser && userInputComponent) resizeTextarea({ target: userInputComponent } as unknown as Event);
 
+    // Try to set default model on initial load
+    trySetDefaultModel();
+
     return unsubscribe;
   });
+
+  function trySetDefaultModel() {
+    // Only set default if no model is currently selected
+    if ($selectedModel) return;
+
+    const instances = $providerInstances;
+    if (!instances || instances.length === 0) return;
+
+    // Try to find a provider with cached models and set its default model
+    for (const instance of instances) {
+      const models = cachedModels[instance.id];
+      if (!models || models.length === 0) continue;
+
+      // Detect the known provider type for this instance
+      const matchedProvider = instance.config.matchedProvider || detectKnownProvider(instance.config);
+
+      // Get the default model for this provider
+      const defaultModelId = getDefaultModel(matchedProvider || '', models);
+
+      if (defaultModelId) {
+        // Verify the model exists in the cached models and is enabled
+        const modelExists = models.some((m) => m.id === defaultModelId);
+        const isEnabled = settingsManager.isModelEnabled(instance.id, defaultModelId);
+
+        if (modelExists && isEnabled) {
+          selectedModel.set({ providerInstanceId: instance.id, modelId: defaultModelId });
+          return; // Found and set a default model, we're done
+        }
+      }
+
+      // If the default model isn't available or enabled, try to find the first enabled model
+      const firstEnabledModel = models.find((model) => settingsManager.isModelEnabled(instance.id, model.id));
+      if (firstEnabledModel) {
+        selectedModel.set({ providerInstanceId: instance.id, modelId: firstEnabledModel.id });
+        return; // Found and set the first enabled model, we're done
+      }
+    }
+  }
 
   async function openModelSelector() {
     await tick();
