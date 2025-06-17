@@ -94,7 +94,7 @@
   style="--collapse-animation-duration: {COLLAPSE_ANIMATION_DURATION}ms">
   <div class="flex flex-col items-center gap-3.5">
     <div class="relative flex w-full items-center justify-between">
-      <button class="button button-secondary absolute top-0 left-0" on:click={handleToggle}>
+      <button class="button button-secondary pointer-events-auto absolute top-0 left-0" on:click={handleToggle}>
         <Menu size={20}></Menu>
       </button>
       <div class="h-10 min-h-10 w-10 min-w-10"></div>
@@ -212,10 +212,12 @@
   }
 
   aside.small {
+    @apply pointer-events-none;
     @apply absolute top-0 left-0 h-screen;
   }
 
   aside.small:not(.collapsed) {
+    @apply pointer-events-auto;
     background: var(--color-1);
   }
 
