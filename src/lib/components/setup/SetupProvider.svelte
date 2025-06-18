@@ -48,11 +48,42 @@
   function handleContinue() {
     if (name && apiKey && baseURL) {
       try {
-        addProviderInstance(name, 'openai-compatible', {
+        const providerId = addProviderInstance(name, 'openai-compatible', {
           apiKey,
           baseURL,
           matchedProvider: selectedKnownProvider || undefined,
         });
+
+        // Sync models and apply default disabled models for the new provider in the background
+        // Don't await this to avoid blocking the user flow
+        (async () => {
+          try {
+            const { getLanguageModel } = await import('$lib/providers/registry');
+            const { modelCache } = await import('$lib/stores/modelCache');
+            const { settingsManager } = await import('$lib/settings/SettingsManager');
+
+            const newProvider = {
+              id: providerId,
+              name,
+              providerType: 'openai-compatible' as const,
+              config: { apiKey, baseURL, matchedProvider: selectedKnownProvider || undefined },
+            };
+
+            await modelCache.syncProvider(newProvider, getLanguageModel);
+
+            // Apply default disabled models based on known provider metadata
+            const all = modelCache.getAllCachedModels();
+            const modelsForProvider = all[providerId] ?? [];
+            settingsManager.applyDefaultDisabledModels(
+              providerId,
+              selectedKnownProvider || undefined,
+              modelsForProvider,
+            );
+          } catch (error) {
+            console.error('Failed to sync models for new provider:', error);
+          }
+        })();
+
         dispatch('continue');
       } catch (error) {
         console.error('Failed to add provider:', error);
