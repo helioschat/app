@@ -293,6 +293,6 @@
   }
 
   button.toggle-btn.toggled {
-    @apply bg-[var(--color-a3)];
+    @apply bg-[var(--color-a4)];
   }
 </style>
