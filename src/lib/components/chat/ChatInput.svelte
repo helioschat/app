@@ -256,7 +256,6 @@
           {:else}
             <button
               type="submit"
-              on:click|preventDefault
               disabled={!userInput.trim() && attachments.length === 0}
               class="button button-main button-small">
               <ArrowUp size={14}></ArrowUp>
