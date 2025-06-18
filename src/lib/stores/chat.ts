@@ -7,6 +7,7 @@ import {
   type Thread,
 } from '$lib/database';
 import { streamStates } from '$lib/streaming';
+import { syncThread } from '$lib/sync';
 import type { Attachment, Chat } from '$lib/types';
 import { generateChatTitle } from '$lib/utils/titleGeneration';
 import { get, writable, type Writable } from 'svelte/store';
@@ -25,6 +26,7 @@ const createInitialChat = (): Chat => ({
 export const chats: Writable<Chat[]> = writable<Chat[]>([]);
 export const activeChatId: Writable<string | null> = writable<string | null>(null);
 export const isLoadingChats: Writable<boolean> = writable<boolean>(false);
+export const isInitializing: Writable<boolean> = writable<boolean>(false);
 
 // Helper to sort chats by updatedAt in descending order
 function sortChats(chatList: Chat[]): Chat[] {
@@ -41,6 +43,9 @@ if (browser) {
   // Load chats from IndexedDB
   const initializeStore = async () => {
     try {
+      // Set initialization flag to prevent sync during initial load
+      isInitializing.set(true);
+
       const threads = await getAllThreads();
 
       if (threads.length > 0) {
@@ -82,6 +87,7 @@ if (browser) {
 
             // Done loading
             isLoadingChats.set(false);
+            isInitializing.set(false);
           };
 
           // Start loading remaining chunks
@@ -89,11 +95,16 @@ if (browser) {
         } else {
           // No more chunks to load
           isLoadingChats.set(false);
+          isInitializing.set(false);
         }
+      } else {
+        // No threads to load
+        isInitializing.set(false);
       }
     } catch (error) {
       console.error('Error initializing chat store:', error);
       isLoadingChats.set(false);
+      isInitializing.set(false);
     }
   };
 
@@ -176,6 +187,8 @@ async function generateTitleForChat(chatId: string, userMessage: string, provide
       // Save to IndexedDB if not temporary
       if (browser && !updatedChat.temporary) {
         saveChatAsThreadAndMessages(updatedChat);
+        // Sync the updated thread
+        syncThread(updatedChat);
       }
 
       return [...allChats];
@@ -253,6 +266,8 @@ export function createNewChat(
   // Only save to IndexedDB if not temporary
   if (browser && !temporary) {
     saveChatAsThreadAndMessages(newChat);
+    // Sync the new thread
+    syncThread(newChat);
   }
 
   return newChat.id;
@@ -288,6 +303,8 @@ export async function deleteChatById(id: string): Promise<void> {
       // Save the new chat to IndexedDB
       if (browser) {
         saveChatAsThreadAndMessages(newChat);
+        // Sync the new thread
+        syncThread(newChat);
       }
     }
 
@@ -399,6 +416,8 @@ export async function toggleChatPin(id: string): Promise<void> {
 
       // Trigger IndexedDB save
       saveChatAsThreadAndMessages(chat);
+      // Sync the updated thread
+      syncThread(chat);
     }
     // Return a new array to trigger Svelte reactivity, properly sorted
     return sortChats([...allChats]);
@@ -440,6 +459,8 @@ export function editMessage(chatId: string, messageId: string, newContent: strin
     // Save to IndexedDB if not temporary
     if (browser && !updatedChat.temporary) {
       saveChatAsThreadAndMessages(updatedChat);
+      // Sync the updated thread
+      syncThread(updatedChat);
     }
 
     return [...allChats];
@@ -489,6 +510,8 @@ export function branchOffChat(sourceChatId: string, upToMessageId: string): stri
   // Save to IndexedDB
   if (browser) {
     saveChatAsThreadAndMessages(newChat);
+    // Sync the new branched thread
+    syncThread(newChat);
   }
 
   return newChat.id;

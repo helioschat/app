@@ -15,6 +15,8 @@
   import { page } from '$app/state';
   import ChatHeader from '$lib/components/chat/ChatHeader.svelte';
   import { chats } from '$lib/stores/chat';
+  import { cleanupAutoSync } from '$lib/sync/autoSync';
+  import { syncManager } from '$lib/stores/sync';
 
   const SMALL_SCREEN_WIDTH = 1024; //px
 
@@ -33,6 +35,15 @@
   onMount(() => {
     if (isFirstTime && page.url.pathname !== '/') goto('/');
 
+    // Hot reload cleanup
+    if (import.meta.hot) {
+      import.meta.hot.dispose(() => {
+        console.log('Hot reload detected - cleaning up from layout');
+        cleanupAutoSync();
+        syncManager.cleanup();
+      });
+    }
+
     // Start background model sync
     const getProviderInstances = () => get(settingsManager.providerInstances);
     modelCache.startBackgroundSync(getProviderInstances, getLanguageModel);
@@ -41,6 +52,10 @@
   onDestroy(() => {
     // Stop background sync when app is destroyed
     modelCache.stopBackgroundSync();
+
+    // Cleanup auto-sync
+    cleanupAutoSync();
+    syncManager.cleanup();
   });
 </script>
 

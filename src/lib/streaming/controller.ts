@@ -3,6 +3,7 @@ import { getLanguageModel } from '$lib/providers/registry';
 import { chats } from '$lib/stores/chat';
 import { availableModels } from '$lib/stores/modelCache';
 import { advancedSettings, providerInstances } from '$lib/stores/settings';
+import { syncThread } from '$lib/sync';
 import type { Attachment, Chat, MessageWithAttachments, ProviderInstance } from '$lib/types';
 import { get } from 'svelte/store';
 import { v7 as uuidv7 } from 'uuid';
@@ -75,6 +76,7 @@ export class StreamingController {
       this.streamMetrics.thinkingTime,
     );
 
+    let updatedChat: Chat | null = null;
     chats.update((allChats) =>
       allChats.map((chat) => {
         if (chat.id !== this.chatId) return chat;
@@ -94,9 +96,15 @@ export class StreamingController {
               }
             : m,
         );
-        return { ...chat, messages: updatedMessages, updatedAt: new Date() };
+        updatedChat = { ...chat, messages: updatedMessages, updatedAt: new Date() };
+        return updatedChat;
       }),
     );
+
+    // Sync the thread after the message is finalized
+    if (updatedChat) {
+      syncThread(updatedChat);
+    }
   }
 
   async cancelStream(): Promise<void> {
@@ -211,6 +219,9 @@ export class StreamingController {
     };
 
     chats.update((allChats) => allChats.map((chat) => (chat.id === this.chatId ? updatedChat : chat)));
+
+    // Sync the thread after adding user/assistant messages
+    syncThread(updatedChat);
 
     this.isLoading = true;
     this.currentlyStreamingMessageId = assistantMessage.id;
@@ -338,6 +349,9 @@ export class StreamingController {
 
     chats.update((allChats) => allChats.map((chat) => (chat.id === this.chatId ? updatedChat : chat)));
 
+    // Sync the thread after adding assistant message for regeneration
+    syncThread(updatedChat);
+
     this.isLoading = true;
     this.currentlyStreamingMessageId = assistantMessage.id;
 
@@ -434,6 +448,7 @@ export class StreamingController {
       };
     }
 
+    let updatedChat: Chat | null = null;
     chats.update((allChats) => {
       return allChats.map((chat) => {
         if (chat.id !== this.chatId) return chat;
@@ -469,13 +484,19 @@ export class StreamingController {
         endStream(this.chatId);
         this.currentlyStreamingMessageId = '';
 
-        return {
+        updatedChat = {
           ...chat,
           messages: updatedChatMessages,
           updatedAt: new Date(),
         };
+        return updatedChat;
       });
     });
+
+    // Sync the thread after the error is handled
+    if (updatedChat) {
+      syncThread(updatedChat);
+    }
   }
 
   private getWebSearchRedirectModel(providerInstanceId: string, modelId: string): string | undefined {

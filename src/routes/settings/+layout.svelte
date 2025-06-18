@@ -7,6 +7,7 @@
   const tabs = [
     { id: 'providers', text: 'Providers', path: '/settings/providers' },
     { id: 'models', text: 'Models', path: '/settings/models' },
+    { id: 'sync', text: 'Sync', path: '/settings/sync' },
     { id: 'advanced', text: 'Advanced', path: '/settings/advanced' },
   ];
 

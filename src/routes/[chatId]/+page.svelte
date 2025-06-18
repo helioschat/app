@@ -1,6 +1,7 @@
 <script lang="ts">
   import { chats, loadChat, clearTemporaryChats, editMessage, branchOffChat } from '$lib/stores/chat';
   import { selectedModel } from '$lib/settings/SettingsManager';
+  import { syncThread } from '$lib/sync';
   import type { Message, Attachment } from '$lib/types';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
@@ -123,17 +124,24 @@
     // Truncate chat history to the point *before* the user message we are regenerating from.
     const truncatedMessages = activeChat.messages.slice(0, messageIndex - 1);
 
+    let truncatedChat: typeof activeChat | null = null;
     chats.update((allChats) => {
       const chatIndex = allChats.findIndex((c) => c.id === chatId);
       if (chatIndex !== -1) {
-        allChats[chatIndex] = {
+        truncatedChat = {
           ...allChats[chatIndex],
           messages: truncatedMessages,
           updatedAt: new Date(),
         };
+        allChats[chatIndex] = truncatedChat;
       }
       return allChats;
     });
+
+    // Sync the thread after truncating messages for regeneration
+    if (truncatedChat) {
+      syncThread(truncatedChat);
+    }
 
     // Wait for Svelte to process the store update.
     await tick();
@@ -214,20 +222,27 @@
   function handleWebSearchToggle(e: CustomEvent<{ enabled: boolean; contextSize: 'low' | 'medium' | 'high' }>) {
     if (!activeChat) return;
 
+    let updatedChatSettings: typeof activeChat | null = null;
     // Update the chat object with new web search settings
     chats.update((allChats) =>
       allChats.map((chat) => {
         if (chat.id === chatId) {
-          return {
+          updatedChatSettings = {
             ...chat,
             webSearchEnabled: e.detail.enabled,
             webSearchContextSize: e.detail.contextSize,
             updatedAt: new Date(),
           };
+          return updatedChatSettings;
         }
         return chat;
       }),
     );
+
+    // Sync the thread after updating web search settings
+    if (updatedChatSettings) {
+      syncThread(updatedChatSettings);
+    }
   }
 
   onMount(() => {
