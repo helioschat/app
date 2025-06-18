@@ -171,7 +171,7 @@
   }
 </script>
 
-<form on:submit={(e) => submit(e)} class="mx-auto mb-8 w-full max-w-4xl px-4">
+<form on:submit={(e) => submit(e)} class="mx-auto mb-8 flex w-full max-w-4xl flex-col gap-2 px-4">
   <!-- Hidden file input -->
   <input
     type="file"
