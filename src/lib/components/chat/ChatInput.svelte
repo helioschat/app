@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Send, Square, VenetianMask, Paperclip, Search } from 'lucide-svelte';
+  import { Send, Square, VenetianMask, Paperclip, Search, ArrowUp } from 'lucide-svelte';
   import { providerInstances, selectedModel, settingsManager } from '$lib/settings/SettingsManager';
   import { availableModels } from '$lib/stores/modelCache';
   import { onMount, tick, createEventDispatcher } from 'svelte';
@@ -190,7 +190,7 @@
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div
-      class="flex flex-1 cursor-text flex-col gap-4 rounded-[28px] bg-[var(--color-3)] p-3 text-[var(--color-a12)]"
+      class="flex flex-1 cursor-text flex-col gap-4 rounded-[28px] border border-[var(--color-a6)]/15 bg-[var(--color-3)]/67.5 px-3 pt-4 pb-3 text-[var(--color-a12)] backdrop-blur-2xl"
       on:click|stopPropagation={() => userInputComponent?.focus()}>
       <div class="flex flex-1">
         <textarea
@@ -199,49 +199,12 @@
           rows="1"
           placeholder={isImageGenerationModel ? 'Describe the image you want to generate...' : 'Ask anything...'}
           disabled={isLoading}
-          class="max-h-52 min-h-6 flex-1 resize-none !rounded-none !p-0 outline-none"
+          class="max-h-52 min-h-6 flex-1 resize-none !rounded-none !bg-transparent !px-2 !py-0 outline-none"
           on:input={resizeTextarea}
           on:keydown={submitTextarea}
           on:change={resizeTextarea}></textarea>
       </div>
       <div class="flex h-7 items-center justify-between">
-        <div class="flex items-center gap-2">
-          <button
-            type="button"
-            on:click={openModelSelector}
-            disabled={isLoading || !browser}
-            class="button button-primary button-small !px-2">
-            <span>{$selectedModel?.modelId || 'Select Model'}</span>
-          </button>
-          <div class="flex items-center gap-0.5">
-            {#if showTemporaryToggle}
-              <button
-                type="button"
-                on:click={() => (isTemporary = !isTemporary)}
-                disabled={isLoading}
-                class="button button-small !px-2"
-                class:button-secondary={!isTemporary}
-                class:button-primary={isTemporary}
-                title={isTemporary ? "Temporary chat (won't be saved)" : 'Regular chat (will be saved)'}>
-                <VenetianMask size={16}></VenetianMask>
-                <span class="hidden lg:block">Temporary</span>
-              </button>
-            {/if}
-            {#if supportsWebSearch}
-              <button
-                type="button"
-                on:click={handleWebSearchToggle}
-                disabled={isLoading}
-                class="button button-small !px-2"
-                class:button-secondary={!webSearchEnabled}
-                class:button-primary={webSearchEnabled}
-                title={webSearchEnabled ? 'Web search enabled' : 'Web search disabled'}>
-                <Search size={16}></Search>
-                <span class="hidden lg:block">Search</span>
-              </button>
-            {/if}
-          </div>
-        </div>
         <div class="flex items-center gap-2">
           {#if canAttachFiles}
             <button
@@ -253,22 +216,54 @@
               <Paperclip size={16} />
             </button>
           {/if}
+
+          <div class="flex items-center gap-1">
+            {#if showTemporaryToggle}
+              <button
+                on:click={() => (isTemporary = !isTemporary)}
+                disabled={isLoading}
+                class="toggle-btn button button-small button-secondary !px-2"
+                class:toggled={isTemporary}
+                title={isTemporary ? "Temporary chat (won't be saved)" : 'Regular chat (will be saved)'}>
+                <VenetianMask size={16}></VenetianMask>
+                <span class="hidden lg:block">Temporary</span>
+              </button>
+            {/if}
+            {#if supportsWebSearch}
+              <button
+                on:click={handleWebSearchToggle}
+                disabled={isLoading}
+                class="toggle-btn button button-small button-secondary !px-2"
+                class:toggled={webSearchEnabled}
+                title={webSearchEnabled ? 'Web search enabled' : 'Web search disabled'}>
+                <Search size={16}></Search>
+                <span class="hidden lg:block">Search</span>
+              </button>
+            {/if}
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            on:click={openModelSelector}
+            disabled={isLoading || !browser}
+            class="button button-primary button-small !px-2">
+            <span>{$selectedModel?.modelId || 'Select Model'}</span>
+          </button>
+          {#if isLoading}
+            <button type="button" on:click={handleStop} class="button button-main button-small">
+              <Square size={14}></Square>
+            </button>
+          {:else}
+            <button
+              type="submit"
+              disabled={!userInput.trim() && attachments.length === 0}
+              class="button button-main button-small">
+              <ArrowUp size={14}></ArrowUp>
+            </button>
+          {/if}
         </div>
       </div>
     </div>
-    {#if isLoading}
-      <button type="button" on:click={handleStop} class="button button-main button-large !rounded-full">
-        <Square size={20}></Square>
-      </button>
-    {:else}
-      <button
-        type="submit"
-        disabled={!userInput.trim() && attachments.length === 0}
-        class="button button-main button-large !rounded-full"
-        class:opacity-50={!userInput.trim() && attachments.length === 0}>
-        <Send size={20}></Send>
-      </button>
-    {/if}
   </div>
 </form>
 
@@ -285,3 +280,19 @@
     showModelSelector = false;
   }}>
 </ModelSelectorModal>
+
+<style lang="postcss">
+  @reference 'tailwindcss';
+
+  button {
+    @apply !min-h-8 !min-w-8 !rounded-full border border-[var(--color-a6)]/50;
+  }
+
+  button span {
+    @apply text-xs;
+  }
+
+  button.toggle-btn.toggled {
+    @apply bg-[var(--color-a3)];
+  }
+</style>
