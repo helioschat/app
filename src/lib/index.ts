@@ -1,10 +1,11 @@
-import packageJsonRaw from '../../package.json?raw';
-const packageJson = JSON.parse(packageJsonRaw);
-
 export const manifest = {
-  name: packageJson.name,
-  description: packageJson.description,
-  version: packageJson.version,
-  author: packageJson.author,
-  license: packageJson.license,
+  name: 'Helios',
+  description: 'Blazing-fast, private & open-source SvelteKit LLM chat app',
+  author: {
+    name: 'Szalovszky Dávid',
+    email: 'david@szalovszky.com',
+    url: 'https://szalovszky.com',
+  },
+  license: 'MIT',
+  repository: 'https://github.com/helioschat/app.git',
 };

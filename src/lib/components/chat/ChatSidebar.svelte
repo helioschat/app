@@ -106,7 +106,8 @@
       <div class="h-10 min-h-10 w-10 min-w-10"></div>
       {#if !collapsed}
         <h1 class="text-xl font-bold" transition:fade={{ duration: COLLAPSE_ANIMATION_DURATION * 0.75 }}>
-          <a on:click={closeSidebarOnInteraction} href="/">{manifest.name}</a>
+          <a on:click={closeSidebarOnInteraction} href="/"
+            >{manifest.name}<span class="text-secondary text-xs">beta</span></a>
         </h1>
         <a
           href="/settings"
