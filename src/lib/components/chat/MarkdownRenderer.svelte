@@ -44,15 +44,13 @@
       return;
     }
 
-    const result = await processor.process(content);
-    renderedHtml = String(result);
-    // try {
-    //   const result = await processor.process(content);
-    //   renderedHtml = String(result);
-    // } catch (error) {
-    //   console.error('Markdown rendering error:', error);
-    //   renderedHtml = `<p>${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`;
-    // }
+    try {
+      const result = await processor.process(content);
+      renderedHtml = String(result);
+    } catch (error) {
+      console.error('Markdown rendering error:', error);
+      renderedHtml = `<p>${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`;
+    }
   }
 
   // Re-render when content changes
