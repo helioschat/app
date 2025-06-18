@@ -268,7 +268,6 @@ export class OpenAICompatibleProvider implements LanguageModel {
             }
           : {}),
       };
-      console.error('OpenAI request options:', requestOptions);
 
       const response = await this.client.chat.completions.create(requestOptions);
 
