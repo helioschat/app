@@ -312,7 +312,7 @@
   }
 
   .message.assistant {
-    @apply py-6 pr-32;
+    @apply py-2 pr-8 sm:pr-16 md:py-6 md:pr-32;
   }
 
   .message.assistant .message-container {
@@ -325,7 +325,7 @@
   }
 
   .message.user {
-    @apply pt-2 pl-32;
+    @apply pt-2 pl-8 sm:pl-16 md:pl-32;
   }
 
   .message.user .message-container {
