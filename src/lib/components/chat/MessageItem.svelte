@@ -316,8 +316,7 @@
   }
 
   .message.assistant .message-container {
-    @apply mr-auto;
-    background-color: var(--color-2);
+    @apply mr-auto bg-[var(--color-a2)];
   }
 
   .message.assistant .message-actions,
@@ -330,8 +329,7 @@
   }
 
   .message.user .message-container {
-    @apply ml-auto;
-    background-color: var(--blue-10);
+    @apply ml-auto bg-[var(--red-10)]/95;
   }
 
   .message.user .message-actions,

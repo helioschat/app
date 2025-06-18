@@ -16,71 +16,71 @@ html {
 /* https://www.radix-ui.com/colors/docs/palette-composition/understanding-the-scale */
 
 :root {
-  --blue-1: #0c101e;
-  --blue-2: #111727;
-  --blue-3: #16234d;
-  --blue-4: #1c2c68;
-  --blue-5: #23367b;
-  --blue-6: #2c418c;
-  --blue-7: #354ea1;
-  --blue-8: #3e5bbc;
-  --blue-9: #405dbf;
-  --blue-10: #3851a4;
-  --blue-11: #92b2ff;
-  --blue-12: #d4e1ff;
+  --red-1: #170f0d;
+  --red-2: #201411;
+  --red-3: #3a160d;
+  --red-4: #521202;
+  --red-5: #621905;
+  --red-6: #722613;
+  --red-7: #8b3621;
+  --red-8: #b4462a;
+  --red-9: #ff4500;
+  --red-10: #f03400;
+  --red-11: #ff9576;
+  --red-12: #ffd4c8;
 
-  --blue-a1: #0000fe0e;
-  --blue-a2: #1151fb18;
-  --blue-a3: #2558fd41;
-  --blue-a4: #2f5afd5e;
-  --blue-a5: #3a64ff72;
-  --blue-a6: #466eff84;
-  --blue-a7: #4c75fe9b;
-  --blue-a8: #4f77feb8;
-  --blue-a9: #5178febb;
-  --blue-a10: #5079ff9e;
-  --blue-a11: #92b2ff;
-  --blue-a12: #d4e1ff;
+  --red-a1: #ec000007;
+  --red-a2: #f23e1111;
+  --red-a3: #ff2e002c;
+  --red-a4: #fe150046;
+  --red-a5: #ff290057;
+  --red-a6: #ff451668;
+  --red-a7: #ff5a3183;
+  --red-a8: #ff5f36af;
+  --red-a9: #ff4500;
+  --red-a10: #ff3600ef;
+  --red-a11: #ff9576;
+  --red-a12: #ffd4c8;
 
-  --blue-contrast: #fff;
-  --blue-surface: #111d3d80;
-  --blue-indicator: #405dbf;
-  --blue-track: #405dbf;
+  --red-contrast: #fff;
+  --red-surface: #2f171180;
+  --red-indicator: #ff4500;
+  --red-track: #ff4500;
 }
 
 @supports (color: color(display-p3 1 1 1)) {
   @media (color-gamut: p3) {
     :root {
-      --blue-1: oklch(17.8% 0.0283 268);
-      --blue-2: oklch(20.7% 0.0346 268);
-      --blue-3: oklch(27.1% 0.0794 268);
-      --blue-4: oklch(31.8% 0.1068 268);
-      --blue-5: oklch(36.1% 0.1198 268);
-      --blue-6: oklch(40.4% 0.1267 268);
-      --blue-7: oklch(45% 0.1378 268);
-      --blue-8: oklch(50.3% 0.1572 268);
-      --blue-9: oklch(51% 0.1572 268);
-      --blue-10: oklch(46.1% 0.1378 268);
-      --blue-11: oklch(77.7% 0.1413 268);
-      --blue-12: oklch(91.1% 0.049 268);
+      --red-1: oklch(17.8% 0.0135 35.4);
+      --red-2: oklch(20.7% 0.02 35.4);
+      --red-3: oklch(25.4% 0.0591 35.4);
+      --red-4: oklch(29.1% 0.0977 35.4);
+      --red-5: oklch(33.2% 0.1085 35.4);
+      --red-6: oklch(38.2% 0.1116 35.4);
+      --red-7: oklch(44.9% 0.1209 35.4);
+      --red-8: oklch(53.9% 0.1484 35.4);
+      --red-9: oklch(66% 0.2294 35.4);
+      --red-10: oklch(62.1% 0.2294 35.4);
+      --red-11: oklch(78.9% 0.194 35.4);
+      --red-12: oklch(90.7% 0.0556 35.4);
 
-      --blue-a1: color(display-p3 0 0 0.9922 / 0.051);
-      --blue-a2: color(display-p3 0.1137 0.3333 0.9922 / 0.089);
-      --blue-a3: color(display-p3 0.2 0.3608 1 / 0.24);
-      --blue-a4: color(display-p3 0.2275 0.3725 1 / 0.349);
-      --blue-a5: color(display-p3 0.2667 0.3961 1 / 0.429);
-      --blue-a6: color(display-p3 0.3098 0.4353 1 / 0.496);
-      --blue-a7: color(display-p3 0.3451 0.4706 1 / 0.585);
-      --blue-a8: color(display-p3 0.3569 0.4824 1 / 0.694);
-      --blue-a9: color(display-p3 0.3608 0.4824 1 / 0.706);
-      --blue-a10: color(display-p3 0.3569 0.4824 1 / 0.597);
-      --blue-a11: color(display-p3 0.6118 0.7137 1 / 0.975);
-      --blue-a12: color(display-p3 0.851 0.8941 1 / 0.988);
+      --red-a1: color(display-p3 0.9608 0 0 / 0.022);
+      --red-a2: color(display-p3 0.9961 0.2824 0.1412 / 0.055);
+      --red-a3: color(display-p3 0.9961 0.251 0.0157 / 0.152);
+      --red-a4: color(display-p3 1 0.1647 0 / 0.244);
+      --red-a5: color(display-p3 1 0.2471 0.0157 / 0.307);
+      --red-a6: color(display-p3 1 0.3412 0.1608 / 0.37);
+      --red-a7: color(display-p3 1 0.4196 0.2588 / 0.471);
+      --red-a8: color(display-p3 1 0.4431 0.2784 / 0.631);
+      --red-a9: color(display-p3 1 0.3608 0.1686 / 0.916);
+      --red-a10: color(display-p3 1 0.3098 0.1569 / 0.858);
+      --red-a11: color(display-p3 1 0.6353 0.5176 / 0.942);
+      --red-a12: color(display-p3 1 0.8627 0.8157 / 0.971);
 
-      --blue-contrast: #fff;
-      --blue-surface: color(display-p3 0.0706 0.1098 0.2275 / 0.5);
-      --blue-indicator: oklch(51% 0.1572 268);
-      --blue-track: oklch(51% 0.1572 268);
+      --red-contrast: #fff;
+      --red-surface: color(display-p3 0.1647 0.0941 0.0706 / 0.5);
+      --red-indicator: oklch(66% 0.2294 35.4);
+      --red-track: oklch(66% 0.2294 35.4);
     }
   }
 }
@@ -189,35 +189,35 @@ body {
 }
 
 body.colorful {
-  --color-1: var(--blue-1);
-  --color-2: var(--blue-2);
-  --color-3: var(--blue-3);
-  --color-4: var(--blue-4);
-  --color-5: var(--blue-5);
-  --color-6: var(--blue-6);
-  --color-7: var(--blue-7);
-  --color-9: var(--blue-9);
-  --color-10: var(--blue-10);
-  --color-11: var(--blue-11);
-  --color-12: var(--blue-12);
+  --color-1: var(--red-1);
+  --color-2: var(--red-2);
+  --color-3: var(--red-3);
+  --color-4: var(--red-4);
+  --color-5: var(--red-5);
+  --color-6: var(--red-6);
+  --color-7: var(--red-7);
+  --color-9: var(--red-9);
+  --color-10: var(--red-10);
+  --color-11: var(--red-11);
+  --color-12: var(--red-12);
 
-  --color-a1: var(--blue-a1);
-  --color-a2: var(--blue-a2);
-  --color-a3: var(--blue-a3);
-  --color-a4: var(--blue-a4);
-  --color-a5: var(--blue-a5);
-  --color-a6: var(--blue-a6);
-  --color-a7: var(--blue-a7);
-  --color-a8: var(--blue-a8);
-  --color-a9: var(--blue-a9);
-  --color-a10: var(--blue-a10);
-  --color-a11: var(--blue-a11);
-  --color-a12: var(--blue-a12);
+  --color-a1: var(--red-a1);
+  --color-a2: var(--red-a2);
+  --color-a3: var(--red-a3);
+  --color-a4: var(--red-a4);
+  --color-a5: var(--red-a5);
+  --color-a6: var(--red-a6);
+  --color-a7: var(--red-a7);
+  --color-a8: var(--red-a8);
+  --color-a9: var(--red-a9);
+  --color-a10: var(--red-a10);
+  --color-a11: var(--red-a11);
+  --color-a12: var(--red-a12);
 
-  --color-contrast: var(--blue-contrast);
-  --color-surface: var(--blue-surface);
-  --color-indicator: var(--blue-indicator);
-  --color-track: var(--blue-track);
+  --color-contrast: var(--red-contrast);
+  --color-surface: var(--red-surface);
+  --color-indicator: var(--red-indicator);
+  --color-track: var(--red-track);
 }
 
 body {
