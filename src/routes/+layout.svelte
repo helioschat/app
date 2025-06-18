@@ -13,6 +13,8 @@
   import { browser } from '$app/environment';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
+  import ChatHeader from '$lib/components/chat/ChatHeader.svelte';
+  import { chats } from '$lib/stores/chat';
 
   const SMALL_SCREEN_WIDTH = 1024; //px
 
@@ -24,6 +26,9 @@
 
   // Check if this is first-time setup to hide sidebar
   const isFirstTime = $derived($setupStore.isFirstTime);
+
+  let chatId = $derived(page.params.chatId);
+  let activeChat = $derived(chatId ? $chats.find((chat) => chat.id === chatId) : undefined);
 
   onMount(() => {
     if (isFirstTime && page.url.pathname !== '/') goto('/');
@@ -46,11 +51,32 @@
     <ChatSidebar bind:collapsed {smallScreen}></ChatSidebar>
   {/if}
 
-  <div class="flex h-full w-full flex-1 flex-col items-center overflow-y-auto">
-    <div class="h-full w-full max-w-7xl" class:small={smallScreen}>
+  <div class="flex h-full w-full flex-1 flex-col items-center overflow-y-auto" class:small={smallScreen}>
+    <div class="relative h-full w-full max-w-7xl">
+      {#if !isFirstTime}
+        <div class="header-container absolute top-0 left-1/2 z-[1] w-full max-w-7xl -translate-x-1/2">
+          <ChatHeader chat={activeChat}></ChatHeader>
+        </div>
+      {/if}
       {@render children()}
     </div>
   </div>
 </div>
 
 <div id="portal-target"></div>
+
+<style lang="postcss">
+  @reference "tailwindcss";
+
+  .header-container {
+    background: linear-gradient(to bottom, var(--color-1), transparent);
+  }
+
+  .small .header-container {
+    @apply pl-14;
+  }
+
+  .small .header-container :global(header) {
+    @apply pl-0;
+  }
+</style>

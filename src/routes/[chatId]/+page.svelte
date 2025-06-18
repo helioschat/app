@@ -8,7 +8,6 @@
   import { streamStates, endStream } from '$lib/streaming';
   import { browser } from '$app/environment';
   import { StreamingController } from '$lib/streaming';
-  import ChatHeader from '$lib/components/chat/ChatHeader.svelte';
   import ChatMessages from '$lib/components/chat/ChatMessages.svelte';
   import ChatInput from '$lib/components/chat/ChatInput.svelte';
   import Spinner from '$lib/components/common/Spinner.svelte';
@@ -294,10 +293,6 @@
 
 <main class="chat relative flex h-full flex-1 flex-col">
   {#if activeChat}
-    <div class="header-container absolute top-0 left-1/2 z-[1] w-full -translate-x-1/2">
-      <ChatHeader chat={activeChat}></ChatHeader>
-    </div>
-
     <div class="messages-container -mb-30 h-full overflow-y-auto">
       <ChatMessages chat={activeChat} {currentlyStreamingMessageId} {handleRegenerate} {handleEdit} {handleBranch}
       ></ChatMessages>
