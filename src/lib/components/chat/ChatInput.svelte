@@ -209,7 +209,7 @@
           {#if canAttachFiles}
             <button
               type="button"
-              on:click={handleAttachClick}
+              on:click|preventDefault={handleAttachClick}
               disabled={isLoading}
               class="button button-secondary button-small !px-2"
               title="Attach files">
@@ -220,7 +220,7 @@
           <div class="flex items-center gap-1">
             {#if showTemporaryToggle}
               <button
-                on:click={() => (isTemporary = !isTemporary)}
+                on:click|preventDefault={() => (isTemporary = !isTemporary)}
                 disabled={isLoading}
                 class="toggle-btn button button-small button-secondary !px-2"
                 class:toggled={isTemporary}
@@ -231,7 +231,7 @@
             {/if}
             {#if supportsWebSearch}
               <button
-                on:click={handleWebSearchToggle}
+                on:click|preventDefault={handleWebSearchToggle}
                 disabled={isLoading}
                 class="toggle-btn button button-small button-secondary !px-2"
                 class:toggled={webSearchEnabled}
@@ -244,18 +244,19 @@
         </div>
         <div class="flex items-center gap-2">
           <button
-            on:click={openModelSelector}
+            on:click|preventDefault={openModelSelector}
             disabled={isLoading || !browser}
             class="button button-primary button-small !px-2">
             <span>{$selectedModel?.modelId || 'Select Model'}</span>
           </button>
           {#if isLoading}
-            <button type="button" on:click={handleStop} class="button button-main button-small">
+            <button type="button" on:click|preventDefault={handleStop} class="button button-main button-small">
               <Square size={14}></Square>
             </button>
           {:else}
             <button
               type="submit"
+              on:click|preventDefault
               disabled={!userInput.trim() && attachments.length === 0}
               class="button button-main button-small">
               <ArrowUp size={14}></ArrowUp>
