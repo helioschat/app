@@ -24,6 +24,12 @@
     manualMode = true;
   }
 
+  function closeSidebarOnInteraction() {
+    if (!smallScreen || collapsed) return;
+    collapsed = true;
+    manualMode = false;
+  }
+
   // Add resize handling to auto-collapse sidebar on small screens
   function handleResize() {
     if (!browser) return;
@@ -94,16 +100,17 @@
   style="--collapse-animation-duration: {COLLAPSE_ANIMATION_DURATION}ms">
   <div class="flex flex-col items-center gap-3.5">
     <div class="relative flex w-full items-center justify-between">
-      <button class="button button-secondary pointer-events-auto absolute top-0 left-0" on:click={handleToggle}>
+      <button class="button button-secondary pointer-events-auto absolute top-0 left-0" on:click={() => handleToggle()}>
         <Menu size={20}></Menu>
       </button>
       <div class="h-10 min-h-10 w-10 min-w-10"></div>
       {#if !collapsed}
         <h1 class="text-xl font-bold" transition:fade={{ duration: COLLAPSE_ANIMATION_DURATION * 0.75 }}>
-          <a href="/">{manifest.name}</a>
+          <a on:click={closeSidebarOnInteraction} href="/">{manifest.name}</a>
         </h1>
         <a
           href="/settings"
+          on:click={closeSidebarOnInteraction}
           class="button button-secondary"
           title="Settings"
           transition:fade={{ duration: COLLAPSE_ANIMATION_DURATION * 0.75 }}>
@@ -114,6 +121,7 @@
     {#if (smallScreen && !collapsed) || !smallScreen}
       <a
         href="/"
+        on:click={closeSidebarOnInteraction}
         class="button button-primary w-full"
         class:justify-center={collapsed}
         title="New Chat"
@@ -146,6 +154,7 @@
             {@const isGenerating = $streamStates[chat.id]?.isStreaming ?? false}
             <a
               href="/{chat.id}"
+              on:click={closeSidebarOnInteraction}
               class="thread-item group flex h-9 items-center justify-between rounded-[10px] py-2 pr-0.5 pl-2.5"
               class:selected={isSelected}
               class:generating={isGenerating}
@@ -155,8 +164,10 @@
                 {#if chat.branchedFrom !== undefined}
                   <button
                     class="button button-secondary button-small text-secondary inline-block h-full"
-                    on:click|preventDefault|stopPropagation={() =>
-                      goto(`/${chat.branchedFrom?.threadId}#${chat.branchedFrom?.messageId}`)}
+                    on:click|preventDefault|stopPropagation={() => {
+                      goto(`/${chat.branchedFrom?.threadId}#${chat.branchedFrom?.messageId}`);
+                      closeSidebarOnInteraction();
+                    }}
                     title="Branched from chat">
                     <GitBranch size={14}></GitBranch>
                   </button>
