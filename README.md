@@ -37,7 +37,7 @@
 
 ## Competition
 
-Helios was created in 10 days for the **T3 Chat Cloneathon**, an open source competition to build the best open-source clone of the T3 Chat product.
+Helios was created in 10 days for the **T3 Chat Cloneathon**, an open source competition to build the best clone of the T3 Chat product.
 
 ## License
 
