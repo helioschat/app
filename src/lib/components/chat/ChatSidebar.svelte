@@ -73,7 +73,7 @@
   }
 
   let filteredChats = $derived(
-    searchQuery.trim()
+    searchQuery.trim() && browser && $chats
       ? $chats.filter((chat) => !chat.temporary && chat.title.toLowerCase().includes(searchQuery.toLowerCase()))
       : $chats.filter((chat) => !chat.temporary),
   );
