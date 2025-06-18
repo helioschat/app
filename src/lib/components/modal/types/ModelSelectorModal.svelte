@@ -37,7 +37,7 @@
     <input type="text" bind:value={searchQuery} placeholder="Search models..." class="flex-1" autofocus />
   </div>
 
-  <div class="max-h-[400px] overflow-y-auto">
+  <div class="max-h-[400px] overflow-x-hidden overflow-y-auto">
     {#each providerInstances as instance (instance.id)}
       {@const allInstanceModels = availableModels[instance.id] || []}
       {@const enabledAndFilteredModels = allInstanceModels.filter(
