@@ -24,7 +24,7 @@
   }
 </script>
 
-<Modal {id} {title} {isOpen} on:close={handleCancel}>
+<Modal {id} {title} {isOpen} hideCloseButton smallWidth on:close={handleCancel}>
   <p class="text-secondary text-sm">{message}</p>
 
   <svelte:fragment slot="footer">

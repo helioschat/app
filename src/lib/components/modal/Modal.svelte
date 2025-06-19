@@ -8,6 +8,8 @@
   export let title: string;
   export let isOpen = false;
   export let closeOnClickOutside = true;
+  export let hideCloseButton = false;
+  export let smallWidth = false;
 
   const dispatch = createEventDispatcher<{
     close: { id: string };
@@ -47,31 +49,36 @@
       class="fixed inset-0 z-50 flex items-center justify-center overflow-x-hidden overflow-y-auto p-4"
       transition:fade={{ duration: 200, easing: quintOut }}
       on:click={handleClickOutside}>
-      <div class="fixed inset-0 bg-black/75" aria-hidden="true"></div>
+      <div class="fixed inset-0 bg-black/25 backdrop-blur-xs" aria-hidden="true"></div>
 
       <dialog
         bind:this={dialog}
-        class="relative mx-auto w-full max-w-lg rounded-lg p-6 lg:max-w-2xl"
+        class="relative mx-auto w-full max-w-lg rounded-2xl shadow-lg lg:max-w-2xl"
+        class:small-width={smallWidth}
         aria-labelledby={`${id}-title`}
         aria-modal="true"
         open
         transition:scale={{ duration: 200, easing: quintOut, start: 0.9 }}>
         <div class="flex flex-col">
-          <div class="flex items-center justify-between">
-            <h2 id={`${id}-title`} class="text-lg font-bold">
+          <div class="flex items-center justify-between py-3 ps-4 pe-2">
+            <h2 id={`${id}-title`} class="text-lg font-medium">
               {title}
             </h2>
-            <button type="button" class="button button-secondary h-8 w-8" aria-label="Close modal" on:click={close}>
-              ✕
-            </button>
+            {#if !hideCloseButton}
+              <button type="button" class="button button-secondary h-8 w-8" aria-label="Close modal" on:click={close}>
+                ✕
+              </button>
+            {/if}
           </div>
 
-          <div class="mt-2">
-            <slot></slot>
-          </div>
+          <div class="grow overflow-y-auto p-4 pt-1">
+            <div>
+              <slot></slot>
+            </div>
 
-          <div class="mt-4 flex justify-end gap-2">
-            <slot name="footer"></slot>
+            <div class="flex justify-end gap-2 not-empty:mt-4">
+              <slot name="footer"></slot>
+            </div>
           </div>
         </div>
       </dialog>
@@ -80,9 +87,15 @@
 {/if}
 
 <style lang="postcss">
+  @reference "tailwindcss";
+
   dialog {
     background-color: var(--color-2);
     color: var(--color-12);
+
+    &.small-width {
+      @apply max-w-md lg:max-w-md;
+    }
 
     &::backdrop {
       display: none;
