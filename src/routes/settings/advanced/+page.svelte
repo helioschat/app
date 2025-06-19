@@ -15,12 +15,17 @@
   $: titleModelOptions = getTitleModelOptions(instances);
 
   function getTitleModelOptions(instances: ProviderInstance[]) {
-    const options: Array<{ value: string; label: string }> = [{ value: '', label: 'Use provider default' }];
+    const options: Array<{ value: string; label: string; isRecommended?: boolean }> = [
+      { value: '', label: 'Use provider default' },
+    ];
 
     const allCachedModels = modelCache.getAllCachedModels();
 
     for (const instance of instances) {
       const cachedModels = allCachedModels[instance.id];
+      const defaultModel = getDefaultTitleModel(instance.config.matchedProvider || '');
+      const addedModels = new Set<string>();
+
       if (cachedModels && cachedModels.length > 0) {
         // Add fast/small models that are suitable for title generation
         const suitableModels = cachedModels.filter(
@@ -36,24 +41,41 @@
         );
 
         for (const model of suitableModels) {
-          options.push({
-            value: `${instance.id}:${model.id}`,
-            label: `${instance.name} - ${model.name}`,
-          });
+          const modelKey = `${instance.id}:${model.id}`;
+          if (!addedModels.has(modelKey)) {
+            addedModels.add(modelKey);
+            const isDefault = model.id === defaultModel;
+            options.push({
+              value: modelKey,
+              label: `${instance.name} - ${model.name}${isDefault ? ' (recommended)' : ''}`,
+              isRecommended: isDefault,
+            });
+          }
         }
       }
 
-      // Also add the default title model if known
-      const defaultModel = getDefaultTitleModel(instance.config.matchedProvider || '');
+      // Add the default title model if it wasn't already added from cached models
       if (defaultModel) {
-        options.push({
-          value: `${instance.id}:${defaultModel}`,
-          label: `${instance.name} - ${defaultModel} (recommended)`,
-        });
+        const defaultModelKey = `${instance.id}:${defaultModel}`;
+        if (!addedModels.has(defaultModelKey)) {
+          options.push({
+            value: defaultModelKey,
+            label: `${instance.name} - ${defaultModel} (recommended)`,
+            isRecommended: true,
+          });
+        }
       }
     }
 
-    return options;
+    // Sort options so recommended models come first
+    const [defaultOption, ...otherOptions] = options;
+    const sortedOptions = otherOptions.sort((a, b) => {
+      if (a.isRecommended && !b.isRecommended) return -1;
+      if (!a.isRecommended && b.isRecommended) return 1;
+      return a.label.localeCompare(b.label);
+    });
+
+    return [defaultOption, ...sortedOptions];
   }
 
   function updateSettings() {
