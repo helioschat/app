@@ -37,6 +37,12 @@
       icon: Wrench,
       url: '/settings/advanced',
     },
+    {
+      id: 'about',
+      text: 'About',
+      icon: Info,
+      url: '/settings/about',
+    },
   ];
 
   $: activeTabId = page.url.pathname.split('/').pop() || 'providers';
