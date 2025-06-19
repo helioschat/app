@@ -84,7 +84,10 @@
       trySetDefaultModel();
     });
 
-    if (browser && userInputComponent) resizeTextarea({ target: userInputComponent } as unknown as Event);
+    if (browser && userInputComponent) {
+      userInputComponent.focus();
+      resizeTextarea({ target: userInputComponent } as unknown as Event);
+    }
 
     // Try to set default model on initial load
     trySetDefaultModel();
@@ -228,7 +231,8 @@
           class="max-h-52 min-h-6 flex-1 resize-none !rounded-none !bg-transparent !px-2 !py-0 outline-none"
           on:input={resizeTextarea}
           on:keydown={submitTextarea}
-          on:change={resizeTextarea}></textarea>
+          on:change={resizeTextarea}
+          autofocus></textarea>
       </div>
       <div class="flex h-7 items-center justify-between">
         <div class="flex items-center gap-2">
