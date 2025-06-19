@@ -142,6 +142,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
       /^omni-.*$/,
       /^tts-.*$/,
       /^text-embedding-.*$/,
+      /^dall-e-.*$/,
     ],
     modelOverrides: {
       'chatgpt-4o-latest': {
