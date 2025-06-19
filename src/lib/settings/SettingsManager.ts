@@ -238,6 +238,27 @@ export class SettingsManager {
     });
   }
 
+  /**
+   * Apply recommended model selections based on known provider metadata.
+   * This enables models that are not disabled by default and disables models that are disabled by default.
+   * @param providerInstanceId Provider instance ID
+   * @param matchedProviderId Matched provider ID from known providers
+   * @param models List of all available models for this provider
+   */
+  public applyRecommendedModels(
+    providerInstanceId: string,
+    matchedProviderId: string | undefined,
+    models: ModelInfo[],
+  ): void {
+    if (!matchedProviderId) return;
+
+    this.disabledModels.update((map) => {
+      const disabled = models.filter((m) => isModelDisabledByDefault(matchedProviderId, m.id)).map((m) => m.id);
+      map[providerInstanceId] = disabled;
+      return map;
+    });
+  }
+
   public toggleAllModels(providerInstanceId: string, enable: boolean, modelIds: string[]): void {
     this.disabledModels.update((models) => {
       if (enable) {

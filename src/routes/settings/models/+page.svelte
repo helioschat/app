@@ -99,6 +99,16 @@
     await modelCache.syncNow(getProviderInstances, getLanguageModel);
     loading = false;
   }
+
+  function applyRecommendedModels(providerInstanceId: string, instance: ProviderInstance) {
+    const models = cachedModels[providerInstanceId] || [];
+    settingsManager.applyRecommendedModels(providerInstanceId, instance.config.matchedProvider, models);
+    // Force a UI update by creating a new object reference
+    if (cachedModels[providerInstanceId]) {
+      cachedModels[providerInstanceId] = [...cachedModels[providerInstanceId]];
+    }
+    cachedModels = { ...cachedModels };
+  }
 </script>
 
 {#if loading}
@@ -117,12 +127,22 @@
       <h3 class="mb-3 text-xl font-semibold">{instance.name} ({instance.providerType})</h3>
       <div class="space-y-2">
         {#if cachedModels[instance.id]?.length}
-          <input
-            type="checkbox"
-            id={`select-all-${instance.id}`}
-            checked={areAllModelsEnabled(instance.id)}
-            onchange={(e) => toggleAllModels(instance.id, e.currentTarget.checked)} />
-          <label for={`select-all-${instance.id}`} class="select-none">Select All Models</label>
+          <div class="mb-3 flex flex-wrap gap-2">
+            <div class="flex items-center">
+              <input
+                type="checkbox"
+                id={`select-all-${instance.id}`}
+                checked={areAllModelsEnabled(instance.id)}
+                onchange={(e) => toggleAllModels(instance.id, e.currentTarget.checked)} />
+              <label for={`select-all-${instance.id}`} class="ml-2 select-none">Select All Models</label>
+            </div>
+            <button
+              type="button"
+              onclick={() => applyRecommendedModels(instance.id, instance)}
+              class="button button-secondary">
+              Select Recommended Models
+            </button>
+          </div>
           {#each cachedModels[instance.id] as model (model.id)}
             <ModelItem
               {model}
