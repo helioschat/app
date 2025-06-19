@@ -5,12 +5,11 @@
   export let tabs: {
     id: string;
     text: string;
-    disabled?: boolean | null;
+    url: string | null;
     hidden?: boolean | null;
   }[];
   export let activeTab: string | undefined = undefined;
   export let initialActiveTab: string | undefined = undefined;
-  export let disabled: boolean | undefined = false;
   export let onChange: void | (() => void) | ((e: Event) => void) | undefined = undefined;
 
   onMount(() => {
@@ -27,9 +26,7 @@
     isHovering: false,
   };
 
-  const tabFocus = (e: MouseEvent, tabDisabled?: boolean | null) => {
-    if (disabled || tabDisabled) return;
-
+  const tabFocus = (e: MouseEvent) => {
     const target = e.target as HTMLElement;
     if (!target) return;
 
@@ -81,22 +78,18 @@
             return undefined;
           })()}
           on:change={handleOnChange} />
-        {@const isDisabled = disabled || tab.disabled}
-        <button
+        <a
+          href={tab.url}
           class="tab peer z-[1] flex h-8 w-full min-w-fit cursor-pointer flex-col items-center justify-center gap-2.5 rounded-lg px-4"
-          disabled={isDisabled}
-          class:disabled={isDisabled}
-          class:text-secondary={isDisabled || tab.id != activeTab}
           class:active={tab.id == activeTab}
           on:click={(e) => {
-            e.preventDefault();
             handleClick(tab.id);
           }}
-          on:mouseenter={(e) => tabFocus(e, isDisabled)}>
+          on:mouseenter={tabFocus}>
           <p class="line-clamp-1 min-w-0 text-sm font-medium break-words select-none">
             {tab.text}
           </p>
-        </button>
+        </a>
       {/each}
       <div
         class="bg bg-component-hover peer-hover absolute left-0 rounded-lg opacity-0 peer-hover:opacity-60"
@@ -124,9 +117,5 @@
 
   .tab.active {
     background-color: var(--color-4);
-  }
-
-  .tab.disabled {
-    @apply cursor-not-allowed;
   }
 </style>
