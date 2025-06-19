@@ -94,7 +94,7 @@
   {/if}
 
   <div class="flex h-full w-full flex-1 flex-col items-center overflow-y-auto" class:small={smallScreen}>
-    <div class="relative h-full w-full max-w-7xl">
+    <div class="relative h-full w-full max-w-7xl overflow-x-hidden">
       {#if !isFirstTime}
         <div class="header-container absolute top-0 left-1/2 z-[1] w-full max-w-7xl -translate-x-1/2">
           <ChatHeader chat={activeChat}></ChatHeader>
