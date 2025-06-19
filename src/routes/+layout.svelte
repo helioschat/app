@@ -17,8 +17,15 @@
   import { chats } from '$lib/stores/chat';
   import { cleanupAutoSync } from '$lib/sync/autoSync';
   import { syncManager } from '$lib/stores/sync';
+  import { manifest } from '$lib';
 
   const SMALL_SCREEN_WIDTH = 1024; //px
+
+  const meta = {
+    title: manifest.name,
+    description: manifest.description,
+    image: '/logo.png',
+  };
 
   let { children } = $props();
   let collapsed = $state(false);
@@ -60,6 +67,25 @@
 </script>
 
 <svelte:window bind:innerWidth />
+
+<svelte:head>
+  <meta name="theme-color" content="#ff4500" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content={meta.title} />
+  <meta name="twitter:title" content={meta.title} />
+  <meta name="description" content={meta.description} />
+  <meta property="og:description" content={meta.description} />
+  <meta name="twitter:description" content={meta.description} />
+  <meta name="thumbnail" content={meta.image} />
+  <meta property="og:image" content={meta.image} />
+  <meta name="twitter:image" content={meta.image} />
+  <link rel="image_src" href={meta.image} />
+
+  <!-- This should be deprecated, however Bing still uses this: -->
+  {@html `<meta http-equiv="content-language" content="en-US">`}
+</svelte:head>
 
 <div class="flex h-screen">
   {#if !isFirstTime}

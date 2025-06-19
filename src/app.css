@@ -220,6 +220,10 @@ body.colorful {
   --color-track: var(--red-track);
 }
 
+:root {
+  --accent: #ff4500;
+}
+
 body {
   background-color: var(--color-1);
   color: var(--color-a12);

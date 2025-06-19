@@ -45,7 +45,7 @@
 </script>
 
 <svelte:head>
-  <title>{manifest.name}</title>
+  <title>{manifest.name} • {manifest.description}</title>
 </svelte:head>
 
 {#if isFirstTime}
