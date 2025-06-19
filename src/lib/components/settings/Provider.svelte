@@ -3,7 +3,7 @@
   import { modelCache } from '$lib/stores/modelCache';
   import type { ProviderInstance } from '$lib/types';
   import { Pencil, Trash } from 'lucide-svelte';
-  import ProviderEditModal from '../modal/types/ProviderEditModal.svelte';
+  import ProviderModal from '../modal/types/ProviderModal.svelte';
   import ConfirmationModal from '../modal/types/ConfirmationModal.svelte';
   import { KNOWN_PROVIDERS } from '$lib/providers/known';
 
@@ -33,34 +33,38 @@
   }
 
   async function handleProviderUpdate(event: CustomEvent) {
-    const { name, apiKey, apiBaseUrl } = event.detail;
+    const { name, apiKey, baseURL, matchedProvider } = event.detail;
 
     // Update the provider instance
     settingsManager.updateProviderInstance(provider.id, {
       name,
       config: {
         apiKey,
-        baseURL: apiBaseUrl,
+        baseURL,
+        matchedProvider,
       },
     });
 
-    // Clear old cache and sync new models
+    // Close modal immediately to keep UI responsive
+    showEditModal = false;
+
+    // Clear old cache and sync new models in the background
     modelCache.clearProviderCache(provider.id);
 
     // Import getLanguageModel and sync models for this provider
-    try {
-      const { getLanguageModel } = await import('$lib/providers/registry');
-      const updatedProvider = {
-        ...provider,
-        name,
-        config: { apiKey, baseURL: apiBaseUrl },
-      };
-      await modelCache.syncProvider(updatedProvider, getLanguageModel);
-    } catch (error) {
-      console.error('Failed to sync models after provider update:', error);
-    }
-
-    showEditModal = false;
+    (async () => {
+      try {
+        const { getLanguageModel } = await import('$lib/providers/registry');
+        const updatedProvider = {
+          ...provider,
+          name,
+          config: { apiKey, baseURL, matchedProvider },
+        };
+        await modelCache.syncProvider(updatedProvider, getLanguageModel);
+      } catch (error) {
+        console.error('Failed to sync models after provider update:', error);
+      }
+    })();
   }
 </script>
 
@@ -92,12 +96,12 @@
   </div>
 </div>
 
-<ProviderEditModal
+<ProviderModal
   id="provider-edit-modal"
   {provider}
   isOpen={showEditModal}
   on:close={() => (showEditModal = false)}
-  on:select={handleProviderUpdate}></ProviderEditModal>
+  on:save={handleProviderUpdate}></ProviderModal>
 
 <ConfirmationModal
   id="delete-provider-modal"
