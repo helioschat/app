@@ -325,7 +325,7 @@ select {
 }
 
 .button {
-  @apply flex h-10 min-h-10 min-w-10 cursor-pointer items-center justify-center gap-1 rounded-full p-2 text-center transition-colors;
+  @apply flex h-10 min-h-10 min-w-10 cursor-pointer items-center justify-center gap-1 rounded-full p-2 text-center transition-[color,background-color,opacity];
 }
 
 .button:disabled {

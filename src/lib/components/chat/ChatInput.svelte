@@ -44,10 +44,34 @@
   $: currentModel = $selectedModel
     ? cachedModels[$selectedModel.providerInstanceId]?.find((m) => m.id === $selectedModel.modelId)
     : null;
-  $: modelFeatures = currentModel?.architecture?.inputModalities || [];
-  $: ({ supportsImages, supportsFiles } = getSupportedModalities(modelFeatures));
+
+  // Base model features (for determining if we should show attachment button at all)
+  $: baseModelFeatures = currentModel?.architecture?.inputModalities || [];
+  $: ({ supportsImages: baseSupportsImages, supportsFiles: baseSupportsFiles } =
+    getSupportedModalities(baseModelFeatures));
   $: isImageGenerationModel = currentModel ? supportsImageGeneration(currentModel) : false;
-  $: canAttachFiles = supportsImages || supportsFiles || isImageGenerationModel;
+  $: canShowAttachFiles = baseSupportsImages || baseSupportsFiles || isImageGenerationModel;
+
+  // Effective model features (for determining if attachment button should be enabled)
+  $: effectiveModel = (() => {
+    if (!currentModel || !$selectedModel) return null;
+
+    // If web search is enabled and there's a redirect model, use that model's capabilities
+    if (webSearchEnabled && currentModel.webSearchModelRedirect) {
+      const redirectModel = cachedModels[$selectedModel.providerInstanceId]?.find(
+        (m) => m.id === currentModel.webSearchModelRedirect,
+      );
+      return redirectModel || currentModel;
+    }
+
+    return currentModel;
+  })();
+
+  $: effectiveModelFeatures = effectiveModel?.architecture?.inputModalities || [];
+  $: ({ supportsImages: effectiveSupportsImages, supportsFiles: effectiveSupportsFiles } =
+    getSupportedModalities(effectiveModelFeatures));
+  $: isEffectiveImageGenerationModel = effectiveModel ? supportsImageGeneration(effectiveModel) : false;
+  $: canAttachFiles = effectiveSupportsImages || effectiveSupportsFiles || isEffectiveImageGenerationModel;
   $: supportsWebSearch = currentModel?.supportsWebSearch || !!currentModel?.webSearchModelRedirect;
 
   onMount(() => {
@@ -177,7 +201,7 @@
     type="file"
     bind:this={fileInput}
     on:change={handleFileSelect}
-    accept={getAcceptForModalities(modelFeatures)}
+    accept={getAcceptForModalities(effectiveModelFeatures)}
     multiple
     style="display: none;" />
 
@@ -197,7 +221,9 @@
           bind:this={userInputComponent}
           bind:value={userInput}
           rows="1"
-          placeholder={isImageGenerationModel ? 'Describe the image you want to generate...' : 'Ask anything...'}
+          placeholder={isEffectiveImageGenerationModel
+            ? 'Describe the image you want to generate...'
+            : 'Ask anything...'}
           disabled={isLoading}
           class="max-h-52 min-h-6 flex-1 resize-none !rounded-none !bg-transparent !px-2 !py-0 outline-none"
           on:input={resizeTextarea}
@@ -206,11 +232,11 @@
       </div>
       <div class="flex h-7 items-center justify-between">
         <div class="flex items-center gap-2">
-          {#if canAttachFiles}
+          {#if canShowAttachFiles}
             <button
               type="button"
               on:click|preventDefault={handleAttachClick}
-              disabled={isLoading}
+              disabled={isLoading || !canAttachFiles}
               class="button button-secondary button-small !px-2"
               title="Attach files">
               <Paperclip size={16} />
