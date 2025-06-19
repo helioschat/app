@@ -1,11 +1,13 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import type { Icon } from 'lucide-svelte';
+  import { onMount, type ComponentType } from 'svelte';
 
   export let name: string = 'switch';
   export let tabs: {
     id: string;
     text: string;
     url: string | null;
+    icon?: ComponentType<Icon> | null;
     hidden?: boolean | null;
   }[];
   export let activeTab: string | undefined = undefined;
@@ -87,6 +89,9 @@
           }}
           on:mouseenter={tabFocus}>
           <p class="line-clamp-1 min-w-0 text-sm font-medium break-words select-none">
+            {#if tab.icon}
+              <svelte:component this={tab.icon} size={14} class="inline-block flex-shrink-0"></svelte:component>
+            {/if}
             {tab.text}
           </p>
         </a>

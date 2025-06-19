@@ -2,12 +2,13 @@
   import { page } from '$app/state';
   import Tabs from '$lib/components/common/Tabs.svelte';
   import { manifest } from '$lib';
+  import { BrainCircuit, CloudUpload, ServerCog, Wrench } from 'lucide-svelte';
 
   const tabs = [
-    { id: 'providers', text: 'Providers', url: '/settings/providers' },
-    { id: 'models', text: 'Models', url: '/settings/models' },
-    { id: 'sync', text: 'Sync', url: '/settings/sync' },
-    { id: 'advanced', text: 'Advanced', url: '/settings/advanced' },
+    { id: 'providers', text: 'Providers', icon: ServerCog, url: '/settings/providers' },
+    { id: 'models', text: 'Models', icon: BrainCircuit, url: '/settings/models' },
+    { id: 'sync', text: 'Sync', icon: CloudUpload, url: '/settings/sync' },
+    { id: 'advanced', text: 'Advanced', icon: Wrench, url: '/settings/advanced' },
   ];
 
   $: activeTab = page.url.pathname.split('/').pop() || 'providers';
