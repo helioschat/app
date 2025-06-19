@@ -59,7 +59,7 @@
 </script>
 
 <div
-  class="mx-auto h-full w-full max-w-4xl flex-1 justify-center overflow-x-hidden overflow-y-auto px-4 pt-16 pb-24"
+  class="mx-auto h-full w-full max-w-4xl flex-1 justify-center overflow-x-hidden overflow-y-auto px-4 pt-16 pb-32"
   bind:this={messagesContainer}
   on:scroll={handleScroll}>
   {#each chat.messages as message (message.id)}
