@@ -318,8 +318,17 @@ dialog {
   @apply cursor-not-allowed;
 }
 
+input {
+  @apply outline-none;
+}
+
 textarea,
-input,
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='number'],
+input[type='search'],
+input[type='tel'],
 select {
   @apply min-h-9 resize-none rounded-lg border border-[var(--color-a6)] text-sm shadow-xs ring-[2px] ring-transparent transition-[border-color,ring] outline-none invalid:ring-red-500 focus-visible:border-[var(--color-9)] focus-visible:ring-[var(--color-9)];
 }
@@ -328,13 +337,18 @@ textarea {
   @apply px-3 py-2;
 }
 
-input,
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='number'],
+input[type='search'],
+input[type='tel'],
 select {
   @apply px-3 py-1;
 }
 
 .input-small {
-  @apply min-h-7 text-xs;
+  @apply !min-h-7 !text-xs;
 }
 
 .button {
