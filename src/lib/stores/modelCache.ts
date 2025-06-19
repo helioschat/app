@@ -22,6 +22,38 @@ interface SyncState {
 const CACHE_TTL = 1000 * 60 * 60; // 1 hour in milliseconds
 const SYNC_INTERVAL = 1000 * 60 * 30; // 30 minutes in milliseconds
 
+/**
+ * Sort models by createdAt (newest first), then by name, then by id
+ */
+function sortModels(models: ModelInfo[]): ModelInfo[] {
+  return [...models].sort((a, b) => {
+    // If both have createdAt, sort by createdAt (newest first)
+    if (a.createdAt && b.createdAt) {
+      return b.createdAt - a.createdAt;
+    }
+    // If only one has createdAt, prioritize the one with createdAt
+    if (a.createdAt && !b.createdAt) {
+      return -1;
+    }
+    if (!a.createdAt && b.createdAt) {
+      return 1;
+    }
+    // If neither has createdAt, sort alphabetically by name, then by id
+    if (a.name && b.name) {
+      return a.name.localeCompare(b.name);
+    }
+    // If only one has name, prioritize the one with name
+    if (a.name && !b.name) {
+      return -1;
+    }
+    if (!a.name && b.name) {
+      return 1;
+    }
+    // If neither has name, sort by id
+    return a.id.localeCompare(b.id);
+  });
+}
+
 function createModelCache() {
   // Initialize from localStorage if available
   const initialCache: ModelCache = browser ? JSON.parse(localStorage.getItem('modelCache') || '{}') : {};
@@ -70,10 +102,11 @@ function createModelCache() {
      * Cache models for a provider
      */
     cacheModels: (provider: string, models: ModelInfo[]) => {
+      const sortedModels = sortModels(models);
       update((cache) => ({
         ...cache,
         [provider]: {
-          models,
+          models: sortedModels,
           timestamp: Date.now(),
         },
       }));
@@ -176,7 +209,7 @@ async function syncModels(
       updateCache((cache) => ({
         ...cache,
         [instance.id]: {
-          models,
+          models: sortModels(models),
           timestamp: Date.now(),
         },
       }));
@@ -223,7 +256,7 @@ async function syncSpecificProvider(
     updateCache((cache) => ({
       ...cache,
       [instance.id]: {
-        models,
+        models: sortModels(models),
         timestamp: Date.now(),
       },
     }));
@@ -257,9 +290,9 @@ export const availableModels = derived([modelCache], () => {
  * Get the default model for a provider instance, falling back to the first cached model
  */
 export function getProviderDefaultModel(
-  providerInstanceId: string, 
+  providerInstanceId: string,
   matchedProviderId: string | undefined,
-  cachedModels?: Record<string, ModelInfo[]>
+  cachedModels?: Record<string, ModelInfo[]>,
 ): string | undefined {
   const models = cachedModels?.[providerInstanceId] || modelCache.getAllCachedModels()[providerInstanceId];
   return getDefaultModel(matchedProviderId || '', models);
