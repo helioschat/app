@@ -173,12 +173,12 @@
             <a
               href="/{chat.id}"
               on:click={closeSidebarOnInteraction}
-              class="thread-item group flex h-9 items-center justify-between rounded-[10px] py-2 pr-0.5 pl-2.5"
+              class="thread-item group flex h-8 items-center justify-between rounded-[10px] pr-0.5 pl-2.5"
               class:selected={isSelected}
               class:generating={isGenerating}
               class:!pl-2={chat.branchedFrom !== undefined}
               title={chat.title}>
-              <span class="flex items-center gap-0.5 truncate text-sm transition-colors duration-200">
+              <span class="flex items-center gap-0.5 truncate text-[0.8rem] transition-colors duration-200">
                 {#if chat.branchedFrom !== undefined}
                   <button
                     class="button button-ghost button-small button-circle inline-block !min-w-fit"
