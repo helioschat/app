@@ -114,7 +114,6 @@
   </div>
 {:else}
   <div class="mb-4 flex items-center justify-between">
-    <h2 class="text-2xl font-semibold">Model Configuration</h2>
     <button type="button" onclick={refreshModels} class="button button-secondary" disabled={loading}>
       Refresh Models
     </button>

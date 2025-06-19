@@ -62,11 +62,6 @@
   }
 </script>
 
-<div>
-  <h2 class="text-xl font-semibold">Sync Settings</h2>
-  <p class="text-sm text-gray-500">Manage your chat synchronization settings.</p>
-</div>
-
 <div class="space-y-6">
   <!-- Connection Status -->
   <div class="card p-4">
