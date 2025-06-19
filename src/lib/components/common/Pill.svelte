@@ -30,7 +30,7 @@
   };
 
   $: pillClasses = [
-    'inline-flex items-center gap-1.5 rounded-full font-medium transition-colors',
+    'inline-flex items-center gap-1 rounded-full font-medium transition-colors',
     variantClasses[variant],
     sizeClasses[size],
   ]
