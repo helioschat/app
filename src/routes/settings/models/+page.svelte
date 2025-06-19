@@ -1,6 +1,6 @@
 <script lang="ts">
   import Spinner from '$lib/components/common/Spinner.svelte';
-  import ModelItem from '$lib/components/common/ModelItem.svelte';
+  import ModelList from '$lib/components/common/ModelList.svelte';
   import { settingsManager, providerInstances, disabledModels } from '$lib/settings/SettingsManager';
   import { availableModels, modelCache } from '$lib/stores/modelCache';
   import type { ModelInfo } from '$lib/providers';
@@ -72,24 +72,20 @@
     cachedModels = { ...cachedModels };
   }
 
-  function isModelEnabled(providerInstanceId: string, modelId: string) {
-    return !(disabledModelsState[providerInstanceId]?.includes(modelId) ?? false);
+  function handleToggleModel(event: CustomEvent<{ providerInstanceId: string; modelId: string }>) {
+    const { providerInstanceId, modelId } = event.detail;
+    toggleModel(providerInstanceId, modelId);
   }
 
-  function toggleAllModels(providerInstanceId: string, enable: boolean) {
-    const modelIds = cachedModels[providerInstanceId]?.map((model) => model.id) || [];
-    settingsManager.toggleAllModels(providerInstanceId, enable, modelIds);
-    // Force a UI update by creating a new object reference
-    if (cachedModels[providerInstanceId]) {
-      cachedModels[providerInstanceId] = [...cachedModels[providerInstanceId]];
+  function toggleAllModelsGlobally(enable: boolean) {
+    for (const instance of $providerInstances) {
+      const modelIds = cachedModels[instance.id]?.map((model) => model.id) || [];
+      if (modelIds.length > 0) {
+        settingsManager.toggleAllModels(instance.id, enable, modelIds);
+      }
     }
+    // Force a UI update by creating a new object reference
     cachedModels = { ...cachedModels };
-  }
-
-  function areAllModelsEnabled(providerInstanceId: string) {
-    const models = cachedModels[providerInstanceId];
-    if (!models || models.length === 0) return false;
-    return models.every((model) => isModelEnabled(providerInstanceId, model.id));
   }
 
   async function refreshModels() {
@@ -100,13 +96,14 @@
     loading = false;
   }
 
-  function applyRecommendedModels(providerInstanceId: string, instance: ProviderInstance) {
-    const models = cachedModels[providerInstanceId] || [];
-    settingsManager.applyRecommendedModels(providerInstanceId, instance.config.matchedProvider, models);
-    // Force a UI update by creating a new object reference
-    if (cachedModels[providerInstanceId]) {
-      cachedModels[providerInstanceId] = [...cachedModels[providerInstanceId]];
+  function applyRecommendedModelsGlobally() {
+    for (const instance of $providerInstances) {
+      const models = cachedModels[instance.id] || [];
+      if (models.length > 0) {
+        settingsManager.applyRecommendedModels(instance.id, instance.config.matchedProvider, models);
+      }
     }
+    // Force a UI update by creating a new object reference
     cachedModels = { ...cachedModels };
   }
 </script>
@@ -122,38 +119,26 @@
       Refresh Models
     </button>
   </div>
-  {#each $providerInstances as instance (instance.id)}
-    <div class="mb-6">
-      <h3 class="mb-3 text-xl font-semibold">{instance.name} ({instance.providerType})</h3>
-      <div class="space-y-2">
-        {#if cachedModels[instance.id]?.length}
-          <div class="mb-3 flex flex-wrap gap-2">
-            <div class="flex items-center">
-              <input
-                type="checkbox"
-                id={`select-all-${instance.id}`}
-                checked={areAllModelsEnabled(instance.id)}
-                onchange={(e) => toggleAllModels(instance.id, e.currentTarget.checked)} />
-              <label for={`select-all-${instance.id}`} class="ml-2 select-none">Select All Models</label>
-            </div>
-            <button
-              type="button"
-              onclick={() => applyRecommendedModels(instance.id, instance)}
-              class="button button-secondary">
-              Select Recommended Models
-            </button>
-          </div>
-          {#each cachedModels[instance.id] as model (model.id)}
-            <ModelItem
-              {model}
-              mode="toggle"
-              isEnabled={isModelEnabled(instance.id, model.id)}
-              onchange={() => toggleModel(instance.id, model.id)} />
-          {/each}
-        {:else}
-          <p class="text-gray-500">No models available. Check your API key and Base URL in the Providers tab.</p>
-        {/if}
-      </div>
-    </div>
-  {/each}
+
+  <!-- Global controls -->
+  <div class="mb-6 flex flex-wrap gap-2">
+    <button type="button" onclick={() => toggleAllModelsGlobally(true)} class="button button-secondary">
+      Enable All Models
+    </button>
+    <button type="button" onclick={() => toggleAllModelsGlobally(false)} class="button button-secondary">
+      Disable All Models
+    </button>
+    <button type="button" onclick={applyRecommendedModelsGlobally} class="button button-secondary">
+      Apply Recommended Models
+    </button>
+  </div>
+
+  <ModelList
+    providerInstances={$providerInstances}
+    availableModels={cachedModels}
+    mode="toggle"
+    showSearch={true}
+    maxHeight="none"
+    enabledModelsState={disabledModelsState}
+    on:toggle={handleToggleModel} />
 {/if}
