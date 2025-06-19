@@ -12,6 +12,13 @@
   export let onclick: (() => void) | undefined = undefined;
   export let onchange: ((enabled: boolean) => void) | undefined = undefined;
 
+  $: modelDate = model.createdAt
+    ? new Date(model.createdAt * 1000).toLocaleString(undefined, {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+      })
+    : null;
   $: modelFeatures = [...(model.architecture?.inputModalities || [])];
   $: isImageGeneration = supportsImageGeneration(model);
 
@@ -50,7 +57,8 @@
   <div class="flex-1 justify-between gap-1 text-left" class:ml-3={mode === 'toggle'} class:flex={minimal}>
     <div class="flex flex-col justify-center gap-0.5">
       <div class="text-primary flex items-center gap-2 font-medium">
-        {model.name}{#if model.deprecated}
+        {model.name}<span class="text-secondary text-xs font-light opacity-75"> {modelDate}</span>
+        {#if model.deprecated}
           <Pill icon={Archive} text="Deprecated" size="xs" variant="warning"></Pill>
         {/if}
       </div>
