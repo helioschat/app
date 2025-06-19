@@ -2,7 +2,7 @@
   import { page } from '$app/state';
   import Tabs from '$lib/components/common/Tabs.svelte';
   import { manifest } from '$lib';
-  import { BrainCircuit, CloudUpload, ServerCog, Wrench } from 'lucide-svelte';
+  import { BrainCircuit, CloudUpload, Info, ServerCog, Wrench } from 'lucide-svelte';
 
   const tabs = [
     {
@@ -54,7 +54,7 @@
 </script>
 
 <svelte:head>
-  <title>{manifest.name}</title>
+  <title>{activeTab.title} • {manifest.name}</title>
 </svelte:head>
 
 <div class="settings mt-[3.75rem] px-4 pb-8">
@@ -62,10 +62,12 @@
     <Tabs {tabs} activeTab={activeTabId} onChange={handleTabChange}></Tabs>
   </div>
 
-  <div class="mb-6">
-    <h2 class="text-xl font-semibold">{activeTab.title}</h2>
-    <p class="text-sm text-gray-500">{activeTab.description}</p>
-  </div>
+  {#if activeTab.title && activeTab.description}
+    <div class="mb-6">
+      <h1 class="text-xl font-semibold">{activeTab.title}</h1>
+      <p class="text-sm text-gray-500">{activeTab.description}</p>
+    </div>
+  {/if}
 
   <div class="flex flex-col gap-4">
     <slot></slot>
@@ -84,7 +86,7 @@
   }
 
   .settings :global(.panel h3) {
-    @apply text-xl font-bold text-[var(--color-12)];
+    @apply flex items-center gap-1 text-xl font-bold text-[var(--color-12)];
   }
 
   .settings :global(.panel h4) {
