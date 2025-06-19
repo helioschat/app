@@ -214,7 +214,7 @@
             </div>
           </div>
         </div>
-      {:else if message.content}
+      {:else}
         <!-- Display Mode -->
         {#if shouldUseMarkdown}
           <MarkdownRenderer content={message.content} isStreaming={isCurrentlyStreaming && message.role === 'assistant'}
