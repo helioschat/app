@@ -155,8 +155,8 @@
   {#if !collapsed}
     <!-- Search input -->
     <div class="relative text-[var(--color-11)]" transition:fade={{ duration: COLLAPSE_ANIMATION_DURATION * 0.75 }}>
-      <Search size={16} class="absolute top-1/2 left-3 -translate-y-1/2" />
-      <input type="text" bind:value={searchQuery} placeholder="Search chats..." class="w-full !py-1.5 !pl-8 text-sm" />
+      <Search size={14} class="absolute top-1/2 left-3 -translate-y-1/2" />
+      <input type="text" bind:value={searchQuery} placeholder="Search chats..." class="input-small w-full !pl-8" />
     </div>
     <nav
       class="flex flex-1 flex-col gap-y-0.5 overflow-y-auto"

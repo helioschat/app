@@ -228,7 +228,7 @@
             ? 'Describe the image you want to generate...'
             : 'Ask anything...'}
           disabled={isLoading}
-          class="max-h-52 min-h-6 flex-1 resize-none !rounded-none !bg-transparent !px-2 !py-0 outline-none"
+          class="max-h-52 min-h-6 flex-1 resize-none !rounded-none !border-none !bg-transparent !px-2 !py-0 !text-base !shadow-none !ring-0"
           on:input={resizeTextarea}
           on:keydown={submitTextarea}
           on:change={resizeTextarea}
