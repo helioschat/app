@@ -1,7 +1,7 @@
 <script lang="ts">
   import { advancedSettings, providerInstances } from '$lib/settings/SettingsManager';
   import { modelCache } from '$lib/stores/modelCache';
-  import { getDefaultTitleModel } from '$lib/providers/known';
+  import { getDefaultTitleModel, isModelDisabledByDefault } from '$lib/providers/known';
   import type { ProviderInstance } from '$lib/types';
   import type { ModelInfo } from '$lib/providers/base';
   import { resetSetup } from '$lib/stores/setup';
@@ -25,13 +25,14 @@
         // Add fast/small models that are suitable for title generation
         const suitableModels = cachedModels.filter(
           (model: ModelInfo) =>
-            model.name.toLowerCase().includes('mini') ||
-            model.name.toLowerCase().includes('small') ||
-            model.name.toLowerCase().includes('nano') ||
-            model.name.toLowerCase().includes(':free') ||
-            model.name.toLowerCase().includes('flash') ||
-            model.name.toLowerCase().includes('haiku') ||
-            model.name.toLowerCase().includes('turbo'),
+            (model.name.toLowerCase().includes('mini') ||
+              model.name.toLowerCase().includes('small') ||
+              model.name.toLowerCase().includes('nano') ||
+              model.name.toLowerCase().includes(':free') ||
+              model.name.toLowerCase().includes('flash') ||
+              model.name.toLowerCase().includes('haiku') ||
+              model.name.toLowerCase().includes('turbo')) &&
+            !isModelDisabledByDefault(instance.config.matchedProvider || '', model.id),
         );
 
         for (const model of suitableModels) {
