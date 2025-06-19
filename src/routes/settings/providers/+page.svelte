@@ -4,6 +4,7 @@
   import { detectKnownProvider } from '$lib/providers/known';
   import { providerInstances, settingsManager } from '$lib/settings/SettingsManager';
   import { modelCache } from '$lib/stores/modelCache';
+  import { Plus } from 'lucide-svelte';
 
   let showAddModal = $state(false);
 
@@ -44,11 +45,17 @@
   }
 </script>
 
-<div class="space-y-4">
+<div class="flex flex-wrap justify-start gap-2 md:justify-between">
+  <button class="button button-secondary" onclick={() => (showAddModal = true)}>
+    <Plus size={14}></Plus>
+    Add New Provider
+  </button>
+</div>
+
+<div class="space-y-2">
   {#each $providerInstances as instance (instance.id)}
     <Provider provider={instance}></Provider>
   {/each}
-  <button class="button button-primary" onclick={() => (showAddModal = true)}>Add New Provider</button>
 </div>
 
 <ProviderModal
