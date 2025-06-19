@@ -43,9 +43,9 @@
     <svelte:component this={icon} size={iconSizes[size]} class="flex-shrink-0"></svelte:component>
   {/if}
 
-  {#if text}
-    <span class="hidden md:block">{text}</span>
-  {/if}
-
   <slot></slot>
+
+  {#if text}
+    <span class={size === 'xs' || size === 'sm' ? 'hidden md:block' : undefined}>{text}</span>
+  {/if}
 </span>
