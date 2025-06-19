@@ -64,7 +64,7 @@
   <!-- svelte-ignore a11y-no-static-element-interactions -->
   <!-- This is only cosmetic, we don't need to watch out for a11y here -->
   <div on:mouseenter={addTabFocus} on:mouseleave={removeTabFocus}>
-    <div class="relative flex" bind:this={container}>
+    <div class="relative flex overflow-x-auto" bind:this={container}>
       {#each tabs.filter((tab) => tab.hidden !== true) as tab}
         <input
           type="radio"
