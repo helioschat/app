@@ -90,7 +90,7 @@
 
 {#if !$authState.isAuthenticated}
   <div class="panel">
-    <h3 class="text-xl font-bold">Setup Sync</h3>
+    <h3>Setup Sync</h3>
 
     <p class="text-secondary text-sm">
       Sync allows you to access your chat history across multiple devices. Your data is encrypted client-side before

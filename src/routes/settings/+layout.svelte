@@ -65,3 +65,23 @@
     <slot></slot>
   </div>
 </div>
+
+<style lang="postcss">
+  @reference "tailwindcss";
+
+  .settings :global(.panel) {
+    @apply flex flex-col gap-3 rounded-lg bg-[var(--color-2)] p-4 shadow-lg;
+  }
+
+  .settings :global(.panel .section) {
+    @apply flex flex-col gap-2;
+  }
+
+  .settings :global(.panel h3) {
+    @apply text-xl font-bold text-[var(--color-12)];
+  }
+
+  .settings :global(.panel h4) {
+    @apply text-sm font-medium text-[var(--color-a12)];
+  }
+</style>

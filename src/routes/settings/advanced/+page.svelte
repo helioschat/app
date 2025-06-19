@@ -77,53 +77,65 @@
   }
 </script>
 
-<div>
-  <label for="systemPrompt">System Prompt</label>
-  <textarea
-    id="systemPrompt"
-    bind:value={currentSettings.systemPrompt}
-    on:change={updateSettings}
-    class="h-32 w-full"
-    placeholder="Enter system instructions for the AI"></textarea>
-  <p class="text-secondary">Instructions that set the behavior of the AI assistant</p>
-</div>
+<div class="panel">
+  <h3>Generation Settings</h3>
 
-<div>
-  <label for="titleGeneration">Chat Title Generation</label>
-  <div class="mb-2 flex items-center gap-2">
-    <input
-      id="titleGeneration"
-      type="checkbox"
-      bind:checked={currentSettings.titleGenerationEnabled}
-      on:change={updateSettings} />
-    <span>Enable automatic chat title generation</span>
-  </div>
-  <p class="text-secondary mb-3">Automatically generate descriptive titles for new chats based on the first message</p>
-
-  {#if currentSettings.titleGenerationEnabled}
+  <div class="section">
+    <h4>System Prompt</h4>
     <div>
-      <label for="titleModel">Title Generation Model</label>
-      <select
-        id="titleModel"
-        bind:value={currentSettings.titleGenerationModel}
+      <textarea
+        id="systemPrompt"
+        bind:value={currentSettings.systemPrompt}
         on:change={updateSettings}
-        class="w-full">
-        {#each titleModelOptions as option}
-          <option value={option.value}>{option.label}</option>
-        {/each}
-      </select>
-      <p class="text-secondary">
-        Choose which model to use for generating chat titles. Smaller/faster models are recommended.
+        class="h-32 w-full"
+        placeholder="Enter system instructions for the AI"></textarea>
+      <p class="text-secondary text-xs opacity-75">Instructions that set the behavior of the AI assistant</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h4>Chat Title Generation</h4>
+
+    <div>
+      <input
+        id="titleGeneration"
+        type="checkbox"
+        bind:checked={currentSettings.titleGenerationEnabled}
+        on:change={updateSettings} />
+      <label for="titleGeneration" class="select-none">Enable automatic chat title generation</label>
+      <p class="text-secondary text-xs opacity-75">
+        Automatically generate descriptive titles for new chats based on the first message
       </p>
+    </div>
+  </div>
+  {#if currentSettings.titleGenerationEnabled}
+    <div class="section">
+      <h4>Title Generation Model</h4>
+
+      <div>
+        <select
+          id="titleModel"
+          bind:value={currentSettings.titleGenerationModel}
+          on:change={updateSettings}
+          class="w-full">
+          {#each titleModelOptions as option}
+            <option value={option.value}>{option.label}</option>
+          {/each}
+        </select>
+        <p class="text-secondary text-xs opacity-75">
+          Choose which model to use for generating chat titles. Smaller/faster models are recommended.
+        </p>
+      </div>
     </div>
   {/if}
 </div>
 
-<div>
-  <p>Developer Options</p>
+<div class="panel">
+  <h3>Danger Zone</h3>
+
   <div class="flex flex-wrap gap-2">
     <button class="button button-secondary" on:click={clearModelCache}>Clear model cache</button>
     <button class="button button-secondary" on:click={resetSetupStatus}>Reset setup status</button>
-    <button class="button button-secondary" on:click={clearSyncSettings}>Clear All Sync Settings</button>
+    <button class="button button-danger" on:click={clearSyncSettings}>Clear All Sync Settings</button>
   </div>
 </div>
