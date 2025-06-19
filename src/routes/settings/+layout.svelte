@@ -1,7 +1,6 @@
 <script lang="ts">
   import { page } from '$app/state';
   import Tabs from '$lib/components/common/Tabs.svelte';
-  import { goto } from '$app/navigation';
   import { manifest } from '$lib';
 
   const tabs = [
