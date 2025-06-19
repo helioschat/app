@@ -140,7 +140,7 @@
   data-message-id={message.id}>
   {#if hasReasoning}
     <button
-      class="reasoning-button button button-secondary text-sm"
+      class="reasoning-button button button-ghost button-small button-circle mb-0.5"
       class:thinking={isThinking}
       on:click={() => (showReasoning = !showReasoning)}>
       <span class="flex items-center gap-1">
