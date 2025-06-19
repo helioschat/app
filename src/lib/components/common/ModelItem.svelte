@@ -88,7 +88,7 @@
   </div>
 
   {#if model.contextWindow && !minimal}
-    <div class="text-sm text-gray-500">
+    <div class="text-secondary hidden text-xs opacity-75 md:block">
       Context: {model.contextWindow.toLocaleString()} tokens
     </div>
   {/if}

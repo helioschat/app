@@ -7,6 +7,7 @@
   import type { ProviderInstance } from '$lib/types';
   import { onMount } from 'svelte';
   import { get } from 'svelte/store';
+  import { CheckCheck, RefreshCcw, SquareCheckBig, SquareMinus } from 'lucide-svelte';
 
   let cachedModels = $state<Record<string, ModelInfo[]>>({});
   let loading = $state(true);
@@ -113,23 +114,27 @@
     <Spinner></Spinner>
   </div>
 {:else}
-  <div class="mb-4 flex items-center justify-between">
-    <button type="button" onclick={refreshModels} class="button button-secondary" disabled={loading}>
-      Refresh Models
-    </button>
-  </div>
-
-  <!-- Global controls -->
-  <div class="mb-6 flex flex-wrap gap-2">
-    <button type="button" onclick={() => toggleAllModelsGlobally(true)} class="button button-secondary">
-      Enable All Models
-    </button>
-    <button type="button" onclick={() => toggleAllModelsGlobally(false)} class="button button-secondary">
-      Disable All Models
-    </button>
-    <button type="button" onclick={applyRecommendedModelsGlobally} class="button button-secondary">
-      Apply Recommended Models
-    </button>
+  <div class="flex flex-wrap justify-start gap-2 md:justify-between">
+    <div class="flex flex-wrap gap-2">
+      <button type="button" onclick={() => toggleAllModelsGlobally(true)} class="button button-secondary">
+        <SquareCheckBig size={14}></SquareCheckBig>
+        Enable All Models
+      </button>
+      <button type="button" onclick={() => toggleAllModelsGlobally(false)} class="button button-secondary">
+        <SquareMinus size={14}></SquareMinus>
+        Disable All Models
+      </button>
+      <button type="button" onclick={applyRecommendedModelsGlobally} class="button button-secondary">
+        <CheckCheck size={14}></CheckCheck>
+        Apply Recommended Models
+      </button>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" onclick={refreshModels} class="button button-secondary" disabled={loading}>
+        <RefreshCcw size={14}></RefreshCcw>
+        Refresh Models
+      </button>
+    </div>
   </div>
 
   <ModelList
