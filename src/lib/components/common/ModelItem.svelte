@@ -2,6 +2,7 @@
   import type { ModelInfo } from '$lib/providers/base';
   import Pill from './Pill.svelte';
   import { supportsImageGeneration } from '$lib/utils/attachments';
+  import { FileInput, Image, Search, Text } from 'lucide-svelte';
 
   export let model: ModelInfo;
   export let isActive = false;
@@ -56,19 +57,19 @@
     {#if modelFeatures.length > 0 || isImageGeneration}
       <div class="mt-2 flex flex-wrap gap-1">
         {#if modelFeatures.includes('text')}
-          <Pill text="Text" size="sm"></Pill>
+          <Pill icon={Text} text="Text" size="sm"></Pill>
         {/if}
         {#if modelFeatures.includes('image')}
-          <Pill text="Image" size="sm" variant="secondary"></Pill>
+          <Pill icon={Image} text="Image" size="sm" variant="secondary"></Pill>
         {/if}
         {#if modelFeatures.includes('file')}
-          <Pill text="File" size="sm" variant="success"></Pill>
+          <Pill icon={FileInput} text="File" size="sm" variant="success"></Pill>
         {/if}
         {#if isImageGeneration}
-          <Pill text="Image Generation" size="sm" variant="warning"></Pill>
+          <Pill icon={Image} text="Image Generation" size="sm" variant="warning"></Pill>
         {/if}
         {#if model.supportsWebSearch}
-          <Pill text="Web Search" size="sm" variant="error"></Pill>
+          <Pill icon={Search} text="Web Search" size="sm" variant="error"></Pill>
         {/if}
       </div>
     {/if}
