@@ -33,6 +33,7 @@
   export let isTemporary: boolean = false;
   export let webSearchEnabled: boolean = false;
   export let webSearchContextSize: 'low' | 'medium' | 'high' = 'low';
+  export let noPadding: boolean = false;
 
   let userInputComponent: HTMLTextAreaElement;
   let fileInput: HTMLInputElement;
@@ -198,7 +199,7 @@
   }
 </script>
 
-<form on:submit={(e) => submit(e)} class="mx-auto mb-8 flex w-full max-w-4xl flex-col gap-2 px-4">
+<form on:submit={(e) => submit(e)} class="mx-auto mb-8 flex w-full max-w-4xl flex-col gap-2" class:px-4={!noPadding}>
   <!-- Hidden file input -->
   <input
     type="file"
