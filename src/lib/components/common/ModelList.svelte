@@ -207,14 +207,22 @@
     {/if}
   {/if}
 
-  <div class="min-h-[400px] overflow-x-hidden overflow-y-auto" style="max-height: {maxHeight}">
+  <div class="min-h-[400px] space-y-4 overflow-x-hidden overflow-y-auto" style="max-height: {maxHeight}">
     {#if providerInstances.length > 0}
       {#each providerInstances as instance (instance.id)}
         {@const filteredModels = getFilteredModels(instance)}
+        {@const matchedProvider = instance.config.matchedProvider
+          ? getKnownProviderMeta(instance.config.matchedProvider)
+          : null}
 
         {#if filteredModels.length > 0}
-          <h3 class="text-primary mt-4 text-sm font-semibold first:mt-0">{instance.name}</h3>
           <div class="space-y-2">
+            <div class="flex items-center gap-1">
+              {#if matchedProvider && matchedProvider.icon}
+                <div class="provider-icon h-3.5 w-3.5 bg-white" style="--icon: url({matchedProvider.icon});"></div>
+              {/if}
+              <h3 class="text-primary text-sm font-semibold">{instance.name}</h3>
+            </div>
             {#each filteredModels as model (model.id)}
               <ModelItem
                 {model}
