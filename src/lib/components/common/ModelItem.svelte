@@ -53,7 +53,7 @@
         {/if}
       </div>
       {#if model.description}
-        <div class="text-secondary line-clamp-4 text-sm break-words">{model.description}</div>
+        <div class="text-secondary line-clamp-4 text-xs break-words">{model.description}</div>
       {/if}
     </div>
     {#if modelFeatures.length > 0 || isImageGeneration}
