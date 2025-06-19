@@ -83,7 +83,7 @@
           on:change={handleOnChange} />
         {@const isDisabled = disabled || tab.disabled}
         <button
-          class="tab peer z-[1] flex h-10 w-full min-w-0 cursor-pointer flex-col items-center justify-center gap-2.5 rounded-lg px-4 py-2"
+          class="tab peer z-[1] flex h-8 w-full min-w-fit cursor-pointer flex-col items-center justify-center gap-2.5 rounded-lg px-4"
           disabled={isDisabled}
           class:disabled={isDisabled}
           class:text-secondary={isDisabled || tab.id != activeTab}
@@ -93,7 +93,7 @@
             handleClick(tab.id);
           }}
           on:mouseenter={(e) => tabFocus(e, isDisabled)}>
-          <p class="line-clamp-1 min-w-0 font-medium break-words select-none">
+          <p class="line-clamp-1 min-w-0 text-sm font-medium break-words select-none">
             {tab.text}
           </p>
         </button>
