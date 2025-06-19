@@ -2,11 +2,12 @@
   import type { ModelInfo } from '$lib/providers/base';
   import Pill from './Pill.svelte';
   import { supportsImageGeneration } from '$lib/utils/attachments';
-  import { FileInput, Image, Search, Text } from 'lucide-svelte';
+  import { Archive, FileInput, Image, Search, Text } from 'lucide-svelte';
 
   export let model: ModelInfo;
   export let isActive = false;
   export let isEnabled = true;
+  export let minimal = false;
   export let mode: 'select' | 'toggle' = 'select';
   export let onclick: (() => void) | undefined = undefined;
   export let onchange: ((enabled: boolean) => void) | undefined = undefined;
@@ -31,7 +32,8 @@
 </script>
 
 <div
-  class="button button-secondary button-large w-full"
+  class="button button-tertiary button-large w-full"
+  class:!py-2={minimal}
   class:active={mode === 'select' && isActive}
   on:click={handleClick}
   role={mode === 'select' ? 'button' : 'none'}
@@ -45,19 +47,19 @@
       on:click|stopPropagation />
   {/if}
 
-  <div class="flex-1 text-left" class:ml-3={mode === 'toggle'}>
-    <div class="flex flex-col gap-0.5">
+  <div class="flex-1 justify-between gap-1 text-left" class:ml-3={mode === 'toggle'} class:flex={minimal}>
+    <div class="flex flex-col justify-center gap-0.5">
       <div class="text-primary flex items-center gap-2 font-medium">
         {model.name}{#if model.deprecated}
-          <Pill text="Deprecated" size="xs" variant="warning"></Pill>
+          <Pill icon={Archive} text="Deprecated" size="xs" variant="warning"></Pill>
         {/if}
       </div>
-      {#if model.description}
+      {#if model.description && !minimal}
         <div class="text-secondary line-clamp-4 text-xs break-words">{model.description}</div>
       {/if}
     </div>
     {#if modelFeatures.length > 0 || isImageGeneration}
-      <div class="mt-2 flex flex-wrap gap-1">
+      <div class="flex flex-wrap gap-1" class:mt-2={!minimal}>
         {#if modelFeatures.includes('text')}
           <Pill icon={Text} text="Text" size="sm"></Pill>
         {/if}
@@ -77,7 +79,7 @@
     {/if}
   </div>
 
-  {#if model.contextWindow}
+  {#if model.contextWindow && !minimal}
     <div class="text-sm text-gray-500">
       Context: {model.contextWindow.toLocaleString()} tokens
     </div>

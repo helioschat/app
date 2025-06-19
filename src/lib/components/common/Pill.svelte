@@ -16,10 +16,10 @@
   };
 
   const sizeClasses = {
-    xs: 'px-1.5 py-0.5 text-xs',
-    sm: 'px-2 py-1 text-xs',
-    md: 'px-2.5 py-1.5 text-sm',
-    lg: 'px-3 py-2 text-base',
+    xs: 'px-1.5 py-0.5 text-xs min-h-[20px]',
+    sm: 'px-2 py-1 text-xs min-h-[24px]',
+    md: 'px-2.5 py-1.5 text-sm min-h-[28px]',
+    lg: 'px-3 py-2 text-base min-h-[32px]',
   };
 
   const iconSizes = {
@@ -44,7 +44,7 @@
   {/if}
 
   {#if text}
-    <span>{text}</span>
+    <span class="hidden md:block">{text}</span>
   {/if}
 
   <slot></slot>

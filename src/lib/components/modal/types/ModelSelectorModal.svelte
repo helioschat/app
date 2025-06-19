@@ -53,6 +53,7 @@
             <ModelItem
               {model}
               mode="select"
+              minimal
               isActive={model.id === currentModelId}
               onclick={() => handleSelect(instance.id, model.id)} />
           {/each}
