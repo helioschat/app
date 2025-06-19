@@ -285,6 +285,10 @@ html {
     env(safe-area-inset-left, 0);
 }
 
+dialog {
+  @apply outline-none;
+}
+
 /* Scrollbars */
 
 * {
