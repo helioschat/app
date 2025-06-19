@@ -189,7 +189,7 @@
             <button
               type="button"
               on:click={openEditModelSelector}
-              class="button button-primary button-small !rounded-l-2xl !px-2">
+              class="button button-primary button-small button-circle">
               <span>{editModelId || 'Select Model'}</span>
             </button>
 
@@ -197,7 +197,7 @@
               <button
                 type="button"
                 on:click={cancelEdit}
-                class="button button-secondary button-small !px-2"
+                class="button button-secondary button-small button-circle"
                 aria-label="Cancel edit">
                 <X size={16} />
                 <span class="hidden md:block"> Cancel </span>
@@ -206,7 +206,7 @@
                 type="button"
                 on:click={confirmEdit}
                 disabled={!editContent.trim()}
-                class="button button-primary button-small !rounded-t !rounded-r-2xl !px-2"
+                class="button button-secondary button-small button-circle"
                 aria-label="Save edit">
                 <Check size={16} />
                 <span class="hidden sm:block"> Save </span>
@@ -236,23 +236,23 @@
     <div class="flex flex-col gap-1 p-2 xl:flex-row">
       {#if !isEditing}
         <div class="buttons flex items-center gap-2">
-          <button class="button button-secondary button-small" on:click={copyMessageContent}>
+          <button class="button button-ghost button-small button-circle" on:click={copyMessageContent}>
             <Copy size={16}></Copy>
             <span>{copyButtonText}</span>
           </button>
           {#if message.role === 'assistant' && !isCurrentlyStreaming}
-            <button class="button button-secondary button-small" on:click={handleRegenerate}>
+            <button class="button button-ghost button-small button-circle" on:click={handleRegenerate}>
               <RefreshCw size={16}></RefreshCw>
               <span>Regenerate</span>
             </button>
-            <button class="button button-secondary button-small" on:click={handleBranch}>
+            <button class="button button-ghost button-small button-circle" on:click={handleBranch}>
               <GitBranch size={16}></GitBranch>
               <span>Branch off</span>
             </button>
           {/if}
           {#if message.role === 'user'}
             <button
-              class="button button-secondary button-small"
+              class="button button-ghost button-small button-circle"
               disabled={!canEdit || isCurrentlyStreaming}
               on:click={startEdit}>
               <Edit size={16}></Edit>

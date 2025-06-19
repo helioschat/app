@@ -48,13 +48,15 @@
 
       {#if enabledAndFilteredModels.length > 0}
         <h3 class="text-primary mt-4 text-sm font-semibold first:mt-0">{instance.name}</h3>
-        {#each enabledAndFilteredModels as model (model.id)}
-          <ModelItem
-            {model}
-            mode="select"
-            isActive={model.id === currentModelId}
-            onclick={() => handleSelect(instance.id, model.id)} />
-        {/each}
+        <div class="space-y-2">
+          {#each enabledAndFilteredModels as model (model.id)}
+            <ModelItem
+              {model}
+              mode="select"
+              isActive={model.id === currentModelId}
+              onclick={() => handleSelect(instance.id, model.id)} />
+          {/each}
+        </div>
       {/if}
     {/each}
   </div>

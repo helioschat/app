@@ -71,7 +71,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <div
-  class="button button-secondary button-large flex w-full !justify-between !text-left"
+  class="button button-secondary button-large w-full !justify-between !text-left"
   on:click={() => (showEditModal = true)}>
   <div class="flex gap-3">
     {#if matchedProvider && matchedProvider.icon}
@@ -79,17 +79,17 @@
         <div class="provider-icon h-8 w-8 bg-white" style="--icon: url({matchedProvider.icon});"></div>
       </div>
     {/if}
-    <div class="flex flex-col justify-center">
+    <div class="flex flex-col justify-center gap-1">
       <h3 class="font-semibold">{provider.name}</h3>
       <h4 class="text-secondary">{provider.config.baseURL}</h4>
     </div>
   </div>
   <div class="flex">
-    <button class="button button-secondary" on:click={() => (showEditModal = true)}>
+    <button class="button button-ghost button-circle" on:click={() => (showEditModal = true)}>
       <Pencil size={20}></Pencil>
     </button>
     <button
-      class="button button-secondary"
+      class="button button-ghost button-circle"
       on:click|preventDefault|stopPropagation={() => handleDeleteProvider(provider.id)}>
       <Trash size={20}></Trash>
     </button>

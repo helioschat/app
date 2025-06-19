@@ -10,7 +10,7 @@
   $: isSettingsPage = $page.url.pathname.startsWith('/settings');
 </script>
 
-<header class="flex min-h-[3.75rem] items-center justify-between px-4">
+<header class="flex min-h-[3.375rem] items-center justify-between px-4">
   {#if !isSettingsPage}
     <div class="flex items-center gap-2">
       {#if chat}
@@ -23,14 +23,14 @@
       {/if}
     </div>
   {:else}
-    <button onclick={() => goto(`/${$activeChatId}`)} class="button button-secondary">
-      <ArrowLeft size={20}></ArrowLeft>
+    <button onclick={() => goto(`/${$activeChatId}`)} class="button button-ghost button-circle">
+      <ArrowLeft size={14}></ArrowLeft>
       <span class="hidden sm:block">Back to Chat</span>
     </button>
   {/if}
   <div>
-    <a href="/" class="button button-secondary !flex w-full lg:!hidden" title="New Chat">
-      <CirclePlus size={20} class="min-w-5"></CirclePlus>
+    <a href="/" class="button button-ghost button-circle !flex lg:!hidden" title="New Chat">
+      <CirclePlus size={14} class="min-w-5"></CirclePlus>
     </a>
   </div>
 </header>

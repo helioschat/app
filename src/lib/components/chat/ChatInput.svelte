@@ -234,14 +234,14 @@
           on:change={resizeTextarea}
           autofocus></textarea>
       </div>
-      <div class="flex h-7 items-center justify-between">
+      <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           {#if canShowAttachFiles}
             <button
               type="button"
               on:click|preventDefault={handleAttachClick}
               disabled={isLoading || !canAttachFiles}
-              class="button button-secondary button-small !px-2"
+              class="button button-tertiary button-circle"
               title="Attach files">
               <Paperclip size={16} />
             </button>
@@ -252,22 +252,24 @@
               <button
                 on:click|preventDefault={() => (isTemporary = !isTemporary)}
                 disabled={isLoading}
-                class="toggle-btn button button-small button-secondary !px-2"
-                class:toggled={isTemporary}
+                class="button button-circle"
+                class:button-tertiary={!isTemporary}
+                class:button-secondary={isTemporary}
                 title={isTemporary ? "Temporary chat (won't be saved)" : 'Regular chat (will be saved)'}>
                 <VenetianMask size={16}></VenetianMask>
-                <span class="hidden lg:block">Temporary</span>
+                <span class="hidden text-xs lg:block">Temporary</span>
               </button>
             {/if}
             {#if supportsWebSearch}
               <button
                 on:click|preventDefault={handleWebSearchToggle}
                 disabled={isLoading}
-                class="toggle-btn button button-small button-secondary !px-2"
-                class:toggled={webSearchEnabled}
+                class="button button-circle"
+                class:button-tertiary={!webSearchEnabled}
+                class:button-secondary={webSearchEnabled}
                 title={webSearchEnabled ? 'Web search enabled' : 'Web search disabled'}>
                 <Search size={16}></Search>
-                <span class="hidden lg:block">Search</span>
+                <span class="hidden text-xs lg:block">Search</span>
               </button>
             {/if}
           </div>
@@ -276,18 +278,18 @@
           <button
             on:click|preventDefault={openModelSelector}
             disabled={isLoading || !browser}
-            class="button button-primary button-small !px-2">
-            <span>{$selectedModel?.modelId || 'Select Model'}</span>
+            class="button button-ghost button-circle">
+            <span class="text-xs">{$selectedModel?.modelId || 'Select Model'}</span>
           </button>
           {#if isLoading}
-            <button type="button" on:click|preventDefault={handleStop} class="button button-main button-small">
+            <button type="button" on:click|preventDefault={handleStop} class="button button-primary button-circle">
               <Square size={14}></Square>
             </button>
           {:else}
             <button
               type="submit"
               disabled={!userInput.trim() && attachments.length === 0}
-              class="button button-main button-small">
+              class="button button-primary button-circle">
               <ArrowUp size={14}></ArrowUp>
             </button>
           {/if}
@@ -310,19 +312,3 @@
     showModelSelector = false;
   }}>
 </ModelSelectorModal>
-
-<style lang="postcss">
-  @reference 'tailwindcss';
-
-  button {
-    @apply !min-h-8 !min-w-8 !rounded-full border border-[var(--color-a6)]/50;
-  }
-
-  button span {
-    @apply text-xs;
-  }
-
-  button.toggle-btn.toggled {
-    @apply bg-[var(--color-a4)];
-  }
-</style>

@@ -325,80 +325,82 @@ select {
 }
 
 .button {
-  @apply flex h-10 min-h-10 min-w-10 cursor-pointer items-center justify-center gap-1 rounded-full p-2 text-center transition-[color,background-color,opacity];
+  @apply flex min-h-[2.125rem] min-w-[2.125rem] cursor-pointer items-center justify-center gap-1 rounded-full border border-[var(--color-a6)]/50 px-4 py-2 text-center text-sm leading-[1.1] shadow-xs transition-[color,background-color,opacity] outline-none disabled:cursor-not-allowed disabled:opacity-50;
 }
 
-.button:disabled {
-  @apply cursor-not-allowed opacity-50;
+.button-circle {
+  @apply rounded-full p-2;
 }
 
-.button.button-small {
-  @apply h-fit min-h-auto min-w-auto rounded-lg p-1 text-sm;
-  color: var(--color-a11);
+.button-circle.button-small {
+  @apply p-1;
 }
 
-.button.button-large {
-  @apply h-fit min-h-fit rounded-lg p-4;
+.button-small {
+  @apply min-h-2 min-w-2 rounded-lg px-2 py-1 text-xs text-[var(--color-a11)];
 }
 
-.button.button-main {
-  background-color: var(--gray-12);
-  color: var(--gray-1);
-
-  &:hover:not(:disabled) {
-    background-color: var(--gray-11);
-  }
-
-  &:active,
-  &.active {
-    background-color: var(--gray-a12);
-  }
+.button-large {
+  @apply rounded-lg p-4;
 }
 
-.button.button-primary {
-  background-color: var(--color-a3);
-  color: var(--color-a12);
+.button-primary {
+  @apply bg-[var(--color-12)] text-[var(--color-1)];
 
-  &:hover:not(:disabled) {
-    background-color: var(--color-a4);
-  }
+  &:not(:disabled) {
+    @apply hover:opacity-75 active:bg-[var(--color-11)];
 
-  &:active,
-  &.active {
-    background-color: var(--color-3);
+    &.active {
+      @apply bg-[var(--color-11)];
+    }
   }
 }
 
-.button.button-secondary {
-  @apply bg-transparent;
-  color: var(--color-a12);
+.button-secondary {
+  @apply bg-[var(--color-a3)] text-[var(--color-12)];
 
-  &:hover:not(:disabled) {
-    background-color: var(--color-a3);
-  }
+  &:not(:disabled) {
+    @apply hover:bg-[var(--color-a4)] active:bg-[var(--color-a5)];
 
-  &:active,
-  &.active {
-    background-color: var(--color-3);
+    &.active {
+      @apply bg-[var(--color-a5)];
+    }
   }
 }
 
-.button.button-secondary.button-large {
-  @apply border;
-  border-color: var(--color-7);
+.button-tertiary {
+  @apply bg-transparent text-[var(--color-a12)];
+
+  &:not(:disabled) {
+    @apply hover:bg-[var(--color-a3)] active:bg-[var(--color-a4)];
+
+    &.active {
+      @apply bg-[var(--color-a4)];
+    }
+  }
 }
 
-.button.button-danger {
-  background-color: #dc2626;
-  color: var(--color-a12);
+.button-ghost {
+  @apply border-transparent bg-transparent text-[var(--color-a12)] shadow-none;
 
-  &:hover:not(:disabled) {
-    background-color: #b91c1c;
+  &:not(:disabled) {
+    @apply hover:bg-[var(--color-a3)] active:bg-[var(--color-a4)];
+
+    &.active {
+      @apply bg-[var(--color-a4)];
+    }
   }
+}
 
-  &:active,
-  &.active {
-    background-color: #b91c1c;
+.button-danger {
+  @apply bg-red-500 text-white;
+
+  &:not(:disabled) {
+    @apply hover:opacity-75 active:bg-red-600;
+
+    &.active {
+      @apply bg-red-600;
+    }
   }
 }
 

@@ -30,7 +30,7 @@
 </script>
 
 <div
-  class="button button-secondary button-large w-full border-0 border-none select-none"
+  class="button button-secondary button-large w-full"
   class:active={mode === 'select' && isActive}
   on:click={handleClick}
   role={mode === 'select' ? 'button' : 'none'}

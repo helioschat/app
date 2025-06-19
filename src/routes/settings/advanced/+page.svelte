@@ -121,8 +121,8 @@
 <div>
   <p>Developer Options</p>
   <div class="flex flex-wrap gap-2">
-    <button class="button button-primary" on:click={clearModelCache}>Clear model cache</button>
-    <button class="button button-primary" on:click={resetSetupStatus}>Reset setup status</button>
-    <button class="button button-primary" on:click={clearSyncSettings}>Clear All Sync Settings</button>
+    <button class="button button-secondary" on:click={clearModelCache}>Clear model cache</button>
+    <button class="button button-secondary" on:click={resetSetupStatus}>Reset setup status</button>
+    <button class="button button-secondary" on:click={clearSyncSettings}>Clear All Sync Settings</button>
   </div>
 </div>

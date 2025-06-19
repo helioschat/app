@@ -75,7 +75,7 @@
     {#each quickSetupProviders as provider}
       <button
         class="provider-button button button-secondary button-large !h-full !gap-4 !text-left"
-        class:selected={selectedKnownProvider === provider.providerId}
+        class:active={selectedKnownProvider === provider.providerId}
         on:click={() => selectKnownProvider(provider.providerId)}>
         {#if provider.icon}
           <div class="provider-icon h-8 w-8 bg-white" style="--icon: url({provider.icon});"></div>
@@ -144,10 +144,6 @@
 
   .config-form.quick-setup {
     @apply rounded-lg bg-[var(--color-a2)]/25 p-4;
-  }
-
-  .provider-button.selected {
-    @apply bg-[var(--color-a2)];
   }
 
   .provider-icon {

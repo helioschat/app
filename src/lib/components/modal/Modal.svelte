@@ -65,7 +65,7 @@
               {title}
             </h2>
             {#if !hideCloseButton}
-              <button type="button" class="button button-secondary h-8 w-8" aria-label="Close modal" on:click={close}>
+              <button type="button" class="button button-ghost button-circle" aria-label="Close modal" on:click={close}>
                 ✕
               </button>
             {/if}

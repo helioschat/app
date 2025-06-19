@@ -75,7 +75,7 @@
               searchInput = query;
               handleSearch(e);
             }}
-            class="button button-secondary button-large !h-full">
+            class="button button-secondary button-large">
             <p class="text-sm">{query}</p>
           </button>
         {/each}

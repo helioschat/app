@@ -89,7 +89,7 @@
 
   <div class="setup-actions">
     <button class="button button-primary" on:click={handleContinue} disabled={!canContinue}> Continue </button>
-    <button class="button button-skip" on:click={() => dispatch('skip')}> Skip setup </button>
+    <button class="button button-ghost" on:click={() => dispatch('skip')}> Skip setup </button>
   </div>
 </div>
 

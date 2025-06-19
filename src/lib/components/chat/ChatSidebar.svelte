@@ -114,10 +114,12 @@
   style="--collapse-animation-duration: {COLLAPSE_ANIMATION_DURATION}ms">
   <div class="flex flex-col items-center gap-3.5">
     <div class="relative flex w-full items-center justify-between">
-      <button class="button button-secondary pointer-events-auto absolute top-0 left-0" on:click={() => handleToggle()}>
-        <Menu size={20}></Menu>
+      <button
+        class="button button-ghost button-circle pointer-events-auto absolute top-0 left-0"
+        on:click={() => handleToggle()}>
+        <Menu size={16}></Menu>
       </button>
-      <div class="h-10 min-h-10 w-10 min-w-10"></div>
+      <div class="min-h-[2.125rem] min-w-[2.125rem]"></div>
       {#if !collapsed}
         <h1 class="text-xl font-bold" transition:fade={{ duration: COLLAPSE_ANIMATION_DURATION * 0.75 }}>
           <a on:click={closeSidebarOnInteraction} href="/"
@@ -126,10 +128,10 @@
         <a
           href="/settings"
           on:click={closeSidebarOnInteraction}
-          class="button button-secondary"
+          class="button button-ghost button-circle"
           title="Settings"
           transition:fade={{ duration: COLLAPSE_ANIMATION_DURATION * 0.75 }}>
-          <Settings size={20} />
+          <Settings size={16} />
         </a>
       {/if}
     </div>
@@ -141,11 +143,11 @@
         class:justify-center={collapsed}
         title="New Chat"
         transition:fade={{ duration: COLLAPSE_ANIMATION_DURATION * 0.75 }}>
-        <CirclePlus size={20} class="min-w-5"></CirclePlus>
+        <CirclePlus size={16} class="min-w-5"></CirclePlus>
         {#if !collapsed}
-          <p class="line-clamp-1 break-words" transition:fade={{ duration: COLLAPSE_ANIMATION_DURATION * 0.25 }}>
+          <span class="line-clamp-1 break-words" transition:fade={{ duration: COLLAPSE_ANIMATION_DURATION * 0.25 }}>
             New Chat
-          </p>
+          </span>
         {/if}
       </a>
     {/if}
@@ -179,7 +181,7 @@
               <span class="flex items-center gap-0.5 truncate text-sm transition-colors duration-200">
                 {#if chat.branchedFrom !== undefined}
                   <button
-                    class="button button-secondary button-small text-secondary inline-block h-full"
+                    class="button button-ghost button-small button-circle inline-block !min-w-fit"
                     on:click|preventDefault|stopPropagation={() => {
                       goto(`/${chat.branchedFrom?.threadId}#${chat.branchedFrom?.messageId}`);
                       closeSidebarOnInteraction();
@@ -191,20 +193,20 @@
                 {chat.title}</span>
               <div class="hidden items-center group-hover:flex">
                 <button
-                  class="button button-secondary button-small"
+                  class="button button-ghost button-small button-circle"
                   on:click|preventDefault|stopPropagation={() => handlePinChat(chat.id)}
                   aria-label={isPinned ? 'Unpin chat' : 'Pin chat'}>
                   {#if !isPinned}
-                    <Pin size={16}></Pin>
+                    <Pin size={14}></Pin>
                   {:else}
-                    <PinOff size={16}></PinOff>
+                    <PinOff size={14}></PinOff>
                   {/if}
                 </button>
                 <button
-                  class="button button-secondary button-small"
+                  class="button button-ghost button-small button-circle"
                   on:click|preventDefault|stopPropagation={() => handleDeleteChat(chat.id)}
                   aria-label={`Delete chat ${chat.title}`}>
-                  <Trash size={16} />
+                  <Trash size={14}></Trash>
                 </button>
               </div>
             </a>
