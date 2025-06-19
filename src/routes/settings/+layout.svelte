@@ -18,7 +18,7 @@
   <title>{manifest.name}</title>
 </svelte:head>
 
-<div class="settings mt-[3.75rem] px-4">
+<div class="settings mt-[3.75rem] px-4 pb-8">
   <div class="mb-4 w-fit">
     <Tabs {tabs} {activeTab}></Tabs>
   </div>
