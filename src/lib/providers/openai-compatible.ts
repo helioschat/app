@@ -357,7 +357,7 @@ export class OpenAICompatibleProvider implements LanguageModel {
               if (!model.created_at) return undefined;
               const date = new Date(model.created_at);
               if (date.getFullYear() < 2010) return undefined;
-              return date.getTime();
+              return date.getTime() / 1000;
             })(),
         };
       });
