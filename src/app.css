@@ -417,6 +417,22 @@ select {
   }
 }
 
+.button-action:focus {
+  animation-name: button-press;
+  animation-duration: 0.5s;
+  animation-timing-function: ease-in-out;
+}
+
+.button-action:active {
+  animation: none;
+}
+
+@keyframes button-press {
+  5% {
+    background-color: var(--color-green-600) !important;
+  }
+}
+
 /* Accessibility */
 
 @media (prefers-reduced-motion: reduce) {

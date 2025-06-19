@@ -3,6 +3,7 @@
   import Modal from '../Modal.svelte';
   import Alert from '$lib/components/common/Alert.svelte';
   import { Download } from 'lucide-svelte';
+  import { toast } from 'svelte-sonner';
 
   export let id: string;
   export let isOpen = false;
@@ -16,8 +17,6 @@
     login: { serverUrl: string; userId: string; passphrase: string };
   }>();
 
-  let copied = { userId: false, passphrase: false, serverUrl: false };
-
   function close() {
     dispatch('close', { id });
   }
@@ -27,13 +26,10 @@
     dispatch('close', { id });
   }
 
-  async function copyToClipboard(text: string, type: 'userId' | 'passphrase' | 'serverUrl') {
+  async function copyToClipboard(text: string) {
     try {
       await navigator.clipboard.writeText(text);
-      copied[type] = true;
-      setTimeout(() => {
-        copied[type] = false;
-      }, 2000);
+      toast('Copied to clipboard!');
     } catch (err) {
       console.error('Failed to copy to clipboard:', err);
     }
@@ -89,8 +85,8 @@
         <label for="user-id-display" class="mb-1 block text-sm font-medium">User ID</label>
         <div class="flex gap-2">
           <input id="user-id-display" type="text" value={userId} class="input flex-1" readonly />
-          <button type="button" class="button button-secondary px-3" on:click={() => copyToClipboard(userId, 'userId')}>
-            {copied.userId ? '✓' : 'Copy'}
+          <button type="button" class="button button-secondary button-action" on:click={() => copyToClipboard(userId)}>
+            Copy
           </button>
         </div>
       </div>
@@ -101,9 +97,9 @@
           <input id="passphrase-display" type="password" value={passphrase} class="flex-1" readonly />
           <button
             type="button"
-            class="button button-secondary px-3"
-            on:click={() => copyToClipboard(passphrase, 'passphrase')}>
-            {copied.passphrase ? '✓' : 'Copy'}
+            class="button button-secondary button-action"
+            on:click={() => copyToClipboard(passphrase)}>
+            Copy
           </button>
         </div>
       </div>
@@ -114,9 +110,9 @@
           <input id="server-url-display" type="text" value={serverUrl} class="flex-1" readonly />
           <button
             type="button"
-            class="button button-secondary px-3"
-            on:click={() => copyToClipboard(serverUrl, 'serverUrl')}>
-            {copied.serverUrl ? '✓' : 'Copy'}
+            class="button button-secondary button-action"
+            on:click={() => copyToClipboard(serverUrl)}>
+            Copy
           </button>
         </div>
       </div>

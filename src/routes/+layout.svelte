@@ -18,6 +18,7 @@
   import { cleanupAutoSync } from '$lib/sync/autoSync';
   import { syncManager } from '$lib/stores/sync';
   import { manifest } from '$lib';
+  import { Toaster } from 'svelte-sonner';
 
   const SMALL_SCREEN_WIDTH = 1024; //px
 
@@ -103,6 +104,8 @@
     </div>
   </div>
 </div>
+
+<Toaster position="top-right" theme="dark" richColors offset="16px"></Toaster>
 
 <div id="portal-target"></div>
 
