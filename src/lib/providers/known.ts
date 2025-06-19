@@ -135,6 +135,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
       /^gpt-.*-transcribe.*$/,
       /^gpt-.*-instruct.*$/,
       /^o1-preview.*$/,
+      /^o.*-pro.*$/,
       /^whisper-.*$/,
       /^codex-.*$/,
       /^davinci-.*$/,

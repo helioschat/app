@@ -41,10 +41,16 @@
     const allInstanceModels = availableModels[instance.id] || [];
 
     if (mode === 'select') {
-      return allInstanceModels.filter(
-        (model) =>
-          settingsManager.isModelEnabled(instance.id, model.id) &&
-          model.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      return (
+        allInstanceModels
+          .filter(
+            (model) =>
+              settingsManager.isModelEnabled(instance.id, model.id) &&
+              model.name.toLowerCase().includes(searchQuery.toLowerCase()),
+          )
+          // Filter out models that don't support chat completions endpoint
+          // TODO: Implement responses endpoint
+          .filter((model) => !model.doesntSupportChatCompletionsEndpoint)
       );
     } else {
       return allInstanceModels.filter((model) => model.name.toLowerCase().includes(searchQuery.toLowerCase()));
