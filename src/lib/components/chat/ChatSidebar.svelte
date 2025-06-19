@@ -77,6 +77,20 @@
       ? $chats.filter((chat) => !chat.temporary && chat.title.toLowerCase().includes(searchQuery.toLowerCase()))
       : $chats.filter((chat) => !chat.temporary),
   );
+
+  let groupedChats = $derived(groupChatsByDate(filteredChats));
+
+  // Workaround for Svelte's reactivity with derived stores
+  // to ensure pin states are reactive
+  let pinStates = $derived(
+    filteredChats.reduce(
+      (acc, chat) => {
+        acc[chat.id] = Boolean(chat.pinned);
+        return acc;
+      },
+      {} as Record<string, boolean>,
+    ),
+  );
 </script>
 
 <svelte:window on:resize={handleResize} />
@@ -145,14 +159,15 @@
     <nav
       class="flex flex-1 flex-col gap-y-0.5 overflow-y-auto"
       transition:fade={{ duration: COLLAPSE_ANIMATION_DURATION * 0.75 }}>
-      {#each groupChatsByDate(filteredChats) as { group, chats: groupChats }}
+      {#each groupedChats as { group, chats: groupChats }}
         <div class="group-section">
           {#if group}
             <h3 class="group-header mb-1 px-2.5 py-1 text-xs font-medium text-[var(--color-a11)]">{group}</h3>
           {/if}
-          {#each groupChats as chat}
+          {#each groupChats as chat (chat.id)}
             {@const isSelected = chat.id === page.params.chatId}
             {@const isGenerating = $streamStates[chat.id]?.isStreaming ?? false}
+            {@const isPinned = pinStates[chat.id] ?? false}
             <a
               href="/{chat.id}"
               on:click={closeSidebarOnInteraction}
@@ -178,8 +193,8 @@
                 <button
                   class="button button-secondary button-small"
                   on:click|preventDefault|stopPropagation={() => handlePinChat(chat.id)}
-                  aria-label={chat.pinned ? 'Unpin chat' : 'Pin chat'}>
-                  {#if !chat.pinned}
+                  aria-label={isPinned ? 'Unpin chat' : 'Pin chat'}>
+                  {#if !isPinned}
                     <Pin size={16}></Pin>
                   {:else}
                     <PinOff size={16}></PinOff>
