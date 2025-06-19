@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Send, Square, VenetianMask, Paperclip, Search, ArrowUp } from 'lucide-svelte';
+  import { Square, VenetianMask, Paperclip, Search, ArrowUp } from 'lucide-svelte';
   import { providerInstances, selectedModel, settingsManager } from '$lib/settings/SettingsManager';
   import { availableModels } from '$lib/stores/modelCache';
   import { onMount, tick, createEventDispatcher } from 'svelte';
