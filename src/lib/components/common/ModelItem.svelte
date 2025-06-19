@@ -46,14 +46,16 @@
   {/if}
 
   <div class="flex-1 text-left" class:ml-3={mode === 'toggle'}>
-    <div class="text-primary flex items-center gap-2 font-medium">
-      {model.name}{#if model.deprecated}
-        <Pill text="Deprecated" size="xs" variant="warning"></Pill>
+    <div class="flex flex-col gap-0.5">
+      <div class="text-primary flex items-center gap-2 font-medium">
+        {model.name}{#if model.deprecated}
+          <Pill text="Deprecated" size="xs" variant="warning"></Pill>
+        {/if}
+      </div>
+      {#if model.description}
+        <div class="text-secondary line-clamp-4 text-sm break-words">{model.description}</div>
       {/if}
     </div>
-    {#if model.description}
-      <div class="text-secondary line-clamp-4 text-sm break-words">{model.description}</div>
-    {/if}
     {#if modelFeatures.length > 0 || isImageGeneration}
       <div class="mt-2 flex flex-wrap gap-1">
         {#if modelFeatures.includes('text')}
