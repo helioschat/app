@@ -280,7 +280,9 @@
             on:click|preventDefault={openModelSelector}
             disabled={isLoading || !browser}
             class="button button-ghost button-circle">
-            <span class="text-xs">{$selectedModel?.modelId || 'Select Model'}</span>
+            <span class="text-xs">
+              {currentModel?.name || $selectedModel?.modelId || 'Select Model'}
+            </span>
           </button>
           {#if isLoading}
             <button type="button" on:click|preventDefault={handleStop} class="button button-primary button-circle">
