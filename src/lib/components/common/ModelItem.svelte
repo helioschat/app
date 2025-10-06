@@ -54,7 +54,7 @@
       on:click|stopPropagation />
   {/if}
 
-  <div class="flex-1 justify-between gap-1 text-left" class:ml-3={mode === 'toggle'} class:flex={minimal}>
+  <div class="min-h-6 flex-1 justify-between gap-1 text-left" class:ml-3={mode === 'toggle'} class:flex={minimal}>
     <div class="flex flex-col justify-center gap-0.5">
       <div class="text-primary flex items-center gap-2 font-medium">
         {model.name}<span class="text-secondary text-xs font-light opacity-75"> {modelDate}</span>
