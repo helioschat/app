@@ -2,7 +2,7 @@
   import type { ModelInfo } from '$lib/providers/base';
   import Pill from './Pill.svelte';
   import { supportsImageGeneration } from '$lib/utils/attachments';
-  import { Archive, FileInput, Image, Search, Text } from 'lucide-svelte';
+  import { Archive, FileInput, Image, Search, Text, X } from 'lucide-svelte';
 
   export let model: ModelInfo;
   export let isActive = false;
@@ -20,6 +20,16 @@
       })
     : null;
   $: modelFeatures = [...(model.architecture?.inputModalities || [])];
+  $: isUnsupported = (() => {
+    if (model.doesntSupportChatCompletionsEndpoint) return true;
+    if (model.architecture && model.architecture.inputModalities)
+      if (
+        !model.architecture?.inputModalities?.includes('text') &&
+        !model.architecture?.inputModalities?.includes('image')
+      )
+        return true;
+    return false;
+  })();
   $: isImageGeneration = supportsImageGeneration(model);
 
   function handleClick() {
@@ -60,6 +70,9 @@
         {model.name}<span class="text-secondary text-xs font-light opacity-75"> {modelDate}</span>
         {#if model.deprecated}
           <Pill icon={Archive} text="Deprecated" size="xs" variant="warning"></Pill>
+        {/if}
+        {#if isUnsupported}
+          <Pill icon={X} text="Not supported" size="xs" variant="error"></Pill>
         {/if}
       </div>
       {#if model.description && !minimal}
