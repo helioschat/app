@@ -54,6 +54,7 @@
   class:!py-2={minimal}
   class:active={mode === 'select' && isActive}
   on:click={handleClick}
+  title={model.id}
   role={mode === 'select' ? 'button' : 'none'}
   tabindex={mode === 'select' ? 0 : -1}>
   {#if mode === 'toggle'}
