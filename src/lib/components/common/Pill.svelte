@@ -46,6 +46,6 @@
   <slot></slot>
 
   {#if text}
-    <span class={size === 'xs' || size === 'sm' ? 'hidden md:block' : undefined}>{text}</span>
+    <span class={size === 'xs' || size === 'sm' ? 'hidden lg:block' : undefined}>{text}</span>
   {/if}
 </span>
