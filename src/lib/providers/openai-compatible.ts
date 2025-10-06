@@ -33,6 +33,15 @@ export class OpenAICompatibleProvider implements LanguageModel {
       baseURL: config.baseURL,
       dangerouslyAllowBrowser: true,
 
+      ...(config.matchedProvider === 'openrouter'
+        ? {
+            defaultHeaders: {
+              'HTTP-Referer': 'https://heliosch.at',
+              'X-Title': 'Helios',
+            },
+          }
+        : {}),
+
       ...(config.matchedProvider === 'anthropic'
         ? {
             defaultHeaders: {
