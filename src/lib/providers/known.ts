@@ -493,6 +493,11 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
     icon: '/assets/providers/openrouter.svg',
     defaultTitleModel: 'meta-llama/llama-3.3-8b-instruct:free',
     defaultModel: 'openai/gpt-4o',
+    modelOverrides: {
+      'google/gemini-2.5-flash-image-preview': {
+        unsupported: true,
+      },
+    },
     baseUrlPatterns: [/https?:\/\/openrouter\.ai\/api/],
     apiKeyPrefixes: ['sk-or-v1-'],
   },
