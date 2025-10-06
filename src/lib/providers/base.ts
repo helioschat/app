@@ -31,6 +31,7 @@ export interface ModelInfo {
   createdAt?: number;
   contextWindow?: number;
   deprecated?: boolean;
+  unsupported?: boolean; // Whether the model is unsupported (for cases where we don't yet support the model's input/output modalities or other features)
   huggingfaceId?: string;
   supportsWebSearch?: boolean; // Whether the model supports web search capabilities.
   webSearchModelRedirect?: string; // Model ID to use instead when web search is enabled

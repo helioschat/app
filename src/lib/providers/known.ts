@@ -425,6 +425,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
           inputModalities: ['text'],
           outputModalities: ['image'],
         },
+        unsupported: true,
       },
       'dall-e-2': {
         name: 'DALL-E 2',
@@ -433,6 +434,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
           inputModalities: ['text'],
           outputModalities: ['image'],
         },
+        unsupported: true,
       },
       'gpt-4o-search-preview': {
         name: 'GPT-4o Search Preview',

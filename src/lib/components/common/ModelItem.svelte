@@ -21,13 +21,14 @@
     : null;
   $: modelFeatures = [...(model.architecture?.inputModalities || [])];
   $: isUnsupported = (() => {
-    if (model.doesntSupportChatCompletionsEndpoint) return true;
+    if (model.unsupported) return true; // Explicitly marked as unsupported
+    if (model.doesntSupportChatCompletionsEndpoint) return true; // Doesn't support chat completions endpoint
     if (model.architecture && model.architecture.inputModalities)
       if (
         !model.architecture?.inputModalities?.includes('text') &&
         !model.architecture?.inputModalities?.includes('image')
       )
-        return true;
+        return true; // Unsupported input modalities
     return false;
   })();
   $: isImageGeneration = supportsImageGeneration(model);
