@@ -583,7 +583,150 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
     icon: '/assets/providers/google.svg',
     defaultTitleModel: 'gemini-2.0-flash',
     defaultModel: 'gemini-2.0-flash',
-    disabledModels: [/^embedding-.*$/, /^text-embedding-.*$/, /^veo-.*$/],
+    disabledModels: [
+      'aqa',
+      /^gemini-.*-001$/,
+      /^gemini-.*-exp$/,
+      /^gemini-exp.*$/,
+      /^gemini-.*-exp-.*$/,
+      /^gemini-.*-preview$/,
+      /^gemini-.*-preview-.*$/,
+      /^gemini-.*-tts$/,
+      /^gemini-.*-audio.*$/,
+      /^gemini-.*-latest$/,
+      /^imagen-.*-preview-.*$/,
+      /^gemma-.*$/,
+      /^embedding-.*$/,
+      /^text-embedding-.*$/,
+      /^veo-.*$/,
+      /^lyria-.*$/,
+      /^learnlm-.*$/,
+    ],
+    modelOverrides: {
+      // https://ai.google.dev/gemini-api/docs/models
+      'gemini-2.5-flash-image': {
+        name: 'Gemini 2.5 Flash Image (Nano Banana)',
+        contextWindow: 32_768,
+        architecture: {
+          inputModalities: ['text', 'image'],
+          outputModalities: ['text', 'image'],
+        },
+      },
+      'gemini-2.5-pro': {
+        name: 'Gemini 2.5 Pro',
+        description:
+          'Our state-of-the-art thinking model, capable of reasoning over complex problems in code, math, and STEM, as well as analyzing large datasets, codebases, and documents using long context.',
+        contextWindow: 1_048_576,
+        architecture: {
+          inputModalities: ['text', 'image'],
+          outputModalities: ['text'],
+        },
+      },
+      'gemini-2.5-flash': {
+        name: 'Gemini 2.5 Flash',
+        description:
+          'Our best model in terms of price-performance, offering well-rounded capabilities. 2.5 Flash is best for large scale processing, low-latency, high volume tasks that require thinking, and agentic use cases.',
+        contextWindow: 1_048_576,
+        architecture: {
+          inputModalities: ['text', 'image', 'audio', 'video'],
+          outputModalities: ['text'],
+        },
+      },
+      'gemini-2.5-flash-lite': {
+        name: 'Gemini 2.5 Flash Lite',
+        description: 'Our fastest flash model optimized for cost-efficiency and high throughput.',
+        contextWindow: 1_048_576,
+        architecture: {
+          inputModalities: ['text', 'image', 'audio', 'video'],
+          outputModalities: ['text'],
+        },
+      },
+      'gemini-2.0-flash': {
+        name: 'Gemini 2.0 Flash',
+        description: 'Our second generation workhorse model, with a 1 million token context window.',
+        contextWindow: 1_048_576,
+        architecture: {
+          inputModalities: ['text', 'image', 'audio', 'video'],
+          outputModalities: ['text'],
+        },
+      },
+      'gemini-2.0-flash-lite': {
+        name: 'Gemini 2.0 Flash Lite',
+        description: 'Our second generation small workhorse model, with a 1 million token context window.',
+        contextWindow: 1_048_576,
+        architecture: {
+          inputModalities: ['text', 'image', 'audio', 'video'],
+          outputModalities: ['text'],
+        },
+      },
+      'imagen-4.0-generate-001': {
+        name: 'Imagen 4',
+        architecture: {
+          inputModalities: ['text'],
+          outputModalities: ['image'],
+        },
+      },
+      'imagen-4.0-ultra-generate-001': {
+        name: 'Imagen 4 Ultra',
+        architecture: {
+          inputModalities: ['text'],
+          outputModalities: ['image'],
+        },
+      },
+      'imagen-4.0-fast-generate-001': {
+        name: 'Imagen 4 Fast',
+        architecture: {
+          inputModalities: ['text'],
+          outputModalities: ['image'],
+        },
+      },
+      'imagen-3.0-generate-002': {
+        name: 'Imagen 3',
+        architecture: {
+          inputModalities: ['text'],
+          outputModalities: ['image'],
+        },
+      },
+      'veo-3.0-generate-001': {
+        name: 'Veo 3',
+        contextWindow: 1024,
+        architecture: {
+          inputModalities: ['text', 'image'],
+          outputModalities: ['video', 'audio'],
+        },
+      },
+      'veo-3.0-fast-generate-001': {
+        name: 'Veo 3 Fast',
+        contextWindow: 1024,
+        architecture: {
+          inputModalities: ['text', 'image'],
+          outputModalities: ['video', 'audio'],
+        },
+      },
+      'veo-2.0-generate-001': {
+        name: 'Veo 2',
+        architecture: {
+          inputModalities: ['text', 'image'],
+          outputModalities: ['video'],
+        },
+      },
+      'gemini-embedding-001': {
+        name: 'Gemini Embedding',
+        contextWindow: 2048,
+        architecture: {
+          inputModalities: ['text'],
+          outputModalities: ['embedding'],
+        },
+      },
+      'gemini-robotics-er-1.5-preview': {
+        name: 'Gemini Robotics-ER 1.5 Preview',
+        contextWindow: 1_048_576,
+        architecture: {
+          inputModalities: ['text', 'image', 'audio', 'video'],
+          outputModalities: ['text'],
+        },
+      },
+    },
     baseUrlPatterns: [/https?:\/\/generativelanguage\.googleapis.com\/v1beta\/openai\//],
     apiKeyPrefixes: undefined, // Google doesn't have a specific API key prefix that identifies it
   },
