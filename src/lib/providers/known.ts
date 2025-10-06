@@ -127,9 +127,11 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
       'gpt-4o-2024-11-20',
       'gpt-3.5-turbo-16k',
       'gpt-4.5-preview-2025-02-27',
+      'gpt-5-pro-2025-10-06',
       'gpt-5-2025-08-07',
       'gpt-5-mini-2025-08-07',
       'gpt-5-nano-2025-08-07',
+      /^gpt-.*-pro$/,
       /^gpt-.*-search-preview.*$/,
       /^gpt-.*-audio.*$/,
       /^gpt-audio.*$/,
@@ -144,12 +146,14 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
       /^o.*-deep-research.*$/,
       /^whisper-.*$/,
       /^codex-.*$/,
+      /^gpt-.*-codex$/,
       /^davinci-.*$/,
       /^babbage-.*$/,
       /^omni-.*$/,
       /^tts-.*$/,
       /^text-embedding-.*$/,
       /^dall-e-.*$/,
+      /^sora.*$/, // We don't support video generation yet
     ],
     modelOverrides: {
       'chatgpt-4o-latest': {
@@ -256,6 +260,18 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         webSearchModelRedirect: 'gpt-4o-mini-search-preview',
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
+      },
+      'gpt-5-pro': {
+        name: 'GPT-5 pro',
+        description: 'Version of GPT-5 that produces smarter and more precise responses',
+        contextWindow: 400000,
+        architecture: {
+          inputModalities: ['text', 'image'],
+          outputModalities: ['text'],
+        },
+        supportsResponsesEndpoint: true,
+        doesntSupportChatCompletionsEndpoint: true,
+        // TODO: reasoningTokenSupport: true,
       },
       'gpt-5': {
         name: 'GPT-5',
@@ -394,6 +410,14 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
           outputModalities: ['image'],
         },
       },
+      'gpt-image-1-mini': {
+        name: 'GPT Image 1 mini',
+        description: 'A cost-efficient version of GPT Image 1',
+        architecture: {
+          inputModalities: ['text', 'image'],
+          outputModalities: ['image'],
+        },
+      },
       'dall-e-3': {
         name: 'DALL-E 3',
         description: 'Previous generation image generation model',
@@ -433,6 +457,22 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         supportsWebSearch: true,
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
+      },
+      'sora-2': {
+        name: 'Sora 2',
+        description: 'Flagship video generation with synced audio',
+        architecture: {
+          inputModalities: ['text', 'image'],
+          outputModalities: ['audio', 'video'],
+        },
+      },
+      'sora-2-pro': {
+        name: 'Sora 2 Pro',
+        description: 'Most advanced synced-audio video generation',
+        architecture: {
+          inputModalities: ['text', 'image'],
+          outputModalities: ['audio', 'video'],
+        },
       },
     },
     baseUrlPatterns: [/https?:\/\/api\.openai\.com/],
