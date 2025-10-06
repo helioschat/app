@@ -29,6 +29,13 @@ export function getKnownProviderMeta(id: string): KnownProviderMetadata | undefi
 
 export function isModelDisabledByDefault(providerId: string, modelId: string): boolean {
   const meta = KNOWN_PROVIDERS[providerId];
+
+  if (meta.modelOverrides) {
+    const modelOverride = meta.modelOverrides[modelId];
+    if (modelOverride?.unsupported) return true;
+    if (modelOverride?.deprecated) return true;
+  }
+
   if (!meta?.disabledModels) return false;
   return meta.disabledModels.some((pat) => (typeof pat === 'string' ? pat === modelId : pat.test(modelId)));
 }
