@@ -86,6 +86,9 @@
 
   <!-- This should be deprecated, however Bing still uses this: -->
   {@html `<meta http-equiv="content-language" content="en-US">`}
+
+  <!-- OpenSearch definition -->
+  <link rel="search" type="application/opensearchdescription+xml" title="Helios" href="/opensearch.xml" />
 </svelte:head>
 
 <div class="flex h-screen">
