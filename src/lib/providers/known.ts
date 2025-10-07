@@ -168,7 +168,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         description: 'GPT-4o model used in ChatGPT',
         contextWindow: 128000,
         architecture: {
-          inputModalities: ['text', 'image'],
+          inputModalities: ['text', 'image', 'file'],
           outputModalities: ['text'],
         },
         supportsWebSearch: true,
@@ -203,7 +203,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         description: 'An older high-intelligence GPT model',
         contextWindow: 128000,
         architecture: {
-          inputModalities: ['text', 'image'],
+          inputModalities: ['text', 'image', 'file'],
           outputModalities: ['text'],
         },
         supportsResponsesEndpoint: true,
@@ -214,7 +214,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         description: 'Flagship GPT model for complex tasks',
         contextWindow: 1047576,
         architecture: {
-          inputModalities: ['text', 'image'],
+          inputModalities: ['text', 'image', 'file'],
           outputModalities: ['text'],
         },
         supportsResponsesEndpoint: true,
@@ -225,7 +225,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         description: 'Balanced for intelligence, speed, and cost',
         contextWindow: 1047576,
         architecture: {
-          inputModalities: ['text', 'image'],
+          inputModalities: ['text', 'image', 'file'],
           outputModalities: ['text'],
         },
         supportsResponsesEndpoint: true,
@@ -236,7 +236,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         description: 'Fastest, most cost-effective GPT-4.1 model',
         contextWindow: 1047576,
         architecture: {
-          inputModalities: ['text', 'image'],
+          inputModalities: ['text', 'image', 'file'],
           outputModalities: ['text'],
         },
         supportsResponsesEndpoint: true,
@@ -247,7 +247,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         description: 'Fast, intelligent, flexible GPT model',
         contextWindow: 128000,
         architecture: {
-          inputModalities: ['text', 'image'],
+          inputModalities: ['text', 'image', 'file'],
           outputModalities: ['text'],
         },
         supportsWebSearch: true,
@@ -260,7 +260,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         description: 'Fast, affordable small model for focused tasks',
         contextWindow: 128000,
         architecture: {
-          inputModalities: ['text', 'image'],
+          inputModalities: ['text', 'image', 'file'],
           outputModalities: ['text'],
         },
         supportsWebSearch: true,
@@ -273,7 +273,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         description: 'Version of GPT-5 that produces smarter and more precise responses',
         contextWindow: 400000,
         architecture: {
-          inputModalities: ['text', 'image'],
+          inputModalities: ['text', 'image', 'file'],
           outputModalities: ['text'],
         },
         supportsResponsesEndpoint: true,
@@ -285,7 +285,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         description: 'The best model for coding and agentic tasks across domains',
         contextWindow: 400000,
         architecture: {
-          inputModalities: ['text', 'image'],
+          inputModalities: ['text', 'image', 'file'],
           outputModalities: ['text'],
         },
         supportsResponsesEndpoint: true,
@@ -296,7 +296,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         description: 'A faster, cost-efficient version of GPT-5 for well-defined tasks',
         contextWindow: 400000,
         architecture: {
-          inputModalities: ['text', 'image'],
+          inputModalities: ['text', 'image', 'file'],
           outputModalities: ['text'],
         },
         supportsResponsesEndpoint: true,
@@ -307,7 +307,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         description: 'Fastest, most cost-efficient version of GPT-5',
         contextWindow: 400000,
         architecture: {
-          inputModalities: ['text', 'image'],
+          inputModalities: ['text', 'image', 'file'],
           outputModalities: ['text'],
         },
         supportsResponsesEndpoint: true,
@@ -318,7 +318,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         description: 'GPT-5 model used in ChatGPT',
         contextWindow: 128000,
         architecture: {
-          inputModalities: ['text', 'image'],
+          inputModalities: ['text', 'image', 'file'],
           outputModalities: ['text'],
         },
         supportsResponsesEndpoint: true,
@@ -329,7 +329,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         description: 'Version of o1 with more compute for better responses',
         contextWindow: 200000,
         architecture: {
-          inputModalities: ['text', 'image'],
+          inputModalities: ['text', 'image', 'file'],
           outputModalities: ['text'],
         },
         supportsResponsesEndpoint: true,
@@ -341,7 +341,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         description: 'Previous full o-series reasoning model',
         contextWindow: 200000,
         architecture: {
-          inputModalities: ['text', 'image'],
+          inputModalities: ['text', 'image', 'file'],
           outputModalities: ['text'],
         },
         supportsResponsesEndpoint: true,
@@ -366,7 +366,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         description: 'Version of o3 with more compute for better responses',
         contextWindow: 200000,
         architecture: {
-          inputModalities: ['text', 'image'],
+          inputModalities: ['text', 'image', 'file'],
           outputModalities: ['text'],
         },
         supportsResponsesEndpoint: true,
@@ -378,7 +378,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         description: 'Our most powerful reasoning model',
         contextWindow: 200000,
         architecture: {
-          inputModalities: ['text', 'image'],
+          inputModalities: ['text', 'image', 'file'],
           outputModalities: ['text'],
         },
         supportsResponsesEndpoint: true,
@@ -402,7 +402,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         description: 'Faster, more affordable reasoning model',
         contextWindow: 200000,
         architecture: {
-          inputModalities: ['text', 'image'],
+          inputModalities: ['text', 'image', 'file'],
           outputModalities: ['text'],
         },
         supportsResponsesEndpoint: true,

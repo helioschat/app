@@ -268,7 +268,7 @@ export class OpenAICompatibleProvider implements LanguageModel {
         model: modelToUse,
         messages: mappedMessages,
         stream: true,
-        ...(hasFile ? { plugins: [{ id: 'file-parser' }] } : {}),
+        ...(hasFile && this.config.matchedProvider === 'openrouter' ? { plugins: [{ id: 'file-parser' }] } : {}),
         ...(webSearchOptions?.enabled
           ? {
               web_search_options: {
