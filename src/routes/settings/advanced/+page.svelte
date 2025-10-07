@@ -7,6 +7,7 @@
   import { resetSetup } from '$lib/stores/setup';
   import { goto } from '$app/navigation';
   import { syncManager } from '$lib/stores/sync';
+  import { exportUserData, importUserData, clearAllData } from '$lib/utils/dataExport';
 
   $: currentSettings = $advancedSettings;
   $: instances = $providerInstances;
@@ -97,6 +98,64 @@
   function clearSyncSettings() {
     syncManager.clearSyncSettings();
   }
+
+  async function handleExportData() {
+    try {
+      await exportUserData();
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to export data. Please try again.');
+    }
+  }
+
+  function handleImportData() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      const confirmed = confirm(
+        'WARNING: Importing will completely replace all your current data including chats, settings, and provider configurations. This action cannot be undone.\n\nAre you sure you want to continue?',
+      );
+
+      if (!confirmed) return;
+
+      try {
+        await importUserData(file);
+        alert('Data imported successfully! The application will now reload.');
+        // Refresh the page to reload all data
+        window.location.reload();
+      } catch (error) {
+        console.error('Import failed:', error);
+        alert('Failed to import data. Please make sure the file is a valid export.');
+      }
+    };
+    input.click();
+  }
+
+  async function handleClearAllData() {
+    const confirmed = confirm(
+      'DANGER: This will permanently delete ALL your data including:\n\n' +
+        '• All chat conversations and history\n' +
+        '• All provider configurations\n' +
+        '• All application settings\n' +
+        '• All cached data\n\n' +
+        'This action cannot be undone. Are you absolutely sure you want to continue?',
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await clearAllData();
+      alert('All data has been cleared successfully. The application will now reload.');
+      window.location.reload();
+    } catch (error) {
+      console.error('Clear all data failed:', error);
+      alert('Failed to clear all data. Please try again.');
+    }
+  }
 </script>
 
 <div class="panel">
@@ -155,9 +214,28 @@
 <div class="panel">
   <h3>Danger Zone</h3>
 
-  <div class="flex flex-wrap gap-2">
-    <button class="button button-secondary" on:click={clearModelCache}>Clear model cache</button>
-    <button class="button button-secondary" on:click={resetSetupStatus}>Reset setup status</button>
-    <button class="button button-danger" on:click={clearSyncSettings}>Clear All Sync Settings</button>
+  <div class="section">
+    <h4>Data Management</h4>
+    <div>
+      <div class="flex flex-wrap gap-2">
+        <button class="button button-secondary" on:click={handleExportData}>Export All Data</button>
+        <button class="button button-secondary" on:click={handleImportData}>Import Data</button>
+      </div>
+      <p class="text-secondary text-xs opacity-75">
+        Export includes all chats, settings, and provider configurations. Import will replace all current data.
+      </p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h4>Miscellaneous</h4>
+    <div>
+      <div class="flex flex-wrap gap-2">
+        <button class="button button-secondary" on:click={clearModelCache}>Clear model cache</button>
+        <button class="button button-secondary" on:click={resetSetupStatus}>Reset setup status</button>
+        <button class="button button-danger" on:click={clearSyncSettings}>Clear All Sync Settings</button>
+        <button class="button button-danger" on:click={handleClearAllData}>Clear All Data</button>
+      </div>
+    </div>
   </div>
 </div>
