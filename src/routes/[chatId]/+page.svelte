@@ -321,6 +321,7 @@
         {isLoading}
         {handleSubmit}
         {handleStop}
+        isTemporaryChat={activeChat.temporary || false}
         on:webSearchToggle={handleWebSearchToggle}>
       </ChatInput>
     </div>

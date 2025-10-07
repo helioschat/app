@@ -65,6 +65,7 @@
       handleSubmit={handleSearch}
       handleStop={async () => {}}
       showTemporaryToggle={true}
+      isTemporaryChat={isTemporary}
       noPadding></ChatInput>
 
     <div class="text-left">

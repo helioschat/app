@@ -15,6 +15,7 @@
     supportsImageGeneration,
   } from '$lib/utils/attachments';
   import { getDefaultModel, detectKnownProvider } from '$lib/providers/known';
+  import { promptHistory } from '$lib/stores/promptHistory';
 
   const dispatch = createEventDispatcher<{
     webSearchToggle: { enabled: boolean; contextSize: 'low' | 'medium' | 'high' };
@@ -34,6 +35,7 @@
   export let webSearchEnabled: boolean = false;
   export let webSearchContextSize: 'low' | 'medium' | 'high' = 'low';
   export let noPadding: boolean = false;
+  export let isTemporaryChat: boolean = false;
 
   let userInputComponent: HTMLTextAreaElement;
   let fileInput: HTMLInputElement;
@@ -141,6 +143,12 @@
 
   async function submit(e: Event) {
     e.preventDefault();
+
+    // Save to prompt history only if not a temporary chat
+    if (!isTemporaryChat && userInput.trim()) {
+      promptHistory.addPrompt(userInput.trim());
+    }
+
     await handleSubmit(e, attachments, webSearchEnabled, webSearchContextSize);
     attachments = []; // Clear attachments after submit
     resizeTextarea({ target: userInputComponent } as unknown as Event);
@@ -152,9 +160,41 @@
     target.style.height = target.scrollHeight + 'px';
   }
 
+  function handleInputChange(e: Event) {
+    // Reset prompt history navigation when user types manually
+    promptHistory.resetNavigation();
+    resizeTextarea(e);
+  }
+
   function submitTextarea(e: KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
       submit(e);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const previousPrompt = promptHistory.navigatePrevious();
+      if (previousPrompt !== null) {
+        userInput = previousPrompt;
+        // Move cursor to end
+        setTimeout(() => {
+          if (userInputComponent) {
+            userInputComponent.setSelectionRange(userInput.length, userInput.length);
+          }
+          resizeTextarea(e);
+        }, 1);
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const nextPrompt = promptHistory.navigateNext();
+      if (nextPrompt !== null) {
+        userInput = nextPrompt;
+        // Move cursor to end
+        setTimeout(() => {
+          if (userInputComponent) {
+            userInputComponent.setSelectionRange(userInput.length, userInput.length);
+          }
+          resizeTextarea(e);
+        }, 1);
+      }
     }
   }
 
@@ -230,7 +270,7 @@
             : 'Ask anything...'}
           disabled={isLoading}
           class="max-h-52 min-h-6 flex-1 resize-none !rounded-none !border-none !bg-transparent !px-2 !py-0 !text-base !shadow-none !ring-0"
-          on:input={resizeTextarea}
+          on:input={handleInputChange}
           on:keydown={submitTextarea}
           on:change={resizeTextarea}
           autofocus></textarea>
