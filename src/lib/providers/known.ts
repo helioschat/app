@@ -140,6 +140,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
       'gpt-5-nano-2025-08-07',
       /^gpt-.*-pro$/,
       /^gpt-.*-search-preview.*$/,
+      /^gpt-.*-search-api.*$/,
       /^gpt-.*-audio.*$/,
       /^gpt-audio.*$/,
       /^gpt-.*-realtime.*$/,
