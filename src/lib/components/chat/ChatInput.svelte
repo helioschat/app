@@ -16,6 +16,7 @@
   } from '$lib/utils/attachments';
   import { getDefaultModel, detectKnownProvider } from '$lib/providers/known';
   import { promptHistory } from '$lib/stores/promptHistory';
+  import { toast } from 'svelte-sonner';
 
   const dispatch = createEventDispatcher<{
     webSearchToggle: { enabled: boolean; contextSize: 'low' | 'medium' | 'high' };
@@ -229,6 +230,34 @@
     attachments = attachments.filter((a) => a.id !== e.detail.id);
   }
 
+  async function handlePaste(e: ClipboardEvent) {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    // Check if the current model supports image attachments
+    if (!effectiveSupportsImages && !isEffectiveImageGenerationModel) {
+      toast.error('The selected model does not support image attachments.');
+      return;
+    }
+
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (!file) continue;
+
+        try {
+          const attachment = await createAttachment(file);
+          if (attachment) {
+            attachments = [...attachments, attachment];
+          }
+        } catch (error) {
+          console.error('Failed to create attachment from pasted image:', error);
+        }
+      }
+    }
+  }
+
   function handleWebSearchToggle() {
     const newEnabled = !webSearchEnabled;
     webSearchEnabled = newEnabled;
@@ -273,6 +302,7 @@
           on:input={handleInputChange}
           on:keydown={submitTextarea}
           on:change={resizeTextarea}
+          on:paste={handlePaste}
           autofocus></textarea>
       </div>
       <div class="flex items-center justify-between">
