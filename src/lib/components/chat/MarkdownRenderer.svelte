@@ -72,7 +72,7 @@
   {#if renderedHtml}
     {@html renderedHtml}
   {:else}
-    <p>{content}</p>
+    <p>{content.trim()}</p>
   {/if}
 </div>
 

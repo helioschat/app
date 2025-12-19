@@ -138,7 +138,7 @@
   class="message {message.role === 'assistant' ? 'assistant' : 'user'} group"
   class:editing={isEditing}
   data-message-id={message.id}>
-  {#if hasReasoning}
+  {#if hasReasoning && message.reasoning}
     <button
       class="reasoning-button button button-ghost button-small button-circle mb-0.5"
       class:thinking={isThinking}
@@ -161,9 +161,9 @@
     {#if showReasoning}
       <div class="reasoning-content text-secondary mb-2 text-xs">
         {#if reasoningUsesMarkdown}
-          <MarkdownRenderer content={message.reasoning || ''} isStreaming={false}></MarkdownRenderer>
+          <MarkdownRenderer content={message.reasoning} isStreaming={false}></MarkdownRenderer>
         {:else}
-          <p class="whitespace-pre-wrap italic">{message.reasoning}</p>
+          <p class="whitespace-pre-wrap italic">{message.reasoning.trim()}</p>
         {/if}
       </div>
     {/if}
@@ -221,7 +221,7 @@
           ></MarkdownRenderer>
         {:else}
           <p>
-            <span class="whitespace-pre-wrap">{message.content}</span>
+            <span class="whitespace-pre-wrap">{message.content.trim()}</span>
             {#if isCurrentlyStreaming && message.role === 'assistant'}
               <span class="cursor">▋</span>
             {/if}
