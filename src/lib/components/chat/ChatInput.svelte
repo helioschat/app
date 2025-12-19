@@ -234,14 +234,14 @@
     const items = e.clipboardData?.items;
     if (!items) return;
 
-    // Check if the current model supports image attachments
-    if (!effectiveSupportsImages && !isEffectiveImageGenerationModel) {
-      toast.error('The selected model does not support image attachments.');
-      return;
-    }
-
     for (const item of items) {
       if (item.type.startsWith('image/')) {
+        // Check if the current model supports image attachments
+        if (!effectiveSupportsImages && !isEffectiveImageGenerationModel) {
+          toast.error('The selected model does not support image attachments.');
+          return;
+        }
+
         e.preventDefault();
         const file = item.getAsFile();
         if (!file) continue;
