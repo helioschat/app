@@ -449,6 +449,10 @@ select {
   }
 }
 
+.link {
+  @apply underline transition-opacity hover:opacity-75;
+}
+
 /* Accessibility */
 
 @media (prefers-reduced-motion: reduce) {

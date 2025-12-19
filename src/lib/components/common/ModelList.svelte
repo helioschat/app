@@ -242,7 +242,9 @@
         <p class="empty-notice">No models match the current filters.</p>
       {/if}
     {:else if !hasActiveFilters}
-      <p class="empty-notice">No providers found. Please configure your providers first.</p>
+      <p class="empty-notice">
+        No providers found. Please <a class="link" href="/settings/providers">configure your providers</a> first.
+      </p>
     {/if}
   </div>
 </div>
