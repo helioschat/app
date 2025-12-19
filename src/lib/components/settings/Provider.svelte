@@ -2,7 +2,7 @@
   import { settingsManager } from '$lib/settings/SettingsManager';
   import { modelCache } from '$lib/stores/modelCache';
   import type { ProviderInstance } from '$lib/types';
-  import { Pencil, Trash } from 'lucide-svelte';
+  import { Pencil, Server, Trash } from 'lucide-svelte';
   import ProviderModal from '../modal/types/ProviderModal.svelte';
   import ConfirmationModal from '../modal/types/ConfirmationModal.svelte';
   import { KNOWN_PROVIDERS } from '$lib/providers/known';
@@ -74,11 +74,13 @@
   class="button button-secondary button-large w-full !justify-between !text-left"
   on:click={() => (showEditModal = true)}>
   <div class="flex gap-3">
-    {#if matchedProvider && matchedProvider.icon}
-      <div class="flex items-center">
+    <div class="flex items-center">
+      {#if matchedProvider && matchedProvider.icon}
         <div class="provider-icon h-8 w-8 bg-white" style="--icon: url({matchedProvider.icon});"></div>
-      </div>
-    {/if}
+      {:else}
+        <Server class="provider-icon h-8 w-8 text-white"></Server>
+      {/if}
+    </div>
     <div class="flex flex-col justify-center gap-1">
       <h3 class="font-semibold">{provider.name}</h3>
       <h4 class="text-secondary">{provider.config.baseURL}</h4>
