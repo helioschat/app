@@ -107,12 +107,12 @@
 {#if selectedKnownProvider !== null || showCustomForm || editingProvider}
   <div class="config-form space-y-4" class:quick-setup={showQuickSetup && !editingProvider}>
     <div class="form-group">
-      <label for="provider-name">Provider Name</label>
+      <label for="provider-name">Provider Name<span class="required-indicator">*</span></label>
       <input type="text" id="provider-name" bind:value={name} placeholder="My Provider" autocomplete="off" />
     </div>
 
     <div class="form-group">
-      <label for="api-key">API Key<span class="required-indicator">*</span></label>
+      <label for="api-key">API Key</label>
       <input
         type="password"
         id="api-key"
@@ -128,7 +128,7 @@
     </div>
 
     <div class="form-group">
-      <label for="base-url">Base URL</label>
+      <label for="base-url">Base URL<span class="required-indicator">*</span></label>
       <input
         type="text"
         id="base-url"

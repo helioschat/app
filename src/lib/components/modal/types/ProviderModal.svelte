@@ -48,7 +48,7 @@
     selectedKnownProvider = null;
   }
 
-  $: canSave = name.trim() && apiKey.trim() && baseURL.trim();
+  $: canSave = name.trim() && baseURL.trim();
 
   function handleClose() {
     dispatch('close');
