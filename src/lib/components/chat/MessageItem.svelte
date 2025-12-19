@@ -220,8 +220,8 @@
           <MarkdownRenderer content={message.content} isStreaming={isCurrentlyStreaming && message.role === 'assistant'}
           ></MarkdownRenderer>
         {:else}
-          <p class="whitespace-pre-wrap">
-            {message.content}
+          <p>
+            <span class="whitespace-pre-wrap">{message.content}</span>
             {#if isCurrentlyStreaming && message.role === 'assistant'}
               <span class="cursor">▋</span>
             {/if}
