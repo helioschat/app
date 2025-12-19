@@ -284,11 +284,13 @@ export class OpenAICompatibleProvider implements LanguageModel {
         const delta = chunk.choices[0]?.delta as {
           content?: string;
           reasoning?: string | null;
+          reasoning_content?: string | null;
         };
 
         // Handle reasoning if provided by model (e.g., :thinking models)
-        if (delta?.reasoning) {
-          yield `[REASONING]${delta.reasoning}`;
+        const reasoning = delta?.reasoning ?? delta?.reasoning_content;
+        if (reasoning) {
+          yield `[REASONING]${reasoning}`;
         }
 
         if (delta?.content) {
