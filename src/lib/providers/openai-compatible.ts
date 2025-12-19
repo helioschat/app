@@ -286,16 +286,23 @@ export class OpenAICompatibleProvider implements LanguageModel {
           reasoning?: string | null;
           reasoning_content?: string | null;
         };
+        const content = delta?.content;
+        const reasoning = delta?.reasoning ?? delta?.reasoning_content;
+
+        const contentLength = content?.replaceAll('\n', ' ').trim().length ?? 0;
+        const reasoningLength = reasoning?.replaceAll('\n', ' ').trim().length ?? 0;
+        if (contentLength === 0 && reasoningLength === 0) {
+          continue;
+        }
 
         // Handle reasoning if provided by model (e.g., :thinking models)
-        const reasoning = delta?.reasoning ?? delta?.reasoning_content;
         if (reasoning) {
           yield `[REASONING]${reasoning}`;
         }
 
-        if (delta?.content) {
+        if (content) {
           this.tokenCount++;
-          yield delta.content as string;
+          yield content as string;
         }
       }
     }.bind(this)();
