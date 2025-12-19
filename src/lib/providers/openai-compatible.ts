@@ -298,6 +298,7 @@ export class OpenAICompatibleProvider implements LanguageModel {
             continue;
           }
           hasYieldedReasoning = true;
+          this.tokenCount++;
           yield `[REASONING]${reasoning}`;
         }
 
