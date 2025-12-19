@@ -280,6 +280,9 @@ export class OpenAICompatibleProvider implements LanguageModel {
 
       const response = await this.client.chat.completions.create(requestOptions);
 
+      let hasYieldedReasoning = false;
+      let hasYieldedContent = false;
+
       for await (const chunk of response) {
         const delta = chunk.choices[0]?.delta as {
           content?: string;
@@ -289,18 +292,21 @@ export class OpenAICompatibleProvider implements LanguageModel {
         const content = delta?.content;
         const reasoning = delta?.reasoning ?? delta?.reasoning_content;
 
-        const contentLength = content?.replaceAll('\n', ' ').trim().length ?? 0;
-        const reasoningLength = reasoning?.replaceAll('\n', ' ').trim().length ?? 0;
-        if (contentLength === 0 && reasoningLength === 0) {
-          continue;
-        }
-
-        // Handle reasoning if provided by model (e.g., :thinking models)
-        if (reasoning) {
+        // Handle reasoning
+        if (reasoning !== undefined && reasoning !== null) {
+          if (!hasYieldedReasoning && reasoning.trim().length === 0) {
+            continue;
+          }
+          hasYieldedReasoning = true;
           yield `[REASONING]${reasoning}`;
         }
 
-        if (content) {
+        // Handle content
+        if (content !== undefined && content !== null) {
+          if (!hasYieldedContent && content.trim().length === 0) {
+            continue;
+          }
+          hasYieldedContent = true;
           this.tokenCount++;
           yield content as string;
         }
