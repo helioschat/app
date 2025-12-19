@@ -171,7 +171,7 @@
       submit(e);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      const previousPrompt = promptHistory.navigatePrevious();
+      const previousPrompt = promptHistory.navigatePrevious(userInput);
       if (previousPrompt !== null) {
         userInput = previousPrompt;
         // Move cursor to end
