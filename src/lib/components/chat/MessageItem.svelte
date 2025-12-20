@@ -137,7 +137,9 @@
 <div
   class="message {message.role === 'assistant' ? 'assistant' : 'user'} group"
   class:editing={isEditing}
-  data-message-id={message.id}>
+  data-message-id={message.id}
+  data-message-content-markdown={shouldUseMarkdown}
+  data-message-reasoning-markdown={hasReasoning && message.reasoning ? reasoningUsesMarkdown : undefined}>
   {#if hasReasoning && message.reasoning}
     <button
       class="reasoning-button button button-ghost button-small button-circle mb-0.5"
