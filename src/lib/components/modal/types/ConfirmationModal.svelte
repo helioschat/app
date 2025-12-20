@@ -33,7 +33,7 @@
     </button>
     <button
       type="button"
-      class="button"
+      class="button modal-confirm-btn"
       class:button-primary={!isDangerous}
       class:button-danger={isDangerous}
       on:click={handleConfirm}>

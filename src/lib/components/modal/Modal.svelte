@@ -56,6 +56,7 @@
         class="relative mx-auto w-full max-w-lg rounded-2xl shadow-lg lg:max-w-2xl"
         class:small-width={smallWidth}
         aria-labelledby={`${id}-title`}
+        data-modal
         aria-modal="true"
         open
         transition:scale={{ duration: 200, easing: quintOut, start: 0.9 }}>
@@ -64,11 +65,16 @@
             <h2 id={`${id}-title`} class="text-lg font-medium">
               {title}
             </h2>
-            {#if !hideCloseButton}
-              <button type="button" class="button button-ghost button-circle" aria-label="Close modal" on:click={close}>
-                ✕
-              </button>
-            {/if}
+            <button
+              type="button"
+              class="button button-ghost button-circle modal-close-btn"
+              class:!hidden={hideCloseButton}
+              class:!pointer-events-none={!hideCloseButton}
+              inert={hideCloseButton}
+              aria-label="Close modal"
+              on:click={close}>
+              ✕
+            </button>
           </div>
 
           <div class="grow overflow-y-auto p-4 pt-1">

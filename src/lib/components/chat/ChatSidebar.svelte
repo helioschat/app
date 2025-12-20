@@ -115,6 +115,7 @@
   <div class="flex flex-col items-center gap-3.5">
     <div class="relative flex w-full items-center justify-between">
       <button
+        id="toggle-sidebar-button"
         class="button button-ghost button-circle pointer-events-auto absolute top-0 left-0"
         on:click={() => handleToggle()}>
         <Menu size={16}></Menu>
@@ -156,7 +157,12 @@
     <!-- Search input -->
     <div class="relative text-[var(--color-11)]" transition:fade={{ duration: COLLAPSE_ANIMATION_DURATION * 0.75 }}>
       <Search size={14} class="absolute top-1/2 left-3 -translate-y-1/2" />
-      <input type="text" bind:value={searchQuery} placeholder="Search chats..." class="input-small w-full !pl-8" />
+      <input
+        id="chat-search-input"
+        type="text"
+        bind:value={searchQuery}
+        placeholder="Search chats..."
+        class="input-small w-full !pl-8" />
     </div>
     <nav
       class="flex flex-1 flex-col gap-y-0.5 overflow-y-auto"

@@ -291,6 +291,7 @@
       on:click|stopPropagation={() => userInputComponent?.focus()}>
       <div class="flex flex-1">
         <textarea
+          id="chat-input-textarea"
           bind:this={userInputComponent}
           bind:value={userInput}
           rows="1"
@@ -309,6 +310,7 @@
         <div class="flex items-center gap-2">
           {#if canShowAttachFiles}
             <button
+              id="chat-attach-button"
               type="button"
               on:click|preventDefault={handleAttachClick}
               disabled={isLoading || !canAttachFiles}

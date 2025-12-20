@@ -19,6 +19,7 @@
   import { syncManager } from '$lib/stores/sync';
   import { manifest } from '$lib';
   import { Toaster } from 'svelte-sonner';
+  import GlobalShortcuts from '$lib/components/common/GlobalShortcuts.svelte';
 
   const SMALL_SCREEN_WIDTH = 1024; //px
 
@@ -109,6 +110,8 @@
 </div>
 
 <Toaster position="top-right" theme="dark" richColors offset="16px"></Toaster>
+
+<GlobalShortcuts isSetupComplete={!isFirstTime}></GlobalShortcuts>
 
 <div id="portal-target"></div>
 

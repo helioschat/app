@@ -179,7 +179,7 @@
           <span class="text-xs font-medium text-[var(--color-a12)] uppercase">{displayLang}</span>
           <div class="flex gap-0.5">
             <button
-              class="button button-ghost code-action-btn"
+              class="button button-ghost code-action-btn code-copy-action-btn"
               on:click={() => copyToClipboard(token.text, cacheKey)}
               title="Copy">
               {#if isCopied}
@@ -189,7 +189,7 @@
               {/if}
             </button>
             <button
-              class="button button-ghost code-action-btn"
+              class="button button-ghost code-action-btn code-download-action-btn"
               on:click={() => downloadCode(token.text, displayLang)}
               title="Download">
               <Download size={16} />

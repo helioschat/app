@@ -126,7 +126,8 @@
 <div
   class="message {message.role === 'assistant' ? 'assistant' : 'user'} group"
   class:editing={isEditing}
-  data-message-id={message.id}>
+  data-message-id={message.id}
+  tabindex="0">
   {#if hasReasoning && message.reasoning}
     <button
       class="reasoning-button button button-ghost button-small button-circle mb-0.5"
@@ -289,6 +290,10 @@
 
 <style lang="postcss">
   @reference "tailwindcss";
+
+  .message {
+    @apply outline-none;
+  }
 
   .message .message-container {
     @apply w-fit max-w-full rounded-3xl px-5 py-2.5;
