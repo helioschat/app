@@ -57,7 +57,7 @@
   <title>{activeTab.title} • {manifest.name}</title>
 </svelte:head>
 
-<div class="settings mt-[3.75rem] px-4 pb-8">
+<div class="settings mx-auto mt-[3.75rem] max-w-7xl px-4 pb-8">
   <div class="mb-4 w-fit max-w-full">
     <Tabs {tabs} activeTab={activeTabId} onChange={handleTabChange}></Tabs>
   </div>

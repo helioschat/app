@@ -22,6 +22,8 @@
 
   let userInput = '';
   let initialMessageProcessed = false;
+  let autoScroll = true;
+  let messagesContainerElement: HTMLDivElement;
 
   // Use web search options from the chat object, with fallback defaults
   $: webSearchEnabled = activeChat?.webSearchEnabled ?? false;
@@ -29,6 +31,26 @@
 
   // Map provides clearer semantics and easier cleanup than a plain object
   const streamControllers = new Map<string, StreamingController>();
+
+  /**
+   * Scrolls the messages container to the bottom
+   */
+  const scrollToBottom = () => {
+    if (messagesContainerElement) {
+      messagesContainerElement.scrollTop = messagesContainerElement.scrollHeight;
+    }
+  };
+
+  /**
+   * Updates autoScroll state based on current scroll position
+   * AutoScroll is enabled when user is within 50px of the bottom
+   */
+  const handleScroll = () => {
+    if (messagesContainerElement) {
+      const element = messagesContainerElement;
+      autoScroll = element.scrollHeight - element.scrollTop <= element.clientHeight + 50;
+    }
+  };
 
   /**
    * Retrieves or creates a StreamingController for a given chat ID.
@@ -275,6 +297,20 @@
     }
   });
 
+  // Auto-scroll when messages change and autoScroll is enabled
+  $: if (activeChat?.messages && autoScroll) {
+    tick().then(() => {
+      scrollToBottom();
+    });
+  }
+
+  // Auto-scroll when streaming state changes
+  $: if (currentlyStreamingMessageId && autoScroll) {
+    tick().then(() => {
+      scrollToBottom();
+    });
+  }
+
   $: if (
     browser &&
     activeChat &&
@@ -308,7 +344,10 @@
 
 <main class="chat relative flex h-full flex-1 flex-col">
   {#if activeChat}
-    <div class="messages-container -mb-30 h-full overflow-y-auto">
+    <div
+      class="messages-container -mb-30 h-full overflow-y-auto"
+      bind:this={messagesContainerElement}
+      on:scroll={handleScroll}>
       <ChatMessages chat={activeChat} {currentlyStreamingMessageId} {handleRegenerate} {handleEdit} {handleBranch}
       ></ChatMessages>
     </div>

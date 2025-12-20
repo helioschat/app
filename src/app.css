@@ -291,8 +291,14 @@ dialog {
 
 /* Scrollbars */
 
-* {
-  overscroll-behavior: none;
+html {
+  -webkit-overflow-scrolling: touch;
+}
+
+html,
+body {
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: contain;
 }
 
 /* for Chromium */

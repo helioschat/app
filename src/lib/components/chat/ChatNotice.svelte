@@ -2,12 +2,14 @@
   export let type: 'info' | 'warning' | 'error' = 'info';
 </script>
 
-<div
-  class="my-4 rounded-md p-4"
-  class:level-info={type === 'info'}
-  class:level-warning={type === 'warning'}
-  class:level-error={type === 'error'}>
-  <slot></slot>
+<div class="message notice">
+  <div
+    class="my-4 rounded-md p-4"
+    class:level-info={type === 'info'}
+    class:level-warning={type === 'warning'}
+    class:level-error={type === 'error'}>
+    <slot></slot>
+  </div>
 </div>
 
 <style lang="postcss">
