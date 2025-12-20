@@ -12,6 +12,7 @@
   import ChatMessages from '$lib/components/chat/ChatMessages.svelte';
   import ChatInput from '$lib/components/chat/ChatInput.svelte';
   import Spinner from '$lib/components/common/Spinner.svelte';
+  import { ArrowDown } from 'lucide-svelte';
   import { manifest } from '$lib';
 
   $: chatId = $page.params.chatId;
@@ -24,6 +25,7 @@
   let initialMessageProcessed = false;
   let autoScroll = true;
   let messagesContainerElement: HTMLDivElement;
+  let showScrollButton = false;
 
   // Use web search options from the chat object, with fallback defaults
   $: webSearchEnabled = activeChat?.webSearchEnabled ?? false;
@@ -38,6 +40,13 @@
   const scrollToBottom = () => {
     if (messagesContainerElement) {
       messagesContainerElement.scrollTop = messagesContainerElement.scrollHeight;
+      autoScroll = true;
+
+      // Focus the last message for accessibility
+      const messageElements = messagesContainerElement.querySelectorAll('.message');
+      const lastMessageElement = messageElements[messageElements.length - 1] as HTMLElement;
+      if (lastMessageElement) lastMessageElement.focus();
+      else messagesContainerElement.focus();
     }
   };
 
@@ -48,7 +57,9 @@
   const handleScroll = () => {
     if (messagesContainerElement) {
       const element = messagesContainerElement;
-      autoScroll = element.scrollHeight - element.scrollTop <= element.clientHeight + 50;
+      const distanceFromBottom = element.scrollHeight - element.scrollTop - element.clientHeight;
+      autoScroll = distanceFromBottom <= 50;
+      showScrollButton = distanceFromBottom > 256;
     }
   };
 
@@ -362,6 +373,18 @@
       <ChatMessages chat={activeChat} {currentlyStreamingMessageId} {handleRegenerate} {handleEdit} {handleBranch}
       ></ChatMessages>
     </div>
+
+    <button
+      class="button button-secondary button-circle button-rounded relative bottom-4 left-1/2 z-10 h-8 max-h-8 min-h-8 w-8 max-w-8 min-w-8 -translate-x-1/2 backdrop-blur-md transition-opacity"
+      class:pointer-events-auto={showScrollButton}
+      class:pointer-events-none={!showScrollButton}
+      class:opacity-100={showScrollButton}
+      class:opacity-0={!showScrollButton}
+      on:click={scrollToBottom}
+      title="Scroll to bottom"
+      inert={!showScrollButton}>
+      <ArrowDown size={20} />
+    </button>
 
     <div class="input-container z-[1]">
       <ChatInput
