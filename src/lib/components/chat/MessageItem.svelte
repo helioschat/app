@@ -280,7 +280,9 @@
             ]
               .filter((x) => Boolean(x))
               .join(' • ')}>
-            {[...[providerName ? `${providerName}` : null], ...[message.model ? `${message.model}` : null]].join('/')}
+            {[...[providerName ? `${providerName}` : null], ...[message.model ? `${message.model}` : null]]
+              .filter((x) => Boolean(x))
+              .join('/')}
           </div>
         {/if}
       </div>
