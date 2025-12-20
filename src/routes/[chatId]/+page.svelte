@@ -4,7 +4,7 @@
   import { syncThread } from '$lib/sync';
   import type { Message, Attachment } from '$lib/types';
   import { page } from '$app/stores';
-  import { goto } from '$app/navigation';
+  import { goto, onNavigate } from '$app/navigation';
   import { tick, onMount, onDestroy } from 'svelte';
   import { streamStates, endStream } from '$lib/streaming';
   import { browser } from '$app/environment';
@@ -310,6 +310,17 @@
       scrollToBottom();
     });
   }
+
+  onNavigate(() => {
+    if (browser && chatId && activeChat) {
+      tick().then(() => {
+        // Use setTimeout to allow markdown rendering and layout calculations to complete
+        setTimeout(() => {
+          scrollToBottom();
+        }, 100);
+      });
+    }
+  });
 
   $: if (
     browser &&
