@@ -3,12 +3,16 @@
   import { marked, type Token } from 'marked';
   import DOMPurify from 'dompurify';
   import hljs from 'highlight.js';
+  import { Copy, Download, Check } from 'lucide-svelte';
+  import { getLanguageExtension } from '$lib/utils/languageExtensions';
 
   export let content: string = '';
   export let isStreaming: boolean = false;
+  export let messageDate: Date | undefined = undefined;
 
   let tokens: Token[] = [];
   let highlightCache = new Map<string, string>();
+  let copiedStates = new Map<string, boolean>();
 
   // Configure marked for GFM support
   marked.setOptions({
@@ -101,6 +105,47 @@
   onDestroy(() => {
     highlightCache.clear();
   });
+
+  async function copyToClipboard(text: string, cacheKey: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      copiedStates.set(cacheKey, true);
+      copiedStates = copiedStates; // Trigger reactivity
+      setTimeout(() => {
+        copiedStates.delete(cacheKey);
+        copiedStates = copiedStates;
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  }
+
+  async function hashString(str: string): Promise<string> {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(str);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+    return hashHex.substring(0, 8);
+  }
+
+  async function downloadCode(code: string, lang: string) {
+    const extension = getLanguageExtension(lang);
+    const date = messageDate || new Date();
+    const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+    const contentHash = await hashString(code);
+    const filename = `code_${dateStr}_${contentHash}.${extension}`;
+
+    const blob = new Blob([code], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
 </script>
 
 <div class="markdown-content" class:streaming={isStreaming}>
@@ -115,12 +160,38 @@
       {@const isLastToken = idx === tokens.length - 1}
       {@const shouldHighlight = !isStreaming || !isLastToken}
       {@const cacheKey = `${idx}-${token.lang || 'auto'}-${token.text.length}`}
-      {#if shouldHighlight}
-        <pre><code class="hljs {token.lang ? `language-${token.lang}` : ''}"
-            >{@html highlightCode(token.text, token.lang || '', cacheKey)}</code></pre>
-      {:else}
-        <pre><code class="hljs {token.lang ? `language-${token.lang}` : ''}">{token.text}</code></pre>
-      {/if}
+      {@const displayLang = token.lang || 'text'}
+      {@const isCopied = copiedStates.get(cacheKey) || false}
+      <div class="code-block-container mb-2">
+        <div
+          class="code-block-header flex items-center justify-between rounded-t-2xl border-b border-[var(--color-6)] bg-[var(--color-4)] px-3 py-2">
+          <span class="text-xs font-medium text-[var(--color-a12)] uppercase">{displayLang}</span>
+          <div class="flex gap-0.5">
+            <button
+              class="button button-ghost code-action-btn"
+              on:click={() => copyToClipboard(token.text, cacheKey)}
+              title="Copy">
+              {#if isCopied}
+                <Check size={16} />
+              {:else}
+                <Copy size={16} />
+              {/if}
+            </button>
+            <button
+              class="button button-ghost code-action-btn"
+              on:click={() => downloadCode(token.text, displayLang)}
+              title="Download">
+              <Download size={16} />
+            </button>
+          </div>
+        </div>
+        {#if shouldHighlight}
+          <pre><code class="hljs {token.lang ? `language-${token.lang}` : ''}"
+              >{@html highlightCode(token.text, token.lang || '', cacheKey)}</code></pre>
+        {:else}
+          <pre><code class="hljs {token.lang ? `language-${token.lang}` : ''}">{token.text}</code></pre>
+        {/if}
+      </div>
     {:else if token.type === 'blockquote'}
       <blockquote>
         <svelte:self content={token.text} isStreaming={false} />
@@ -277,6 +348,14 @@
 
   .markdown-content :global(blockquote) {
     @apply pl-8;
+  }
+
+  .code-action-btn {
+    @apply rounded-lg p-0.5 transition-colors;
+  }
+
+  .code-block-container :global(pre) {
+    @apply !mt-0 !mb-0 !rounded-t-none;
   }
 
   .markdown-content :global(pre),

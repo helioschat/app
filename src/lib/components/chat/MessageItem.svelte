@@ -219,8 +219,10 @@
       {:else}
         <!-- Display Mode -->
         {#if shouldUseMarkdown}
-          <MarkdownRenderer content={message.content} isStreaming={isCurrentlyStreaming && message.role === 'assistant'}
-          ></MarkdownRenderer>
+          <MarkdownRenderer
+            content={message.content}
+            isStreaming={isCurrentlyStreaming && message.role === 'assistant'}
+            messageDate={message.createdAt}></MarkdownRenderer>
         {:else}
           <p>
             <span class="whitespace-pre-wrap">{message.content.trim()}</span>
