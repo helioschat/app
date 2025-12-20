@@ -333,11 +333,6 @@
     @apply hidden xl:block;
   }
 
-  .cursor {
-    display: inline-block;
-    animation: blink 1s step-end infinite;
-  }
-
   .reasoning-content {
     @apply rounded-xl p-3 opacity-90;
     background-color: var(--color-a2);
