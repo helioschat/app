@@ -28,21 +28,22 @@ export function getKnownProviderMeta(id: string): KnownProviderMetadata | undefi
 }
 
 export function isModelDisabledByDefault(providerId: string, modelId: string): boolean {
-  const meta = KNOWN_PROVIDERS[providerId];
+  const provider = getKnownProviderMeta(providerId);
+  if (!provider) return false;
 
-  if (meta.modelOverrides) {
-    const modelOverride = meta.modelOverrides[modelId];
+  if (provider.modelOverrides) {
+    const modelOverride = provider.modelOverrides[modelId];
     if (modelOverride?.unsupported) return true;
     if (modelOverride?.deprecated) return true;
   }
 
-  if (!meta?.disabledModels) return false;
-  return meta.disabledModels.some((pat) => (typeof pat === 'string' ? pat === modelId : pat.test(modelId)));
+  if (!provider.disabledModels) return false;
+  return provider.disabledModels.some((pat) => (typeof pat === 'string' ? pat === modelId : pat.test(modelId)));
 }
 
 /** Retrieve metadata override for a specific model */
 export function getModelMetadata(providerId: string, modelId: string): ModelInfoOverride | undefined {
-  const provider = KNOWN_PROVIDERS[providerId];
+  const provider = getKnownProviderMeta(providerId);
   if (!provider) return undefined;
   return provider.modelOverrides?.[modelId];
 }
@@ -52,7 +53,7 @@ export function getModelMetadata(providerId: string, modelId: string): ModelInfo
  * The original array is NOT mutated.
  */
 export function applyModelOverrides(providerId: string, models: ModelInfo[]): ModelInfo[] {
-  const provider = KNOWN_PROVIDERS[providerId];
+  const provider = getKnownProviderMeta(providerId);
   if (!provider?.modelOverrides) return models;
 
   const overrides = provider.modelOverrides;
@@ -86,12 +87,12 @@ export function detectKnownProvider(config: ProviderConfig): string | undefined 
 }
 
 export function getDefaultTitleModel(providerId: string): string | undefined {
-  const provider = KNOWN_PROVIDERS[providerId];
+  const provider = getKnownProviderMeta(providerId);
   return provider?.defaultTitleModel;
 }
 
 export function getDefaultModel(providerId: string, cachedModels?: ModelInfo[]): string | undefined {
-  const provider = KNOWN_PROVIDERS[providerId];
+  const provider = getKnownProviderMeta(providerId);
   if (provider?.defaultModel) {
     return provider.defaultModel;
   }
