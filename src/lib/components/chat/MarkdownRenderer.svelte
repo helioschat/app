@@ -12,6 +12,7 @@
 
   let tokens: Token[] = [];
   let highlightCache = new Map<string, string>();
+  let sanitizeCache = new Map<string, string>();
   let copiedStates = new Map<string, boolean>();
 
   // Configure marked for GFM support
@@ -32,15 +33,24 @@
     } else {
       tokens = [];
       highlightCache.clear();
+      sanitizeCache.clear();
     }
   }
 
   function sanitizeHtml(html: string): string {
-    return DOMPurify.sanitize(html, {
+    // Check cache first
+    if (sanitizeCache.has(html)) {
+      return sanitizeCache.get(html)!;
+    }
+
+    const sanitized = DOMPurify.sanitize(html, {
       ALLOWED_TAGS: ['span', 'strong', 'em', 'del', 'code', 'a', 'br'],
       ALLOWED_ATTR: ['href', 'src', 'alt', 'title'],
       ALLOW_DATA_ATTR: false,
     });
+
+    sanitizeCache.set(html, sanitized);
+    return sanitized;
   }
 
   function renderInlineTokens(inlineTokens: Token[]): string {
@@ -104,6 +114,7 @@
 
   onDestroy(() => {
     highlightCache.clear();
+    sanitizeCache.clear();
   });
 
   async function copyToClipboard(text: string, cacheKey: string) {
