@@ -1,29 +1,4 @@
 /**
- * Fast check to determine if content likely contains markdown
- * This is a performance optimization to avoid unnecessary markdown parsing
- */
-export function likelyContainsMarkdown(content: string): boolean {
-  if (!content) return false;
-
-  const markdownPatterns = [
-    /[*_~`].*[*_~`]/, // Inline formatting like *bold*, _italic_, etc.
-    /^\s*#{1,6}\s+/m, // Headers
-    /^\s*[-*+]\s+/m, // Unordered lists
-    /^\s*\d+\.\s+/m, // Ordered lists
-    /^\s*>/m, // Blockquotes
-    /^\s*```/m, // Code blocks
-    /\[.*?\]\(.*?\)/, // Links
-    /!\[.*?\]\(.*?\)/, // Images
-    /^\s*---+\s*$/m, // Horizontal rules
-    /\|\s*[-:]+\s*\|/, // Tables
-  ];
-
-  if (content.includes('```')) return true;
-
-  return markdownPatterns.some((pattern) => pattern.test(content));
-}
-
-/**
  * Extract code blocks from content
  * Useful for optimizing syntax highlighting by pre-loading languages
  */

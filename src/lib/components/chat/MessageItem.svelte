@@ -1,7 +1,6 @@
 <script lang="ts">
   import MarkdownRenderer from '$lib/components/chat/MarkdownRenderer.svelte';
   import MessageAttachments from '$lib/components/chat/MessageAttachments.svelte';
-  import { likelyContainsMarkdown } from '$lib/utils/markdown';
   import { formatMessageTimestamp } from '$lib/utils/date';
   import type { MessageWithAttachments } from '$lib/types';
   import { isMessageStreaming } from '$lib/streaming';
@@ -11,12 +10,17 @@
   import { providerInstances, selectedModel } from '$lib/settings/SettingsManager';
   import { availableModels } from '$lib/stores/modelCache';
   import ModelSelectorModal from '$lib/components/modal/types/ModelSelectorModal.svelte';
-  import type { ModelInfo } from '$lib/providers/base';
 
-  export let message: MessageWithAttachments;
-  export let isStreaming: boolean = false;
-  export let isThinking: boolean = false;
-  export let canEdit: boolean = false; // Whether this message can be edited
+  interface Props {
+    message: MessageWithAttachments;
+    isStreaming?: boolean;
+    isThinking?: boolean;
+    canEdit?: boolean; // Whether this message can be edited
+  }
+
+  let { message, isStreaming = false, isThinking = false, canEdit = false }: Props = $props();
+
+  const messageCreatedAt = message.createdAt;
 
   const dispatch = createEventDispatcher<{
     regenerate: { message: MessageWithAttachments };
@@ -24,38 +28,23 @@
     branch: { message: MessageWithAttachments };
   }>();
 
-  $: isCurrentlyStreaming =
-    isStreaming || (message.role === 'assistant' && isMessageStreaming(page.params.chatId, message.id));
+  const providerName = $providerInstances.find((p) => p.id === message.providerInstanceId)?.name;
+  let totalTime = $derived(message.metrics?.totalTime);
+  let tokensPerSecond = $derived(message.metrics?.tokensPerSecond);
 
-  $: shouldUseMarkdown = likelyContainsMarkdown(message.content);
+  let isCurrentlyStreaming = $derived(
+    isStreaming || (message.role === 'assistant' && isMessageStreaming(page.params.chatId, message.id)),
+  );
 
-  $: showReasoning = false;
-  $: hasReasoning = message.role === 'assistant' && message.reasoning && message.reasoning.length > 0;
-  $: reasoningUsesMarkdown = hasReasoning && likelyContainsMarkdown(message.reasoning || '');
+  let showReasoning = $state(false);
+  let hasReasoning = $derived(message.role === 'assistant' && message.reasoning && message.reasoning.length > 0);
 
-  $: providerName = $providerInstances.find((p) => p.id === message.providerInstanceId)?.name;
-  $: generationTime = message.metrics?.totalTime ? `${(message.metrics.totalTime / 1000).toFixed(2)}s` : null;
-  $: tokensPerSecond = message.metrics?.tokensPerSecond
-    ? `${message.metrics.tokensPerSecond.toFixed(2)} tokens/sec`
-    : null;
-
-  let copyButtonText = 'Copy';
-  let isEditing = false;
-  let editContent = '';
-  let editTextarea: HTMLTextAreaElement;
-  let showEditModelSelector = false;
-  let editProviderInstanceId = '';
-  let editModelId = '';
-  let cachedModels: Record<string, ModelInfo[]> = {};
-
-  $: cachedModels = $availableModels;
-
-  $: if (isEditing && editTextarea) {
-    tick().then(() => {
-      editTextarea.focus();
-      resizeTextarea({ target: editTextarea } as unknown as Event);
-    });
-  }
+  let copyButtonText = $state('Copy');
+  let isEditing = $state(false);
+  let editContent = $state('');
+  let showEditModelSelector = $state(false);
+  let editProviderInstanceId = $state('');
+  let editModelId = $state('');
 
   async function copyMessageContent() {
     try {
@@ -137,14 +126,12 @@
 <div
   class="message {message.role === 'assistant' ? 'assistant' : 'user'} group"
   class:editing={isEditing}
-  data-message-id={message.id}
-  data-message-content-markdown={shouldUseMarkdown}
-  data-message-reasoning-markdown={hasReasoning && message.reasoning ? reasoningUsesMarkdown : undefined}>
+  data-message-id={message.id}>
   {#if hasReasoning && message.reasoning}
     <button
       class="reasoning-button button button-ghost button-small button-circle mb-0.5"
       class:thinking={isThinking}
-      on:click={() => (showReasoning = !showReasoning)}>
+      onclick={() => (showReasoning = !showReasoning)}>
       <span class="flex items-center gap-1">
         <div class="inline-block">
           {#if !showReasoning}
@@ -162,11 +149,7 @@
 
     {#if showReasoning}
       <div class="reasoning-content text-secondary mb-2 text-xs">
-        {#if reasoningUsesMarkdown}
-          <MarkdownRenderer content={message.reasoning} isStreaming={false}></MarkdownRenderer>
-        {:else}
-          <p class="whitespace-pre-wrap italic">{message.reasoning.trim()}</p>
-        {/if}
+        <MarkdownRenderer content={message.reasoning} isStreaming={false}></MarkdownRenderer>
       </div>
     {/if}
   {/if}
@@ -179,18 +162,17 @@
         <!-- Edit Mode -->
         <div class="edit-container flex w-full flex-col gap-2">
           <textarea
-            bind:this={editTextarea}
             bind:value={editContent}
             rows="3"
             placeholder="Edit your message..."
             class="w-full !rounded-2xl"
-            on:input={resizeTextarea}
-            on:keydown={handleEditKeydown}></textarea>
+            oninput={resizeTextarea}
+            onkeydown={handleEditKeydown}></textarea>
 
           <div class="flex items-center justify-between gap-4 sm:gap-8">
             <button
               type="button"
-              on:click={openEditModelSelector}
+              onclick={openEditModelSelector}
               class="button button-primary button-small button-circle">
               <span>{editModelId || 'Select Model'}</span>
             </button>
@@ -198,7 +180,7 @@
             <div class="flex items-center gap-2">
               <button
                 type="button"
-                on:click={cancelEdit}
+                onclick={cancelEdit}
                 class="button button-secondary button-small button-circle"
                 aria-label="Cancel edit">
                 <X size={16} />
@@ -206,7 +188,7 @@
               </button>
               <button
                 type="button"
-                on:click={confirmEdit}
+                onclick={confirmEdit}
                 disabled={!editContent.trim()}
                 class="button button-secondary button-small button-circle"
                 aria-label="Save edit">
@@ -218,19 +200,10 @@
         </div>
       {:else}
         <!-- Display Mode -->
-        {#if shouldUseMarkdown}
-          <MarkdownRenderer
-            content={message.content}
-            isStreaming={isCurrentlyStreaming && message.role === 'assistant'}
-            messageDate={message.createdAt}></MarkdownRenderer>
-        {:else}
-          <p>
-            <span class="whitespace-pre-wrap">{message.content.trim()}</span>
-            {#if isCurrentlyStreaming && message.role === 'assistant'}
-              <span class="cursor">▋</span>
-            {/if}
-          </p>
-        {/if}
+        <MarkdownRenderer
+          content={message.content}
+          isStreaming={isCurrentlyStreaming && message.role === 'assistant'}
+          messageDate={message.createdAt}></MarkdownRenderer>
       {/if}
     </div>
   </div>
@@ -240,16 +213,22 @@
     <div class="flex flex-col gap-1 p-2 xl:flex-row">
       {#if !isEditing}
         <div class="buttons flex items-center gap-2">
-          <button class="button button-ghost button-small button-circle" on:click={copyMessageContent}>
+          <button class="button button-ghost button-small button-circle" onclick={copyMessageContent}>
             <Copy size={16}></Copy>
             <span>{copyButtonText}</span>
           </button>
-          {#if message.role === 'assistant' && !isCurrentlyStreaming}
-            <button class="button button-ghost button-small button-circle" on:click={handleRegenerate}>
+          {#if message.role === 'assistant'}
+            <button
+              class="button button-ghost button-small button-circle"
+              disabled={isCurrentlyStreaming}
+              onclick={handleRegenerate}>
               <RefreshCw size={16}></RefreshCw>
               <span>Regenerate</span>
             </button>
-            <button class="button button-ghost button-small button-circle" on:click={handleBranch}>
+            <button
+              class="button button-ghost button-small button-circle"
+              disabled={isCurrentlyStreaming}
+              onclick={handleBranch}>
               <GitBranch size={16}></GitBranch>
               <span>Branch off</span>
             </button>
@@ -258,7 +237,7 @@
             <button
               class="button button-ghost button-small button-circle"
               disabled={!canEdit || isCurrentlyStreaming}
-              on:click={startEdit}>
+              onclick={startEdit}>
               <Edit size={16}></Edit>
               <span>Edit</span>
             </button>
@@ -267,16 +246,19 @@
       {/if}
 
       <div class="text-secondary flex items-center gap-1 text-xs">
-        <div class="flex items-center">
-          <span>{formatMessageTimestamp(message.createdAt)}</span>
-        </div>
-        {#if message.role === 'assistant' && (providerName || message.model || generationTime || tokensPerSecond)}
+        {#if messageCreatedAt}
+          <div class="flex items-center">
+            <span>{formatMessageTimestamp(messageCreatedAt)}</span>
+          </div>
+        {/if}
+
+        {#if messageCreatedAt && message.role === 'assistant' && (providerName || message.model || totalTime || tokensPerSecond)}
           <span>&bull;</span>
           <div
             class="text-secondary flex items-center gap-1 text-xs"
             title={[
-              ...[generationTime ? `${generationTime}` : null],
-              ...[tokensPerSecond ? `${tokensPerSecond}` : null],
+              ...[totalTime ? `${(totalTime / 1000).toFixed(2)}s` : null],
+              ...[tokensPerSecond ? `${tokensPerSecond.toFixed(2)} tokens/sec` : null],
             ]
               .filter((x) => Boolean(x))
               .join(' • ')}>
@@ -294,7 +276,7 @@
   id="message-edit-model-selector"
   isOpen={showEditModelSelector}
   providerInstances={$providerInstances}
-  availableModels={cachedModels}
+  availableModels={$availableModels}
   currentModelId={editModelId}
   on:close={() => (showEditModelSelector = false)}
   on:select={(e) => {
