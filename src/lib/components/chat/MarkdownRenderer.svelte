@@ -1,79 +1,187 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import rehypeHighlight from 'rehype-highlight';
-  import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
-  import rehypeStringify from 'rehype-stringify';
-  import remarkFrontmatter from 'remark-frontmatter';
-  import remarkGemoji from 'remark-gemoji';
-  import remarkGfm from 'remark-gfm';
-  import remarkParse from 'remark-parse';
-  import remarkRehype from 'remark-rehype';
-  import { unified } from 'unified';
+  import { onDestroy } from 'svelte';
+  import { marked, type Token } from 'marked';
+  import DOMPurify from 'dompurify';
+  import hljs from 'highlight.js';
 
   export let content: string = '';
   export let isStreaming: boolean = false;
 
-  let renderedHtml = '';
-  let processor: ReturnType<typeof createMarkdownProcessor> | null = null;
+  let tokens: Token[] = [];
+  let highlightCache = new Map<string, string>();
 
-  const baseSanitizationSchema = {
-    ...defaultSchema,
-  };
+  // Configure marked for GFM support
+  marked.setOptions({
+    gfm: true,
+    breaks: false,
+  });
 
-  function createMarkdownProcessor() {
-    return unified()
-      .use(remarkParse)
-      .use(remarkFrontmatter)
-      .use(remarkGfm)
-      .use(remarkGemoji)
-      .use(remarkRehype)
-      .use(rehypeSanitize, {
-        ...baseSanitizationSchema,
-        attributes: {
-          ...baseSanitizationSchema.attributes,
-          '*': ['class'],
-        },
+  // Tokenize markdown when content changes
+  $: {
+    if (content) {
+      try {
+        tokens = marked.lexer(content);
+      } catch (error) {
+        console.error('Markdown tokenization error:', error);
+        tokens = [];
+      }
+    } else {
+      tokens = [];
+      highlightCache.clear();
+    }
+  }
+
+  function sanitizeHtml(html: string): string {
+    return DOMPurify.sanitize(html, {
+      ALLOWED_TAGS: ['span', 'strong', 'em', 'del', 'code', 'a', 'br'],
+      ALLOWED_ATTR: ['href', 'src', 'alt', 'title'],
+      ALLOW_DATA_ATTR: false,
+    });
+  }
+
+  function renderInlineTokens(inlineTokens: Token[]): string {
+    return inlineTokens
+      .map((token) => {
+        if (token.type === 'text') {
+          return token.text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        } else if (token.type === 'strong') {
+          return `<strong>${renderInlineTokens(token.tokens || [])}</strong>`;
+        } else if (token.type === 'em') {
+          return `<em>${renderInlineTokens(token.tokens || [])}</em>`;
+        } else if (token.type === 'del') {
+          return `<del>${renderInlineTokens(token.tokens || [])}</del>`;
+        } else if (token.type === 'codespan') {
+          return `<code>${token.text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>`;
+        } else if (token.type === 'link') {
+          const href = token.href.replace(/"/g, '&quot;');
+          const title = token.title ? ` title="${token.title.replace(/"/g, '&quot;')}"` : '';
+          return `<a href="${href}"${title}>${renderInlineTokens(token.tokens || [])}</a>`;
+        } else if (token.type === 'image') {
+          const src = token.href.replace(/"/g, '&quot;');
+          const alt = token.text.replace(/"/g, '&quot;');
+          const title = token.title ? ` title="${token.title.replace(/"/g, '&quot;')}"` : '';
+          return `<img src="${src}" alt="${alt}"${title} />`;
+        } else if (token.type === 'br') {
+          return '<br />';
+        }
+        return '';
       })
-      .use(rehypeHighlight)
-      .use(rehypeStringify);
+      .join('');
   }
 
-  async function renderMarkdown() {
-    if (!content || !processor) {
-      renderedHtml = '';
-      return;
+  function headerComponent(depth: number): string {
+    return 'h' + Math.min(Math.max(depth, 1), 6);
+  }
+
+  function highlightCode(code: string, lang: string, cacheKey: string): string {
+    // Check cache first
+    if (highlightCache.has(cacheKey)) {
+      return highlightCache.get(cacheKey)!;
     }
 
+    let result: string;
+    if (lang && hljs.getLanguage(lang)) {
+      try {
+        result = hljs.highlight(code, { language: lang }).value;
+        highlightCache.set(cacheKey, result);
+        return result;
+      } catch {
+        // Fall through to auto-detect
+      }
+    }
     try {
-      const result = await processor.process(content);
-      renderedHtml = String(result);
-    } catch (error) {
-      console.error('Markdown rendering error:', error);
-      renderedHtml = `<p>${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`;
+      result = hljs.highlightAuto(code).value;
+    } catch {
+      result = code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
+    highlightCache.set(cacheKey, result);
+    return result;
   }
 
-  // Re-render when content changes
-  $: if (processor && content) {
-    renderMarkdown();
-  }
-
-  onMount(() => {
-    processor = createMarkdownProcessor();
-    renderMarkdown();
-
-    return () => {
-      processor = null;
-    };
+  onDestroy(() => {
+    highlightCache.clear();
   });
 </script>
 
 <div class="markdown-content" class:streaming={isStreaming}>
-  {#if renderedHtml}
-    {@html renderedHtml}
-  {:else}
-    <p>{content.trim()}</p>
-  {/if}
+  {#each tokens as token, idx (idx)}
+    {#if token.type === 'heading'}
+      <svelte:element this={headerComponent(token.depth)}>
+        {@html sanitizeHtml(renderInlineTokens(token.tokens || []))}
+      </svelte:element>
+    {:else if token.type === 'paragraph'}
+      <p>{@html sanitizeHtml(renderInlineTokens(token.tokens || []))}</p>
+    {:else if token.type === 'code'}
+      {@const isLastToken = idx === tokens.length - 1}
+      {@const shouldHighlight = !isStreaming || !isLastToken}
+      {@const cacheKey = `${idx}-${token.lang || 'auto'}-${token.text.length}`}
+      {#if shouldHighlight}
+        <pre><code class="hljs {token.lang ? `language-${token.lang}` : ''}"
+            >{@html highlightCode(token.text, token.lang || '', cacheKey)}</code></pre>
+      {:else}
+        <pre><code class="hljs {token.lang ? `language-${token.lang}` : ''}">{token.text}</code></pre>
+      {/if}
+    {:else if token.type === 'blockquote'}
+      <blockquote>
+        <svelte:self content={token.text} isStreaming={false} />
+      </blockquote>
+    {:else if token.type === 'list'}
+      {#if token.ordered}
+        <ol start={token.start || 1}>
+          {#each token.items as item}
+            <li>
+              {#if item.task}
+                <input type="checkbox" checked={item.checked} disabled />
+              {/if}
+              <svelte:self content={item.text} isStreaming={false} />
+            </li>
+          {/each}
+        </ol>
+      {:else}
+        <ul>
+          {#each token.items as item}
+            <li>
+              {#if item.task}
+                <input type="checkbox" checked={item.checked} disabled />
+              {/if}
+              <svelte:self content={item.text} isStreaming={false} />
+            </li>
+          {/each}
+        </ul>
+      {/if}
+    {:else if token.type === 'table'}
+      <table>
+        <thead>
+          <tr>
+            {#each token.header as header}
+              <th>{@html sanitizeHtml(renderInlineTokens(header.tokens || []))}</th>
+            {/each}
+          </tr>
+        </thead>
+        <tbody>
+          {#each token.rows as row}
+            <tr>
+              {#each row as cell}
+                <td>{@html sanitizeHtml(renderInlineTokens(cell.tokens || []))}</td>
+              {/each}
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    {:else if token.type === 'hr'}
+      <hr />
+    {:else if token.type === 'html'}
+      {@html sanitizeHtml(token.text)}
+    {:else if token.type === 'text'}
+      {#if token.tokens}
+        <p>{@html sanitizeHtml(renderInlineTokens(token.tokens))}</p>
+      {:else}
+        <p>{token.text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+      {/if}
+    {:else if token.type === 'space'}
+      <div class="space"></div>
+    {/if}
+  {/each}
 </div>
 
 <style lang="postcss">
