@@ -2,7 +2,7 @@
   import { page } from '$app/state';
   import Tabs from '$lib/components/common/Tabs.svelte';
   import { manifest } from '$lib';
-  import { BrainCircuit, CloudUpload, Info, ServerCog, Wrench } from 'lucide-svelte';
+  import { BrainCircuit, CloudUpload, HardDrive, Info, ServerCog, Wrench } from 'lucide-svelte';
 
   const tabs = [
     {
@@ -20,6 +20,14 @@
       description: 'Enable or disable models for each provider.',
       icon: BrainCircuit,
       url: '/settings/models',
+    },
+    {
+      id: 'storage',
+      text: 'Storage',
+      title: 'Storage',
+      description: 'View and manage storage used by your chats and attachments.',
+      icon: HardDrive,
+      url: '/settings/storage',
     },
     {
       id: 'sync',
