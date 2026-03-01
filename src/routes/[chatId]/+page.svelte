@@ -27,14 +27,26 @@
   let messagesContainerElement: HTMLDivElement;
   let showScrollButton = false;
 
-  // Use web search options from the chat object, with fallback defaults
-  $: webSearchEnabled = activeChat?.webSearchEnabled ?? false;
-  $: webSearchContextSize = activeChat?.webSearchContextSize ?? 'low';
+  // Modifier state — initialized from the chat object when the chat changes,
+  // but kept as local state so they don't get overwritten on every streaming token.
+  let webSearchEnabled = false;
+  let webSearchContextSize: 'low' | 'medium' | 'high' = 'low';
+  let reasoningEnabled = false;
+  let reasoningEffort: 'minimal' | 'low' | 'medium' | 'high' = 'medium';
+  let reasoningSummary: 'auto' | 'concise' | 'detailed' = 'auto';
 
-  // Use reasoning options from the chat object, with fallback defaults
-  $: reasoningEnabled = activeChat?.reasoningEnabled ?? false;
-  $: reasoningEffort = activeChat?.reasoningEffort ?? 'medium';
-  $: reasoningSummary = activeChat?.reasoningSummary ?? 'auto';
+  // Track which chat ID we last synced modifiers from so we only re-read the
+  // persisted settings when the user actually switches to a different chat.
+  let modifierSyncedChatId = '';
+
+  $: if (activeChat && activeChat.id !== modifierSyncedChatId) {
+    modifierSyncedChatId = activeChat.id;
+    webSearchEnabled = activeChat.webSearchEnabled ?? false;
+    webSearchContextSize = activeChat.webSearchContextSize ?? 'low';
+    reasoningEnabled = activeChat.reasoningEnabled ?? false;
+    reasoningEffort = activeChat.reasoningEffort ?? 'medium';
+    reasoningSummary = activeChat.reasoningSummary ?? 'auto';
+  }
 
   // Map provides clearer semantics and easier cleanup than a plain object
   const streamControllers = new Map<string, StreamingController>();
@@ -45,12 +57,6 @@
   const scrollToBottom = () => {
     if (messagesContainerElement) {
       messagesContainerElement.scrollTop = messagesContainerElement.scrollHeight;
-
-      // Focus the last message for accessibility
-      const messageElements = messagesContainerElement.querySelectorAll('.message');
-      const lastMessageElement = messageElements[messageElements.length - 1] as HTMLElement;
-      if (lastMessageElement) lastMessageElement.focus();
-      else messagesContainerElement.focus();
     }
   };
 
@@ -280,8 +286,12 @@
   function handleWebSearchToggle(e: CustomEvent<{ enabled: boolean; contextSize: 'low' | 'medium' | 'high' }>) {
     if (!activeChat) return;
 
+    // Update local state immediately so the UI reflects the change
+    webSearchEnabled = e.detail.enabled;
+    webSearchContextSize = e.detail.contextSize;
+
     let updatedChatSettings: typeof activeChat | null = null;
-    // Update the chat object with new web search settings
+    // Persist to the chat object so settings survive reloads
     chats.update((allChats) =>
       allChats.map((chat) => {
         if (chat.id === chatId) {
@@ -312,8 +322,13 @@
   ) {
     if (!activeChat) return;
 
+    // Update local state immediately so the UI reflects the change
+    reasoningEnabled = e.detail.enabled;
+    reasoningEffort = e.detail.effort;
+    reasoningSummary = e.detail.summary;
+
     let updatedChatSettings: typeof activeChat | null = null;
-    // Update the chat object with new reasoning settings
+    // Persist to the chat object so settings survive reloads
     chats.update((allChats) =>
       allChats.map((chat) => {
         if (chat.id === chatId) {

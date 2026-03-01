@@ -353,7 +353,6 @@
           placeholder={isEffectiveImageGenerationModel
             ? 'Describe the image you want to generate...'
             : 'Ask anything...'}
-          disabled={isLoading}
           class="max-h-52 min-h-6 flex-1 resize-none !rounded-none !border-none !bg-transparent !px-2 !py-0 !text-base !shadow-none !ring-0"
           on:input={handleInputChange}
           on:keydown={submitTextarea}
@@ -368,7 +367,7 @@
               id="chat-attach-button"
               type="button"
               on:click|preventDefault={handleAttachClick}
-              disabled={isLoading || !canAttachFiles}
+              disabled={!canAttachFiles}
               class="button button-tertiary button-circle"
               title="Attach files">
               <Paperclip size={16} />
@@ -379,7 +378,6 @@
             {#if showTemporaryToggle}
               <button
                 on:click|preventDefault={() => (isTemporary = !isTemporary)}
-                disabled={isLoading}
                 class="button button-circle"
                 class:button-tertiary={!isTemporary}
                 class:button-secondary={isTemporary}
@@ -391,7 +389,6 @@
             {#if supportsWebSearch}
               <button
                 on:click|preventDefault={handleWebSearchToggle}
-                disabled={isLoading}
                 class="button button-circle"
                 class:button-tertiary={!webSearchEnabled}
                 class:button-secondary={webSearchEnabled}
@@ -403,7 +400,6 @@
             {#if supportsReasoning}
               <button
                 on:click|preventDefault={handleReasoningToggle}
-                disabled={isLoading}
                 class="button button-circle"
                 class:button-tertiary={!reasoningEnabled}
                 class:button-secondary={reasoningEnabled}
@@ -413,7 +409,6 @@
               </button>
               <button
                 on:click|preventDefault={openReasoningOptions}
-                disabled={isLoading}
                 class="button button-tertiary button-circle"
                 title="Reasoning options">
                 <Settings size={16}></Settings>
@@ -424,7 +419,7 @@
         <div class="flex items-center gap-2">
           <button
             on:click|preventDefault={openModelSelector}
-            disabled={isLoading || !browser}
+            disabled={!browser}
             class="button button-ghost button-circle">
             <span class="text-xs">
               {currentModel?.name || $selectedModel?.modelId || 'Select Model'}
