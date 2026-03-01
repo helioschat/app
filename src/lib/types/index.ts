@@ -42,6 +42,13 @@ export type MessageWithAttachments = Omit<Message, 'attachmentIds'> & {
   attachments?: Attachment[];
 };
 
+export type Folder = {
+  id: string;
+  name: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 export type Chat = {
   id: string;
   title: string;
@@ -52,6 +59,7 @@ export type Chat = {
   model?: string;
   pinned?: boolean;
   temporary?: boolean;
+  folderId?: string;
   branchedFrom?: {
     threadId: string;
     messageId: string;

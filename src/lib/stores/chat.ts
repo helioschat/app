@@ -402,6 +402,7 @@ function createEmptyChatFromThread(thread: Thread): Chat {
     providerInstanceId: thread.providerInstanceId,
     model: thread.model,
     pinned: thread.pinned,
+    folderId: thread.folderId,
     branchedFrom: thread.branchedFrom,
   };
 }
@@ -478,6 +479,34 @@ export function editMessage(chatId: string, messageId: string, newContent: strin
     }
 
     return [...allChats];
+  });
+}
+
+/**
+ * Moves a chat into a folder (or removes it from any folder when folderId is null).
+ * @param chatId The ID of the chat to move
+ * @param folderId The target folder ID, or null to un-folder the chat
+ */
+export async function moveChatToFolder(chatId: string, folderId: string | null): Promise<void> {
+  chats.update((allChats) => {
+    const idx = allChats.findIndex((c) => c.id === chatId);
+    if (idx === -1) return allChats;
+
+    const updated: Chat = {
+      ...allChats[idx],
+      folderId: folderId ?? undefined,
+      updatedAt: new Date(),
+    };
+
+    const next = [...allChats];
+    next[idx] = updated;
+
+    if (browser && !updated.temporary) {
+      saveChatAsThreadAndMessages(updated);
+      syncThread(updated);
+    }
+
+    return sortChats(next);
   });
 }
 

@@ -1,16 +1,18 @@
 import type { Attachment, Chat, Message } from '$lib/types';
 
 export const DB_NAME = 'llmchat';
-export const DB_VERSION = 1;
+export const DB_VERSION = 2;
 export const THREAD_STORE = 'threads';
 export const MESSAGE_STORE = 'messages';
 export const ATTACHMENT_STORE = 'attachments';
+export const FOLDER_STORE = 'folders';
 
 // Thread data structure (without messages)
 export type Thread = Omit<Chat, 'messages'> & {
   lastMessageDate: Date;
   messageCount: number;
   pinned?: boolean;
+  folderId?: string;
 };
 
 // Message with storage metadata

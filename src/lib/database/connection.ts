@@ -1,5 +1,5 @@
 import { browser } from '$app/environment';
-import { ATTACHMENT_STORE, DB_NAME, DB_VERSION, MESSAGE_STORE, THREAD_STORE } from './types';
+import { ATTACHMENT_STORE, DB_NAME, DB_VERSION, FOLDER_STORE, MESSAGE_STORE, THREAD_STORE } from './types';
 
 // Database connection singleton
 let dbPromise: Promise<IDBDatabase> | null = null;
@@ -20,28 +20,40 @@ if (browser) {
 
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
+      const transaction = (event.target as IDBOpenDBRequest).transaction!;
+      const oldVersion = event.oldVersion;
 
-      // Create the threads store if it doesn't exist
-      if (!db.objectStoreNames.contains(THREAD_STORE)) {
+      // ── v1 schema (fresh install or upgrading from nothing) ──────────────────
+      if (oldVersion < 1) {
         const threadStore = db.createObjectStore(THREAD_STORE, { keyPath: 'id' });
         threadStore.createIndex('updatedAt', 'updatedAt', { unique: false });
         threadStore.createIndex('lastMessageDate', 'lastMessageDate', { unique: false });
         threadStore.createIndex('pinned', 'pinned', { unique: false });
-      }
 
-      // Create the messages store if it doesn't exist
-      if (!db.objectStoreNames.contains(MESSAGE_STORE)) {
         const messageStore = db.createObjectStore(MESSAGE_STORE, { keyPath: 'id' });
         messageStore.createIndex('threadId', 'threadId', { unique: false });
         messageStore.createIndex('timestamp', 'timestamp', { unique: false });
-      }
 
-      // Create the attachments store if it doesn't exist
-      if (!db.objectStoreNames.contains(ATTACHMENT_STORE)) {
         const attachmentStore = db.createObjectStore(ATTACHMENT_STORE, { keyPath: 'id' });
         attachmentStore.createIndex('messageId', 'messageId', { unique: false });
         attachmentStore.createIndex('threadId', 'threadId', { unique: false });
         attachmentStore.createIndex('createdAt', 'createdAt', { unique: false });
+      }
+
+      // ── v2 migration: add folders store + folderId index on threads ──────────
+      if (oldVersion < 2) {
+        // Create folders store if not already present
+        if (!db.objectStoreNames.contains(FOLDER_STORE)) {
+          db.createObjectStore(FOLDER_STORE, { keyPath: 'id' });
+        }
+
+        // Add folderId index to threads store if not already present
+        if (db.objectStoreNames.contains(THREAD_STORE)) {
+          const threadStore = transaction.objectStore(THREAD_STORE);
+          if (!threadStore.indexNames.contains('folderId')) {
+            threadStore.createIndex('folderId', 'folderId', { unique: false });
+          }
+        }
       }
     };
   });

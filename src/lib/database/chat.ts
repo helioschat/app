@@ -67,6 +67,7 @@ export async function saveChatAsThreadAndMessages(chat: Chat): Promise<void> {
       providerInstanceId: chat.providerInstanceId,
       model: chat.model,
       pinned: chat.pinned,
+      folderId: chat.folderId,
       branchedFrom: chat.branchedFrom,
     };
 
