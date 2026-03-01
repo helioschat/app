@@ -188,10 +188,22 @@
     resizeTextarea(e);
   }
 
+  function isOnFirstLine(): boolean {
+    if (!userInputComponent) return true;
+    const cursorPos = userInputComponent.selectionStart;
+    return !userInput.substring(0, cursorPos).includes('\n');
+  }
+
+  function isOnLastLine(): boolean {
+    if (!userInputComponent) return true;
+    const cursorPos = userInputComponent.selectionEnd;
+    return !userInput.substring(cursorPos).includes('\n');
+  }
+
   function submitTextarea(e: KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
       submit(e);
-    } else if (e.key === 'ArrowUp') {
+    } else if (e.key === 'ArrowUp' && isOnFirstLine()) {
       e.preventDefault();
       const previousPrompt = promptHistory.navigatePrevious(userInput);
       if (previousPrompt !== null) {
@@ -204,7 +216,7 @@
           resizeTextarea(e);
         }, 1);
       }
-    } else if (e.key === 'ArrowDown') {
+    } else if (e.key === 'ArrowDown' && isOnLastLine()) {
       e.preventDefault();
       const nextPrompt = promptHistory.navigateNext();
       if (nextPrompt !== null) {
