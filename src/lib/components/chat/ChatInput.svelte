@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { Square, VenetianMask, Paperclip, Search, ArrowUp } from 'lucide-svelte';
+  import { Square, VenetianMask, Paperclip, Search, ArrowUp, Brain, Settings } from 'lucide-svelte';
   import { providerInstances, selectedModel, settingsManager } from '$lib/settings/SettingsManager';
   import { availableModels } from '$lib/stores/modelCache';
   import { onMount, tick, createEventDispatcher } from 'svelte';
   import ModelSelectorModal from '$lib/components/modal/types/ModelSelectorModal.svelte';
+  import ReasoningOptionsModal from '$lib/components/modal/types/ReasoningOptionsModal.svelte';
   import MessageAttachments from './MessageAttachments.svelte';
   import { browser } from '$app/environment';
   import type { Attachment } from '$lib/types';
@@ -20,6 +21,11 @@
 
   const dispatch = createEventDispatcher<{
     webSearchToggle: { enabled: boolean; contextSize: 'low' | 'medium' | 'high' };
+    reasoningToggle: {
+      enabled: boolean;
+      effort: 'minimal' | 'low' | 'medium' | 'high';
+      summary: 'auto' | 'concise' | 'detailed';
+    };
   }>();
 
   export let userInput: string = '';
@@ -29,12 +35,18 @@
     attachments?: Attachment[],
     webSearchEnabled?: boolean,
     webSearchContextSize?: 'low' | 'medium' | 'high',
+    reasoningEnabled?: boolean,
+    reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high',
+    reasoningSummary?: 'auto' | 'concise' | 'detailed',
   ) => Promise<void>;
   export let handleStop: () => Promise<void>;
   export let showTemporaryToggle: boolean = false;
   export let isTemporary: boolean = false;
   export let webSearchEnabled: boolean = false;
   export let webSearchContextSize: 'low' | 'medium' | 'high' = 'low';
+  export let reasoningEnabled: boolean = false;
+  export let reasoningEffort: 'minimal' | 'low' | 'medium' | 'high' = 'medium';
+  export let reasoningSummary: 'auto' | 'concise' | 'detailed' = 'auto';
   export let noPadding: boolean = false;
   export let isTemporaryChat: boolean = false;
 
@@ -42,6 +54,7 @@
   let fileInput: HTMLInputElement;
 
   let showModelSelector = false;
+  let showReasoningOptions = false;
   let cachedModels: Record<string, ModelInfo[]> = {};
   let attachments: Attachment[] = [];
 
@@ -60,14 +73,6 @@
   $: effectiveModel = (() => {
     if (!currentModel || !$selectedModel) return null;
 
-    // If web search is enabled and there's a redirect model, use that model's capabilities
-    if (webSearchEnabled && currentModel.webSearchModelRedirect) {
-      const redirectModel = cachedModels[$selectedModel.providerInstanceId]?.find(
-        (m) => m.id === currentModel.webSearchModelRedirect,
-      );
-      return redirectModel || currentModel;
-    }
-
     return currentModel;
   })();
 
@@ -76,7 +81,9 @@
     getSupportedModalities(effectiveModelFeatures));
   $: isEffectiveImageGenerationModel = effectiveModel ? supportsImageGeneration(effectiveModel) : false;
   $: canAttachFiles = effectiveSupportsImages || effectiveSupportsFiles || isEffectiveImageGenerationModel;
-  $: supportsWebSearch = currentModel?.supportsWebSearch || !!currentModel?.webSearchModelRedirect;
+  $: supportsWebSearch = currentModel?.supportsWebSearch;
+  $: supportsReasoning = currentModel?.supportsReasoning || false;
+  $: supportsReasoningSummary = currentModel?.doesntSupportReasoningSummary !== true;
 
   onMount(() => {
     cachedModels = $availableModels;
@@ -142,6 +149,11 @@
     showModelSelector = true;
   }
 
+  async function openReasoningOptions() {
+    await tick();
+    showReasoningOptions = true;
+  }
+
   async function submit(e: Event) {
     e.preventDefault();
 
@@ -150,7 +162,15 @@
       promptHistory.addPrompt(userInput.trim());
     }
 
-    await handleSubmit(e, attachments, webSearchEnabled, webSearchContextSize);
+    await handleSubmit(
+      e,
+      attachments,
+      webSearchEnabled,
+      webSearchContextSize,
+      reasoningEnabled,
+      reasoningEffort,
+      reasoningSummary,
+    );
     attachments = []; // Clear attachments after submit
     resizeTextarea({ target: userInputComponent } as unknown as Event);
   }
@@ -266,6 +286,28 @@
       contextSize: webSearchContextSize,
     });
   }
+
+  function handleReasoningToggle() {
+    const newEnabled = !reasoningEnabled;
+    reasoningEnabled = newEnabled;
+    dispatch('reasoningToggle', {
+      enabled: newEnabled,
+      effort: reasoningEffort,
+      summary: reasoningSummary,
+    });
+  }
+
+  function handleReasoningOptionsSelect(
+    event: CustomEvent<{ effort: 'minimal' | 'low' | 'medium' | 'high'; summary: 'auto' | 'concise' | 'detailed' }>,
+  ) {
+    reasoningEffort = event.detail.effort;
+    reasoningSummary = event.detail.summary;
+    dispatch('reasoningToggle', {
+      enabled: reasoningEnabled,
+      effort: reasoningEffort,
+      summary: reasoningSummary,
+    });
+  }
 </script>
 
 <form on:submit={(e) => submit(e)} class="mx-auto mb-8 flex w-full max-w-4xl flex-col gap-2" class:px-4={!noPadding}>
@@ -345,6 +387,25 @@
                 <span class="hidden text-xs lg:block">Search</span>
               </button>
             {/if}
+            {#if supportsReasoning}
+              <button
+                on:click|preventDefault={handleReasoningToggle}
+                disabled={isLoading}
+                class="button button-circle"
+                class:button-tertiary={!reasoningEnabled}
+                class:button-secondary={reasoningEnabled}
+                title={reasoningEnabled ? `Reasoning enabled (${reasoningEffort})` : 'Reasoning disabled'}>
+                <Brain size={16}></Brain>
+                <span class="hidden text-xs lg:block">Reason</span>
+              </button>
+              <button
+                on:click|preventDefault={openReasoningOptions}
+                disabled={isLoading}
+                class="button button-tertiary button-circle"
+                title="Reasoning options">
+                <Settings size={16}></Settings>
+              </button>
+            {/if}
           </div>
         </div>
         <div class="flex items-center gap-2">
@@ -387,3 +448,13 @@
     showModelSelector = false;
   }}>
 </ModelSelectorModal>
+
+<ReasoningOptionsModal
+  id="chat-reasoning-options"
+  isOpen={showReasoningOptions}
+  currentEffort={reasoningEffort}
+  currentSummary={reasoningSummary}
+  {supportsReasoningSummary}
+  on:close={() => (showReasoningOptions = false)}
+  on:select={handleReasoningOptionsSelect}>
+</ReasoningOptionsModal>

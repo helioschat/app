@@ -88,6 +88,11 @@ export class OpenAICompatibleProvider implements LanguageModel {
   stream(
     messages: MessageWithAttachments[],
     webSearchOptions?: { enabled: boolean; searchContextSize?: 'low' | 'medium' | 'high' },
+    reasoningOptions?: {
+      enabled: boolean;
+      effort?: 'minimal' | 'low' | 'medium' | 'high';
+      summary?: 'auto' | 'concise' | 'detailed';
+    },
   ) {
     this.tokenCount = 0;
 
@@ -96,7 +101,7 @@ export class OpenAICompatibleProvider implements LanguageModel {
       return this.streamImageGeneration(messages);
     }
 
-    return this.streamTextGeneration(messages, webSearchOptions);
+    return this.streamTextGeneration(messages, webSearchOptions, reasoningOptions);
   }
 
   private streamImageGeneration(messages: MessageWithAttachments[]) {
@@ -203,6 +208,30 @@ export class OpenAICompatibleProvider implements LanguageModel {
   private streamTextGeneration(
     messages: MessageWithAttachments[],
     webSearchOptions?: { enabled: boolean; searchContextSize?: 'low' | 'medium' | 'high' },
+    reasoningOptions?: {
+      enabled: boolean;
+      effort?: 'minimal' | 'low' | 'medium' | 'high';
+      summary?: 'auto' | 'concise' | 'detailed';
+    },
+  ) {
+    // Check if model supports responses endpoint
+    const supportsResponses = this.supportsResponsesEndpoint();
+
+    if (supportsResponses) {
+      return this.streamResponsesEndpoint(messages, webSearchOptions, reasoningOptions);
+    }
+
+    return this.streamChatCompletions(messages, webSearchOptions, reasoningOptions);
+  }
+
+  private streamChatCompletions(
+    messages: MessageWithAttachments[],
+    webSearchOptions?: { enabled: boolean; searchContextSize?: 'low' | 'medium' | 'high' },
+    reasoningOptions?: {
+      enabled: boolean;
+      effort?: 'minimal' | 'low' | 'medium' | 'high';
+      summary?: 'auto' | 'concise' | 'detailed';
+    },
   ) {
     const gen = async function* (this: OpenAICompatibleProvider) {
       let hasFile = false;
@@ -255,17 +284,12 @@ export class OpenAICompatibleProvider implements LanguageModel {
         return openaiMessage;
       });
 
-      // Determine which model to use - redirect if web search is enabled
-      let modelToUse = this.config.model as string;
-      if (webSearchOptions?.enabled) {
-        const redirectModel = this.getWebSearchRedirectModel();
-        if (redirectModel) {
-          modelToUse = redirectModel;
-        }
-      }
+      // Check if reasoning should be enabled for OpenRouter models
+      const shouldEnableOpenRouterReasoning =
+        reasoningOptions?.enabled && this.config.matchedProvider === 'openrouter' && this.supportsReasoning();
 
       const requestOptions: OpenAI.Chat.Completions.ChatCompletionCreateParams = {
-        model: modelToUse,
+        model: this.config.model as string,
         messages: mappedMessages,
         stream: true,
         ...(hasFile && this.config.matchedProvider === 'openrouter' ? { plugins: [{ id: 'file-parser' }] } : {}),
@@ -273,6 +297,15 @@ export class OpenAICompatibleProvider implements LanguageModel {
           ? {
               web_search_options: {
                 search_context_size: webSearchOptions.searchContextSize || 'low',
+              },
+            }
+          : {}),
+        ...(shouldEnableOpenRouterReasoning
+          ? {
+              reasoning: {
+                // Map effort levels to OpenRouter format (high/medium/low)
+                effort: reasoningOptions.effort === 'minimal' ? 'low' : reasoningOptions.effort || 'medium',
+                exclude: false, // Always include reasoning tokens in response
               },
             }
           : {}),
@@ -394,15 +427,251 @@ export class OpenAICompatibleProvider implements LanguageModel {
     }
   }
 
-  private getWebSearchRedirectModel(): string | undefined {
+  private supportsResponsesEndpoint(): boolean {
     if (this.config.providerInstanceId && this.config.model) {
       const cachedModels = modelCache.getAllCachedModels();
       const models = cachedModels[this.config.providerInstanceId];
       if (models) {
         const model = models.find((m) => m.id === this.config.model);
-        return model?.webSearchModelRedirect;
+        return model?.supportsResponsesEndpoint === true;
       }
     }
-    return undefined;
+    return false;
+  }
+
+  private supportsReasoning(): boolean {
+    if (this.config.providerInstanceId && this.config.model) {
+      const cachedModels = modelCache.getAllCachedModels();
+      const models = cachedModels[this.config.providerInstanceId];
+      if (models) {
+        const model = models.find((m) => m.id === this.config.model);
+        return model?.supportsReasoning === true;
+      }
+    }
+    return false;
+  }
+
+  private supportsReasoningSummary(): boolean {
+    if (this.config.providerInstanceId && this.config.model) {
+      const cachedModels = modelCache.getAllCachedModels();
+      const models = cachedModels[this.config.providerInstanceId];
+      if (models) {
+        const model = models.find((m) => m.id === this.config.model);
+        return model?.doesntSupportReasoningSummary !== true;
+      }
+    }
+    return true; // Default to supporting summary if not specified
+  }
+
+  private streamResponsesEndpoint(
+    messages: MessageWithAttachments[],
+    webSearchOptions?: { enabled: boolean; searchContextSize?: 'low' | 'medium' | 'high' },
+    reasoningOptions?: {
+      enabled: boolean;
+      effort?: 'minimal' | 'low' | 'medium' | 'high';
+      summary?: 'auto' | 'concise' | 'detailed';
+    },
+  ) {
+    const gen = async function* (this: OpenAICompatibleProvider) {
+      // Convert messages to responses endpoint format using properly typed interfaces
+      const input: Array<{
+        type: 'message';
+        role: 'user' | 'assistant';
+        content: Array<{
+          type: 'input_text' | 'input_image' | 'output_text';
+          text?: string;
+          image_url?: string;
+          annotations?: unknown[];
+        }>;
+      }> = [];
+      let instructions = '';
+
+      for (const message of messages) {
+        if (message.role === 'system') {
+          instructions = message.content;
+          continue;
+        }
+
+        if (message.role === 'user') {
+          const content: Array<{
+            type: 'input_text' | 'input_image' | 'input_file';
+            text?: string;
+            image_url?: string;
+            filename?: string;
+            file_data?: string;
+          }> = [];
+
+          // Add text content
+          if (message.content) {
+            content.push({
+              type: 'input_text',
+              text: message.content,
+            });
+          }
+
+          // Add attachments
+          if (message.attachments && message.attachments.length > 0) {
+            for (const attachment of message.attachments) {
+              if (attachment.type === 'image') {
+                content.push({
+                  type: 'input_image',
+                  image_url: `data:${attachment.mimeType};base64,${attachment.data}`,
+                });
+              } else if (attachment.type === 'file') {
+                content.push({
+                  type: 'input_file',
+                  filename: attachment.name,
+                  file_data: `data:${attachment.mimeType};base64,${attachment.data}`,
+                });
+              }
+            }
+          }
+
+          input.push({
+            type: 'message',
+            role: 'user',
+            content,
+          });
+        } else if (message.role === 'assistant') {
+          // Add assistant messages to maintain conversation context
+          input.push({
+            type: 'message',
+            role: 'assistant',
+            content: [
+              {
+                type: 'output_text',
+                text: message.content,
+                annotations: [],
+              },
+            ],
+          });
+        }
+      }
+
+      // Check if reasoning should be enabled (only for OpenAI provider and if model supports it)
+      const shouldEnableReasoning =
+        reasoningOptions?.enabled && this.config.matchedProvider === 'openai' && this.supportsReasoning();
+
+      const requestOptions = {
+        model: this.config.model as string,
+        input,
+        stream: true as const,
+        ...(instructions ? { instructions } : {}),
+        ...(webSearchOptions?.enabled
+          ? {
+              tools: [{ type: 'web_search_preview' }], // Use correct tool type for web search
+            }
+          : {}),
+        ...(shouldEnableReasoning
+          ? {
+              // Include reasoning content if supported
+              include: ['reasoning.encrypted_content'],
+              reasoning: {
+                effort: reasoningOptions.effort || 'medium',
+                ...(this.supportsReasoningSummary() ? { summary: reasoningOptions.summary || 'auto' } : {}),
+              },
+            }
+          : {}),
+      };
+
+      // Use OpenAI SDK responses endpoint with proper typing
+      const response = await (this.client.responses.create as (params: typeof requestOptions) => Promise<unknown>)(
+        requestOptions,
+      );
+
+      let currentReasoningText = '';
+      let currentReasoningSummaryText = '';
+
+      // Handle streaming response
+      if (response && typeof response === 'object' && Symbol.asyncIterator in response) {
+        for await (const event of response as unknown as AsyncIterable<{
+          type: string;
+          delta?: string;
+        }>) {
+          // Handle different event types
+          switch (event.type) {
+            case 'response.output_text.delta':
+              if (event.delta) {
+                this.tokenCount++;
+                yield event.delta;
+              }
+              break;
+
+            // Handle OpenAI responses endpoint reasoning format
+            case 'response.reasoning_text.delta':
+              if (event.delta) {
+                currentReasoningText += event.delta;
+              }
+              break;
+
+            case 'response.reasoning_summary_text.delta':
+              if (event.delta) {
+                currentReasoningSummaryText += event.delta;
+              }
+              break;
+
+            case 'response.reasoning_summary_part.added':
+              // Initialize reasoning summary part
+              break;
+
+            case 'response.reasoning_summary_part.done':
+              // If we have collected reasoning summary text, yield it
+              if (currentReasoningSummaryText.trim()) {
+                yield `[REASONING]${currentReasoningSummaryText.trim()}`;
+                currentReasoningSummaryText = '';
+              }
+              break;
+
+            case 'response.reasoning_part.done':
+              // If we have collected raw reasoning text, yield it
+              if (currentReasoningText.trim()) {
+                yield `[REASONING]${currentReasoningText.trim()}`;
+                currentReasoningText = '';
+              }
+              break;
+
+            case 'response.output_item.done':
+              // Yield any remaining reasoning text when output item is done
+              if (currentReasoningText.trim()) {
+                yield `[REASONING]${currentReasoningText.trim()}`;
+                currentReasoningText = '';
+              }
+              if (currentReasoningSummaryText.trim()) {
+                yield `[REASONING]${currentReasoningSummaryText.trim()}`;
+                currentReasoningSummaryText = '';
+              }
+              break;
+
+            // Handle other event types as needed
+            case 'response.created':
+            case 'response.in_progress':
+            case 'response.output_item.added':
+            case 'response.content_part.added':
+            case 'response.output_text.done':
+            case 'response.content_part.done':
+            case 'response.completed':
+              // These events don't need specific handling for text streaming
+              break;
+
+            default:
+              // Log unknown event types for debugging
+              console.debug('Unknown response event type:', event.type);
+              break;
+          }
+        }
+
+        // Yield any remaining reasoning text
+        if (currentReasoningText.trim()) {
+          yield `[REASONING]${currentReasoningText.trim()}`;
+        }
+        if (currentReasoningSummaryText.trim()) {
+          yield `[REASONING]${currentReasoningSummaryText.trim()}`;
+        }
+      } else {
+        throw new Error('Expected a streaming response from OpenAI responses endpoint');
+      }
+    }.bind(this)();
+
+    return toReadableStream(gen);
   }
 }

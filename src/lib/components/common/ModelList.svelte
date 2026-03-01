@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import ModelItem from './ModelItem.svelte';
-  import { Search, Funnel, Image, Text } from 'lucide-svelte';
+  import { Search, Funnel, Image, Text, Brain } from 'lucide-svelte';
   import type { ModelInfo } from '$lib/providers/base';
   import type { ProviderInstance } from '$lib/types';
   import { settingsManager } from '$lib/settings/SettingsManager';
@@ -24,6 +24,7 @@
   let filterFileInput = false;
   let filterImageInput = false;
   let filterImageGeneration = false;
+  let filterReasoning = false;
   let filterWebSearch = false;
   let selectedProviderIds: string[] = [];
 
@@ -61,6 +62,10 @@
     return model.architecture?.outputModalities?.includes('image') ?? false;
   }
 
+  function supportsReasoning(model: ModelInfo): boolean {
+    return model.supportsReasoning ?? false;
+  }
+
   function supportsWebSearch(model: ModelInfo): boolean {
     return model.supportsWebSearch ?? false;
   }
@@ -70,13 +75,19 @@
     filterFileInput = false;
     filterImageInput = false;
     filterImageGeneration = false;
+    filterReasoning = false;
     filterWebSearch = false;
     selectedProviderIds = [];
   }
 
   // Check if any filters are active
   $: hasActiveFilters =
-    filterFileInput || filterImageInput || filterImageGeneration || filterWebSearch || selectedProviderIds.length > 0;
+    filterFileInput ||
+    filterImageInput ||
+    filterImageGeneration ||
+    filterReasoning ||
+    filterWebSearch ||
+    selectedProviderIds.length > 0;
 
   // Clear filters when filter panel is closed
   $: if (!showFilters && hasActiveFilters) {
@@ -102,13 +113,15 @@
     }
 
     // Apply capability filters with OR logic
-    const hasCapabilityFilters = filterFileInput || filterImageInput || filterImageGeneration || filterWebSearch;
+    const hasCapabilityFilters =
+      filterFileInput || filterImageInput || filterImageGeneration || filterReasoning || filterWebSearch;
     if (hasCapabilityFilters) {
       filteredModels = filteredModels.filter((model) => {
         return (
           (filterFileInput && supportsFileInput(model)) ||
           (filterImageInput && supportsImageInput(model)) ||
           (filterImageGeneration && supportsImageGeneration(model)) ||
+          (filterReasoning && supportsReasoning(model)) ||
           (filterWebSearch && supportsWebSearch(model))
         );
       });
@@ -120,13 +133,7 @@
     }
 
     if (mode === 'select') {
-      return (
-        filteredModels
-          .filter((model) => settingsManager.isModelEnabled(instance.id, model.id))
-          // Filter out models that don't support chat completions endpoint
-          // TODO: Implement responses endpoint
-          .filter((model) => !model.doesntSupportChatCompletionsEndpoint)
-      );
+      return filteredModels.filter((model) => settingsManager.isModelEnabled(instance.id, model.id));
     } else {
       return filteredModels;
     }
@@ -175,6 +182,12 @@
                 text="Image Generation"
                 variant={filterImageGeneration ? 'warning' : 'default'}
                 size="md"></Pill>
+            </button>
+            <button
+              class="filter-btn"
+              class:inactive={!filterReasoning}
+              on:click={() => (filterReasoning = !filterReasoning)}>
+              <Pill icon={Brain} text="Reasoning" variant={filterReasoning ? 'special' : 'default'} size="md"></Pill>
             </button>
             <button
               class="filter-btn"

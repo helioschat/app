@@ -31,6 +31,10 @@ export type Message = {
   // Web search settings used for this message
   webSearchEnabled?: boolean;
   webSearchContextSize?: 'low' | 'medium' | 'high';
+  // Reasoning settings used for this message
+  reasoningEnabled?: boolean;
+  reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high';
+  reasoningSummary?: 'auto' | 'concise' | 'detailed';
 };
 
 // Message with populated attachments for UI usage
@@ -54,6 +58,9 @@ export type Chat = {
   };
   webSearchEnabled?: boolean;
   webSearchContextSize?: 'low' | 'medium' | 'high';
+  reasoningEnabled?: boolean;
+  reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high';
+  reasoningSummary?: 'auto' | 'concise' | 'detailed';
 };
 
 export type ProviderType = 'openai-compatible';

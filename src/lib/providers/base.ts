@@ -6,6 +6,11 @@ export interface LanguageModel {
   stream: (
     messages: MessageWithAttachments[],
     webSearchOptions?: { enabled: boolean; searchContextSize?: 'low' | 'medium' | 'high' },
+    reasoningOptions?: {
+      enabled: boolean;
+      effort?: 'minimal' | 'low' | 'medium' | 'high';
+      summary?: 'auto' | 'concise' | 'detailed';
+    },
   ) => ReadableStream<string>;
   getAvailableModels: () => Promise<ModelInfo[]>;
   fallbackModel?: string;
@@ -34,8 +39,10 @@ export interface ModelInfo {
   unsupported?: boolean; // Whether the model is unsupported (for cases where we don't yet support the model's input/output modalities or other features)
   huggingfaceId?: string;
   supportsWebSearch?: boolean; // Whether the model supports web search capabilities.
-  webSearchModelRedirect?: string; // Model ID to use instead when web search is enabled
+  webSearchOnlyThroughResponsesEndpoint?: boolean; // Whether web search is only available through the /v1/responses endpoint.
   supportsResponsesEndpoint?: boolean; // Whether the model supports the /v1/responses endpoint.
+  supportsReasoning?: boolean; // Whether the model supports advanced reasoning capabilities.
+  doesntSupportReasoningSummary?: boolean; // Whether the model doesn't support reasoning summary parameter.
   doesntSupportChatCompletionsEndpoint?: boolean; // Whether the model doesn't support the /v1/chat/completions endpoint.
 }
 

@@ -215,6 +215,9 @@ export function createNewChat(
   providerInstanceId?: string,
   webSearchEnabled?: boolean,
   webSearchContextSize?: 'low' | 'medium' | 'high',
+  reasoningEnabled?: boolean,
+  reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high',
+  reasoningSummary?: 'auto' | 'concise' | 'detailed',
 ): string {
   const newChat: Chat = createInitialChat();
 
@@ -229,6 +232,17 @@ export function createNewChat(
   }
   if (webSearchContextSize !== undefined) {
     newChat.webSearchContextSize = webSearchContextSize;
+  }
+
+  // Set reasoning options if specified
+  if (reasoningEnabled !== undefined) {
+    newChat.reasoningEnabled = reasoningEnabled;
+  }
+  if (reasoningEffort !== undefined) {
+    newChat.reasoningEffort = reasoningEffort;
+  }
+  if (reasoningSummary !== undefined) {
+    newChat.reasoningSummary = reasoningSummary;
   }
 
   // If an initial message is provided OR attachments exist, add it as a user message

@@ -12,6 +12,9 @@
   let isTemporary = $state(false);
   let webSearchEnabled = $state(false);
   let webSearchContextSize: 'low' | 'medium' | 'high' = $state('low');
+  let reasoningEnabled = $state(false);
+  let reasoningEffort: 'minimal' | 'low' | 'medium' | 'high' = $state('medium');
+  let reasoningSummary: 'auto' | 'concise' | 'detailed' = $state('auto');
 
   // Check if this is first-time setup
   const isFirstTime = $derived($setupStore.isFirstTime);
@@ -21,6 +24,9 @@
     attachments?: Attachment[],
     webSearchEnabled?: boolean,
     webSearchContextSize?: 'low' | 'medium' | 'high',
+    reasoningEnabled?: boolean,
+    reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high',
+    reasoningSummary?: 'auto' | 'concise' | 'detailed',
   ) {
     e.preventDefault();
     if (!searchInput.trim() && (!attachments || attachments.length === 0)) return;
@@ -32,6 +38,9 @@
       $selectedModel?.providerInstanceId,
       webSearchEnabled,
       webSearchContextSize,
+      reasoningEnabled,
+      reasoningEffort,
+      reasoningSummary,
     );
     goto(`/${newChatId}`);
   }
@@ -62,6 +71,9 @@
       bind:isTemporary
       bind:webSearchEnabled
       bind:webSearchContextSize
+      bind:reasoningEnabled
+      bind:reasoningEffort
+      bind:reasoningSummary
       handleSubmit={handleSearch}
       handleStop={async () => {}}
       showTemporaryToggle={true}

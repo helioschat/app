@@ -376,7 +376,7 @@ select {
 }
 
 .button-large {
-  @apply rounded-lg p-4;
+  @apply justify-start gap-4 rounded-lg p-4 text-left;
 }
 
 .button-primary {

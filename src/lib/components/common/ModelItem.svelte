@@ -2,7 +2,7 @@
   import type { ModelInfo } from '$lib/providers/base';
   import Pill from './Pill.svelte';
   import { supportsImageGeneration } from '$lib/utils/attachments';
-  import { Archive, FileInput, Image, Search, Text, X } from 'lucide-svelte';
+  import { Archive, Brain, FileInput, Image, Search, Text, X } from 'lucide-svelte';
 
   export let model: ModelInfo;
   export let isActive = false;
@@ -22,7 +22,6 @@
   $: modelFeatures = [...(model.architecture?.inputModalities || [])];
   $: isUnsupported = (() => {
     if (model.unsupported) return true; // Explicitly marked as unsupported
-    if (model.doesntSupportChatCompletionsEndpoint) return true; // Doesn't support chat completions endpoint
     if (model.architecture && model.architecture.inputModalities)
       if (
         !model.architecture?.inputModalities?.includes('text') &&
@@ -94,6 +93,9 @@
         {/if}
         {#if isImageGeneration}
           <Pill icon={Image} text="Image Generation" size="sm" variant="warning"></Pill>
+        {/if}
+        {#if model.supportsReasoning}
+          <Pill icon={Brain} text="Reasoning" size="sm" variant="special"></Pill>
         {/if}
         {#if model.supportsWebSearch}
           <Pill icon={Search} text="Web Search" size="sm" variant="error"></Pill>

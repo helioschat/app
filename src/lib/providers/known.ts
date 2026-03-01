@@ -139,7 +139,6 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
       'gpt-5-2025-08-07',
       'gpt-5-mini-2025-08-07',
       'gpt-5-nano-2025-08-07',
-      /^gpt-.*-pro$/,
       /^gpt-.*-search-preview.*$/,
       /^gpt-.*-search-api.*$/,
       /^gpt-.*-audio.*$/,
@@ -151,7 +150,6 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
       /^gpt-.*-transcribe.*$/,
       /^gpt-.*-instruct.*$/,
       /^o1-preview.*$/,
-      /^o.*-pro.*$/,
       /^o.*-deep-research.*$/,
       /^whisper-.*$/,
       /^codex-.*$/,
@@ -174,7 +172,6 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
           outputModalities: ['text'],
         },
         supportsWebSearch: true,
-        webSearchModelRedirect: 'gpt-4o-search-preview',
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
       },
@@ -253,7 +250,6 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
           outputModalities: ['text'],
         },
         supportsWebSearch: true,
-        webSearchModelRedirect: 'gpt-4o-search-preview',
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
       },
@@ -266,7 +262,6 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
           outputModalities: ['text'],
         },
         supportsWebSearch: true,
-        webSearchModelRedirect: 'gpt-4o-mini-search-preview',
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
       },
@@ -280,7 +275,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         },
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: true,
-        // TODO: reasoningTokenSupport: true,
+        supportsReasoning: true,
       },
       'gpt-5': {
         name: 'GPT-5',
@@ -292,6 +287,9 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         },
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
+        supportsReasoning: true,
+        supportsWebSearch: true,
+        webSearchOnlyThroughResponsesEndpoint: true,
       },
       'gpt-5-mini': {
         name: 'GPT-5 mini',
@@ -303,6 +301,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         },
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
+        supportsReasoning: true,
       },
       'gpt-5-nano': {
         name: 'GPT-5 nano',
@@ -314,6 +313,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         },
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
+        supportsReasoning: true,
       },
       'gpt-5-chat-latest': {
         name: 'ChatGPT 5',
@@ -336,7 +336,8 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         },
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: true,
-        // TODO: reasoningTokenSupport: true,
+        supportsReasoning: true,
+        doesntSupportReasoningSummary: true,
       },
       o1: {
         name: 'o1',
@@ -348,7 +349,8 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         },
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
-        // TODO: reasoningTokenSupport: true,
+        supportsReasoning: true,
+        doesntSupportReasoningSummary: true,
       },
       'o1-mini': {
         name: 'o1-mini',
@@ -361,7 +363,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         deprecated: true,
         supportsResponsesEndpoint: false,
         doesntSupportChatCompletionsEndpoint: false,
-        // TODO: reasoningTokenSupport: true,
+        supportsReasoning: true,
       },
       'o3-pro': {
         name: 'o3-pro',
@@ -373,7 +375,8 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         },
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: true,
-        // TODO: reasoningTokenSupport: true,
+        supportsReasoning: true,
+        doesntSupportReasoningSummary: true,
       },
       o3: {
         name: 'o3',
@@ -385,7 +388,8 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         },
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
-        // TODO: reasoningTokenSupport: true,
+        supportsReasoning: true,
+        doesntSupportReasoningSummary: true,
       },
       'o3-mini': {
         name: 'o3-mini',
@@ -397,7 +401,8 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         },
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
-        // TODO: reasoningTokenSupport: true,
+        supportsReasoning: true,
+        doesntSupportReasoningSummary: true,
       },
       'o4-mini': {
         name: 'o4-mini',
@@ -409,7 +414,8 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         },
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
-        // TODO: reasoningTokenSupport: true,
+        supportsReasoning: true,
+        doesntSupportReasoningSummary: true,
       },
       'gpt-image-1': {
         name: 'GPT Image 1',
@@ -498,6 +504,42 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
     modelOverrides: {
       'google/gemini-2.5-flash-image-preview': {
         unsupported: true,
+      },
+      'openai/gpt-5-pro': {
+        supportsReasoning: true,
+      },
+      'openai/gpt-5': {
+        supportsReasoning: true,
+      },
+      'openai/gpt-5-mini': {
+        supportsReasoning: true,
+      },
+      'openai/gpt-5-nano': {
+        supportsReasoning: true,
+      },
+      'openai/o1-pro': {
+        supportsReasoning: true,
+        doesntSupportReasoningSummary: true,
+      },
+      'openai/o1': {
+        supportsReasoning: true,
+        doesntSupportReasoningSummary: true,
+      },
+      'openai/o3-pro': {
+        supportsReasoning: true,
+        doesntSupportReasoningSummary: true,
+      },
+      'openai/o3': {
+        supportsReasoning: true,
+        doesntSupportReasoningSummary: true,
+      },
+      'openai/o3-mini': {
+        supportsReasoning: true,
+        doesntSupportReasoningSummary: true,
+      },
+      'openai/o4-mini': {
+        supportsReasoning: true,
+        doesntSupportReasoningSummary: true,
       },
     },
     baseUrlPatterns: [/https?:\/\/openrouter\.ai\/api/],

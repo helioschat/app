@@ -35,16 +35,7 @@ export class StreamingController {
   private buildModel(providerInstanceId: string, modelId: string, webSearchEnabled?: boolean) {
     const providerInstance = this.getProviderInstance(providerInstanceId);
 
-    // Check if we should use a redirect model for web search
-    let effectiveModelId = modelId;
-    if (webSearchEnabled) {
-      const redirectModel = this.getWebSearchRedirectModel(providerInstanceId, modelId);
-      if (redirectModel) {
-        effectiveModelId = redirectModel;
-      }
-    }
-
-    const effectiveConfig = { ...providerInstance.config, model: effectiveModelId, providerInstanceId };
+    const effectiveConfig = { ...providerInstance.config, model: modelId, providerInstanceId };
     return getLanguageModel(providerInstance.providerType, effectiveConfig);
   }
 
@@ -129,6 +120,9 @@ export class StreamingController {
     attachments?: Attachment[],
     webSearchEnabled?: boolean,
     webSearchContextSize?: 'low' | 'medium' | 'high',
+    reasoningEnabled?: boolean,
+    reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high',
+    reasoningSummary?: 'auto' | 'concise' | 'detailed',
   ): Promise<StreamControllerState> {
     if ((!userInput.trim() && (!attachments || attachments.length === 0)) || !activeChat || this.isLoading) {
       return this.getState();
@@ -145,15 +139,6 @@ export class StreamingController {
     const model = this.buildModel(providerInstanceId, modelId, webSearchEnabled);
     const systemPrompt = get(advancedSettings).systemPrompt;
 
-    // Get the effective model ID (with redirect if web search is enabled)
-    let effectiveModelId = modelId;
-    if (webSearchEnabled) {
-      const redirectModel = this.getWebSearchRedirectModel(providerInstanceId, modelId);
-      if (redirectModel) {
-        effectiveModelId = redirectModel;
-      }
-    }
-
     const messagesForProvider = [];
     if (systemPrompt) {
       messagesForProvider.push({
@@ -168,9 +153,12 @@ export class StreamingController {
         role: 'assistant',
         content: '',
         providerInstanceId: providerInstanceId,
-        model: effectiveModelId,
+        model: modelId,
         webSearchEnabled: webSearchEnabled,
         webSearchContextSize: webSearchContextSize,
+        reasoningEnabled: reasoningEnabled,
+        reasoningEffort: reasoningEffort,
+        reasoningSummary: reasoningSummary,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -199,9 +187,12 @@ export class StreamingController {
         role: 'assistant',
         content: '',
         providerInstanceId: providerInstanceId,
-        model: effectiveModelId,
+        model: modelId,
         webSearchEnabled: webSearchEnabled,
         webSearchContextSize: webSearchContextSize,
+        reasoningEnabled: reasoningEnabled,
+        reasoningEffort: reasoningEffort,
+        reasoningSummary: reasoningSummary,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -213,8 +204,11 @@ export class StreamingController {
     const updatedChat = {
       ...activeChat,
       providerInstanceId: activeChat.providerInstanceId || providerInstanceId,
-      model: effectiveModelId,
+      model: modelId,
       messages: updatedMessages,
+      reasoningEnabled: reasoningEnabled,
+      reasoningEffort: reasoningEffort,
+      reasoningSummary: reasoningSummary,
       updatedAt: new Date(),
     };
 
@@ -257,11 +251,20 @@ export class StreamingController {
 
       // Check if web search should be enabled for this model
       const webSearchOptions =
-        webSearchEnabled && this.supportsWebSearch(providerInstanceId, effectiveModelId)
+        webSearchEnabled && this.supportsWebSearch(providerInstanceId, modelId)
           ? { enabled: true, searchContextSize: webSearchContextSize || 'low' }
           : undefined;
 
-      const stream = model.stream(messagesForProvider as MessageWithAttachments[], webSearchOptions);
+      // Prepare reasoning options
+      const reasoningOptions = reasoningEnabled
+        ? {
+            enabled: true,
+            effort: reasoningEffort || 'medium',
+            summary: reasoningSummary || 'auto',
+          }
+        : undefined;
+
+      const stream = model.stream(messagesForProvider as MessageWithAttachments[], webSearchOptions, reasoningOptions);
       this.currentReader = stream.getReader();
 
       startStream(this.chatId, assistantMessage.id, contextMessages);
@@ -297,6 +300,9 @@ export class StreamingController {
     modelId: string,
     webSearchEnabled?: boolean,
     webSearchContextSize?: 'low' | 'medium' | 'high',
+    reasoningEnabled?: boolean,
+    reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high',
+    reasoningSummary?: 'auto' | 'concise' | 'detailed',
   ): Promise<StreamControllerState> {
     if (!activeChat || this.isLoading || activeChat.messages.length === 0) {
       return this.getState();
@@ -305,24 +311,18 @@ export class StreamingController {
     const model = this.buildModel(providerInstanceId, modelId, webSearchEnabled);
     const systemPrompt = get(advancedSettings).systemPrompt;
 
-    // Get the effective model ID (with redirect if web search is enabled)
-    let effectiveModelId = modelId;
-    if (webSearchEnabled) {
-      const redirectModel = this.getWebSearchRedirectModel(providerInstanceId, modelId);
-      if (redirectModel) {
-        effectiveModelId = redirectModel;
-      }
-    }
-
     // Create assistant message
     const assistantMessage: MessageWithAttachments = {
       id: uuidv7(),
       role: 'assistant',
       content: '',
       providerInstanceId: providerInstanceId,
-      model: effectiveModelId,
+      model: modelId,
       webSearchEnabled: webSearchEnabled,
       webSearchContextSize: webSearchContextSize,
+      reasoningEnabled: reasoningEnabled,
+      reasoningEffort: reasoningEffort,
+      reasoningSummary: reasoningSummary,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -342,7 +342,7 @@ export class StreamingController {
     const updatedChat = {
       ...activeChat,
       providerInstanceId: activeChat.providerInstanceId || providerInstanceId,
-      model: effectiveModelId,
+      model: modelId,
       messages: updatedMessages,
       updatedAt: new Date(),
     };
@@ -388,11 +388,20 @@ export class StreamingController {
 
       // Check if web search should be enabled for this model
       const webSearchOptions =
-        webSearchEnabled && this.supportsWebSearch(providerInstanceId, effectiveModelId)
+        webSearchEnabled && this.supportsWebSearch(providerInstanceId, modelId)
           ? { enabled: true, searchContextSize: webSearchContextSize || 'low' }
           : undefined;
 
-      const stream = model.stream(messagesForProvider as MessageWithAttachments[], webSearchOptions);
+      // Prepare reasoning options
+      const reasoningOptions = reasoningEnabled
+        ? {
+            enabled: true,
+            effort: reasoningEffort || 'medium',
+            summary: reasoningSummary || 'auto',
+          }
+        : undefined;
+
+      const stream = model.stream(messagesForProvider as MessageWithAttachments[], webSearchOptions, reasoningOptions);
       this.currentReader = stream.getReader();
 
       const streamProcessor = new StreamProcessor(
@@ -499,16 +508,6 @@ export class StreamingController {
     }
   }
 
-  private getWebSearchRedirectModel(providerInstanceId: string, modelId: string): string | undefined {
-    const cachedModels = get(availableModels);
-    const models = cachedModels[providerInstanceId];
-    if (models) {
-      const model = models.find((m: ModelInfo) => m.id === modelId);
-      return model?.webSearchModelRedirect;
-    }
-    return undefined;
-  }
-
   private supportsWebSearch(providerInstanceId: string, modelId: string): boolean {
     const instances = get(providerInstances) as ProviderInstance[];
     const instance = instances.find((inst: ProviderInstance) => inst.id === providerInstanceId);
@@ -519,7 +518,7 @@ export class StreamingController {
     if (models) {
       const model = models.find((m: ModelInfo) => m.id === modelId);
       // Model supports web search if it explicitly supports it OR has a redirect model for web search
-      return model?.supportsWebSearch || !!model?.webSearchModelRedirect;
+      return model?.supportsWebSearch ?? false;
     }
 
     return false;

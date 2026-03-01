@@ -31,6 +31,11 @@
   $: webSearchEnabled = activeChat?.webSearchEnabled ?? false;
   $: webSearchContextSize = activeChat?.webSearchContextSize ?? 'low';
 
+  // Use reasoning options from the chat object, with fallback defaults
+  $: reasoningEnabled = activeChat?.reasoningEnabled ?? false;
+  $: reasoningEffort = activeChat?.reasoningEffort ?? 'medium';
+  $: reasoningSummary = activeChat?.reasoningSummary ?? 'auto';
+
   // Map provides clearer semantics and easier cleanup than a plain object
   const streamControllers = new Map<string, StreamingController>();
 
@@ -83,6 +88,9 @@
     attachments?: Attachment[],
     webSearchEnabled?: boolean,
     webSearchContextSize?: 'low' | 'medium' | 'high',
+    reasoningEnabled?: boolean,
+    reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high',
+    reasoningSummary?: 'auto' | 'concise' | 'detailed',
   ) {
     const messageContent = userInput;
     if (
@@ -103,6 +111,9 @@
       attachments,
       webSearchEnabled,
       webSearchContextSize,
+      reasoningEnabled,
+      reasoningEffort,
+      reasoningSummary,
     );
   }
 
@@ -153,6 +164,11 @@
     const originalWebSearchEnabled = messageToRegenerate.webSearchEnabled || false;
     const originalWebSearchContextSize = messageToRegenerate.webSearchContextSize || 'low';
 
+    // Extract reasoning settings from the original assistant message
+    const originalReasoningEnabled = messageToRegenerate.reasoningEnabled || false;
+    const originalReasoningEffort = messageToRegenerate.reasoningEffort || 'medium';
+    const originalReasoningSummary = messageToRegenerate.reasoningSummary || 'auto';
+
     // Truncate chat history to the point *before* the user message we are regenerating from.
     const truncatedMessages = activeChat.messages.slice(0, messageIndex - 1);
 
@@ -191,6 +207,9 @@
       originalAttachments,
       originalWebSearchEnabled, // Use original web search settings
       originalWebSearchContextSize, // Use original web search context size
+      originalReasoningEnabled, // Use original reasoning settings
+      originalReasoningEffort, // Use original reasoning effort
+      originalReasoningSummary, // Use original reasoning summary
     );
   }
 
@@ -226,12 +245,19 @@
       const originalWebSearchEnabled = nextAssistantMessage?.webSearchEnabled || false;
       const originalWebSearchContextSize = nextAssistantMessage?.webSearchContextSize || 'low';
 
+      const originalReasoningEnabled = nextAssistantMessage?.reasoningEnabled || false;
+      const originalReasoningEffort = nextAssistantMessage?.reasoningEffort || 'medium';
+      const originalReasoningSummary = nextAssistantMessage?.reasoningSummary || 'auto';
+
       await controller.handleRegenerate(
         updatedChat,
         providerInstanceId,
         modelId,
         originalWebSearchEnabled, // Use original web search settings
         originalWebSearchContextSize, // Use original web search context size
+        originalReasoningEnabled, // Use original reasoning settings
+        originalReasoningEffort, // Use original reasoning effort
+        originalReasoningSummary, // Use original reasoning summary
       );
     }
   }
@@ -272,6 +298,39 @@
     );
 
     // Sync the thread after updating web search settings
+    if (updatedChatSettings) {
+      syncThread(updatedChatSettings);
+    }
+  }
+
+  function handleReasoningToggle(
+    e: CustomEvent<{
+      enabled: boolean;
+      effort: 'minimal' | 'low' | 'medium' | 'high';
+      summary: 'auto' | 'concise' | 'detailed';
+    }>,
+  ) {
+    if (!activeChat) return;
+
+    let updatedChatSettings: typeof activeChat | null = null;
+    // Update the chat object with new reasoning settings
+    chats.update((allChats) =>
+      allChats.map((chat) => {
+        if (chat.id === chatId) {
+          updatedChatSettings = {
+            ...chat,
+            reasoningEnabled: e.detail.enabled,
+            reasoningEffort: e.detail.effort,
+            reasoningSummary: e.detail.summary,
+            updatedAt: new Date(),
+          };
+          return updatedChatSettings;
+        }
+        return chat;
+      }),
+    );
+
+    // Sync the thread after updating reasoning settings
     if (updatedChatSettings) {
       syncThread(updatedChatSettings);
     }
@@ -354,6 +413,9 @@
           activeChat.messages[0].attachments,
           webSearchEnabled, // Pass the web search options
           webSearchContextSize, // Pass the web search context size
+          reasoningEnabled, // Pass the reasoning options
+          reasoningEffort, // Pass the reasoning effort
+          reasoningSummary, // Pass the reasoning summary
         );
       }
     }, 100);
@@ -394,11 +456,15 @@
         bind:userInput
         {webSearchEnabled}
         {webSearchContextSize}
+        {reasoningEnabled}
+        {reasoningEffort}
+        {reasoningSummary}
         {isLoading}
         {handleSubmit}
         {handleStop}
         isTemporaryChat={activeChat.temporary || false}
-        on:webSearchToggle={handleWebSearchToggle}>
+        on:webSearchToggle={handleWebSearchToggle}
+        on:reasoningToggle={handleReasoningToggle}>
       </ChatInput>
     </div>
   {:else}
