@@ -3,6 +3,7 @@
   import { providerInstances, selectedModel, settingsManager } from '$lib/settings/SettingsManager';
   import { availableModels } from '$lib/stores/modelCache';
   import { onMount, tick, createEventDispatcher } from 'svelte';
+  import { lastUsedModels } from '$lib/stores/modelPreferences';
   import ModelSelectorModal from '$lib/components/modal/types/ModelSelectorModal.svelte';
   import ReasoningOptionsModal from '$lib/components/modal/types/ReasoningOptionsModal.svelte';
   import MessageAttachments from './MessageAttachments.svelte';
@@ -445,6 +446,7 @@
   on:select={(e) => {
     const { providerInstanceId, modelId } = e.detail;
     selectedModel.set({ providerInstanceId, modelId });
+    lastUsedModels.recordUsage(providerInstanceId, modelId);
     showModelSelector = false;
   }}>
 </ModelSelectorModal>

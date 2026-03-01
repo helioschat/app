@@ -1,13 +1,14 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import ModelItem from './ModelItem.svelte';
-  import { Search, Funnel, Image, Text, Brain } from 'lucide-svelte';
+  import { Search, Funnel, Image, Text, Brain, Star, Clock } from 'lucide-svelte';
   import type { ModelInfo } from '$lib/providers/base';
   import type { ProviderInstance } from '$lib/types';
   import { settingsManager } from '$lib/settings/SettingsManager';
   import Pill from './Pill.svelte';
   import { slide } from 'svelte/transition';
   import { getKnownProviderMeta } from '$lib/providers/known';
+  import { favoriteModels, lastUsedModels } from '$lib/stores/modelPreferences';
 
   export let providerInstances: ProviderInstance[] = [];
   export let availableModels: Record<string, ModelInfo[]> = {};
@@ -63,11 +64,11 @@
   }
 
   function supportsReasoning(model: ModelInfo): boolean {
-    return model.supportsReasoning ?? false;
+    return (model as any).supportsReasoning ?? false;
   }
 
   function supportsWebSearch(model: ModelInfo): boolean {
-    return model.supportsWebSearch ?? false;
+    return (model as any).supportsWebSearch ?? false;
   }
 
   // Clear all filters
@@ -138,6 +139,59 @@
       return filteredModels;
     }
   }
+
+  // Build a lookup: providerInstanceId -> icon URL
+  $: providerIconMap = (() => {
+    const map: Record<string, string | undefined> = {};
+    for (const instance of providerInstances) {
+      const meta = instance.config.matchedProvider ? getKnownProviderMeta(instance.config.matchedProvider) : undefined;
+      map[instance.id] = meta?.icon;
+    }
+    return map;
+  })();
+
+  // Build a flat lookup: modelId -> { model, providerInstanceId }
+  $: allEnabledModels = (() => {
+    const result: Record<string, { model: ModelInfo; providerInstanceId: string }> = {};
+    for (const instance of providerInstances) {
+      const models = availableModels[instance.id] || [];
+      for (const model of models) {
+        if (settingsManager.isModelEnabled(instance.id, model.id)) {
+          result[`${instance.id}::${model.id}`] = { model, providerInstanceId: instance.id };
+        }
+      }
+    }
+    return result;
+  })();
+
+  // Resolved favorite entries (only show models that are currently available + enabled)
+  $: resolvedFavorites = $favoriteModels
+    .map((fav) => allEnabledModels[`${fav.providerInstanceId}::${fav.modelId}`])
+    .filter(Boolean) as { model: ModelInfo; providerInstanceId: string }[];
+
+  // Resolved last-used entries (only show models that are currently available + enabled, exclude favorites)
+  $: resolvedLastUsed = $lastUsedModels
+    .map((entry) => {
+      const resolved = allEnabledModels[`${entry.providerInstanceId}::${entry.modelId}`];
+      if (!resolved) return null;
+      // Exclude models already shown in favorites
+      const isFav = $favoriteModels.some(
+        (f) => f.providerInstanceId === entry.providerInstanceId && f.modelId === entry.modelId,
+      );
+      return isFav ? null : resolved;
+    })
+    .filter(Boolean) as { model: ModelInfo; providerInstanceId: string }[];
+
+  // Filter specials by search query too
+  $: filteredFavorites = searchQuery
+    ? resolvedFavorites.filter((e) => e.model.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    : resolvedFavorites;
+
+  $: filteredLastUsed = searchQuery
+    ? resolvedLastUsed.filter((e) => e.model.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    : resolvedLastUsed;
+
+  $: showSpecialSections = mode === 'select' && !hasActiveFilters;
 </script>
 
 <div>
@@ -221,6 +275,46 @@
   {/if}
 
   <div class="min-h-[400px] space-y-4 overflow-x-hidden overflow-y-auto" style="max-height: {maxHeight}">
+    {#if showSpecialSections && filteredFavorites.length > 0}
+      <div class="space-y-2" transition:slide={{ duration: 125 }}>
+        <div class="section-header">
+          <Star size={13} class="text-amber-400" />
+          <span>Favorites</span>
+        </div>
+        {#each filteredFavorites as entry (entry.providerInstanceId + '::' + entry.model.id)}
+          <ModelItem
+            model={entry.model}
+            providerInstanceId={entry.providerInstanceId}
+            providerIconUrl={providerIconMap[entry.providerInstanceId]}
+            {mode}
+            minimal={true}
+            isActive={mode === 'select' && entry.model.id === currentModelId}
+            onclick={mode === 'select' ? () => handleSelect(entry.providerInstanceId, entry.model.id) : undefined} />
+        {/each}
+        <div class="section-divider"></div>
+      </div>
+    {/if}
+
+    {#if showSpecialSections && filteredLastUsed.length > 0}
+      <div class="space-y-2" transition:slide={{ duration: 125 }}>
+        <div class="section-header">
+          <Clock size={13} class="text-[var(--color-a9)]" />
+          <span>Last Used</span>
+        </div>
+        {#each filteredLastUsed as entry (entry.providerInstanceId + '::' + entry.model.id)}
+          <ModelItem
+            model={entry.model}
+            providerInstanceId={entry.providerInstanceId}
+            providerIconUrl={providerIconMap[entry.providerInstanceId]}
+            {mode}
+            minimal={true}
+            isActive={mode === 'select' && entry.model.id === currentModelId}
+            onclick={mode === 'select' ? () => handleSelect(entry.providerInstanceId, entry.model.id) : undefined} />
+        {/each}
+        <div class="section-divider"></div>
+      </div>
+    {/if}
+
     {#if providerInstances.length > 0}
       {#each providerInstances as instance (instance.id)}
         {@const filteredModels = getFilteredModels(instance)}
@@ -239,6 +333,8 @@
             {#each filteredModels as model (model.id)}
               <ModelItem
                 {model}
+                providerInstanceId={instance.id}
+                providerIconUrl={providerIconMap[instance.id]}
                 {mode}
                 minimal={mode === 'select'}
                 isActive={mode === 'select' && model.id === currentModelId}
@@ -282,5 +378,15 @@
 
   .filter-btn.inactive {
     @apply opacity-50;
+  }
+
+  .section-header {
+    @apply flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase;
+    color: var(--color-a10);
+    padding-inline-start: 0.25rem;
+  }
+
+  .section-divider {
+    @apply mt-2 border-t border-[var(--color-a4)];
   }
 </style>
