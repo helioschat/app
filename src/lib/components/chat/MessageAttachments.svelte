@@ -1,8 +1,9 @@
 <script lang="ts">
   import type { Attachment } from '$lib/types';
   import { formatFileSize } from '$lib/utils/attachments';
-  import { File, Download, X } from 'lucide-svelte';
+  import { File, Download, X, Expand } from 'lucide-svelte';
   import { createEventDispatcher } from 'svelte';
+  import ImageLightbox from '$lib/components/chat/ImageLightbox.svelte';
 
   // List of attachments to display
   export let attachments: Attachment[];
@@ -13,7 +14,20 @@
   // Indicates message already sent; toggles UI differences (download vs remove, thumbnail size)
   export let isSent: boolean = false;
 
+  // When true the message contains only images (no text / other content)
+  export let imageOnly: boolean = false;
+
   const dispatch = createEventDispatcher<{ remove: { id: string } }>();
+
+  let lightboxAttachment: Attachment | null = null;
+
+  function openLightbox(attachment: Attachment) {
+    lightboxAttachment = attachment;
+  }
+
+  function closeLightbox() {
+    lightboxAttachment = null;
+  }
 
   function emitRemove(id: string) {
     dispatch('remove', { id });
@@ -49,7 +63,7 @@
   <button
     type="button"
     class="button button-small button-secondary"
-    on:click={() => downloadAttachment(attachment)}
+    onclick={() => downloadAttachment(attachment)}
     title="Download {attachment.name}">
     <Download size={14} />
   </button>
@@ -59,26 +73,30 @@
   <button
     type="button"
     class="button button-small button-secondary"
-    on:click={() => emitRemove(attachment.id)}
+    onclick={() => emitRemove(attachment.id)}
     aria-label="Remove attachment">
     <X size={12} />
   </button>
 {/snippet}
 
 {#if attachments && attachments.length > 0}
-  <div class="flex flex-wrap gap-2">
+  <div class="flex flex-wrap gap-2" class:image-only-grid={imageOnly && isSent}>
     {#each attachments as attachment (attachment.id)}
       <div
         class="attachment relative flex h-fit w-full max-w-full items-center gap-3 rounded-lg border border-[var(--color-6)] bg-[var(--color-3)] p-3 sm:w-fit sm:max-w-48 md:max-w-64 lg:max-w-96"
         class:file={attachment.type === 'file'}
         class:image={attachment.type === 'image' && attachment.previewUrl}
-        class:sent={isSent}>
+        class:sent={isSent}
+        class:image-only={imageOnly && isSent}>
         <div class="peer flex w-full items-center">
           {#if attachment.type === 'image' && attachment.previewUrl}
+            <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_noninteractive_element_interactions -->
             <img
               class={isSent ? 'max-h-64 rounded' : 'h-12 w-12 rounded object-cover'}
+              class:clickable={isSent}
               src={attachment.previewUrl}
-              alt={attachment.name} />
+              alt={attachment.name}
+              onclick={isSent ? () => openLightbox(attachment) : undefined} />
           {:else}
             <div
               class="flex h-12 w-12 items-center justify-center rounded bg-[var(--color-a5)] text-[var(--color-a11)]">
@@ -103,9 +121,23 @@
           {/if}
         </div>
         {#if isSent && attachment.type === 'image' && attachment.previewUrl}
+          <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
           <div
-            class="pointer-events-none absolute top-0 left-0 flex h-full w-full items-center justify-center rounded bg-black/50 opacity-0 transition-opacity peer-hover:pointer-events-auto peer-hover:opacity-100 hover:pointer-events-auto hover:opacity-100">
-            {@render downloadBtn(attachment)}
+            class="pointer-events-none absolute top-0 left-0 flex h-full w-full cursor-pointer items-center justify-center gap-2 rounded bg-black/50 opacity-0 transition-opacity peer-hover:pointer-events-auto peer-hover:opacity-100 hover:pointer-events-auto hover:opacity-100"
+            onclick={() => openLightbox(attachment)}>
+            <div onclick={(e) => e.stopPropagation()}>
+              {@render downloadBtn(attachment)}
+            </div>
+            <button
+              type="button"
+              class="button button-small button-secondary"
+              onclick={(e) => {
+                e.stopPropagation();
+                openLightbox(attachment);
+              }}
+              title="View full size">
+              <Expand size={14} />
+            </button>
             <div class="pointer-events-none absolute right-0 bottom-0">
               <p class="text-secondary p-2 text-xs select-none">{formatFileSize(attachment.size)}</p>
             </div>
@@ -116,10 +148,26 @@
   </div>
 {/if}
 
+{#if lightboxAttachment}
+  <ImageLightbox attachment={lightboxAttachment} isOpen={true} onclose={closeLightbox} />
+{/if}
+
 <style lang="postcss">
   @reference "tailwindcss";
 
   .attachment.sent.image {
     @apply rounded-none border-none bg-transparent p-0;
+  }
+
+  .attachment.sent.image.image-only {
+    @apply overflow-hidden rounded-lg;
+  }
+
+  img.clickable {
+    @apply cursor-pointer transition-opacity hover:opacity-90;
+  }
+
+  .image-only-grid {
+    @apply gap-1.5;
   }
 </style>

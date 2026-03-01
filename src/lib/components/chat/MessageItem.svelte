@@ -22,6 +22,14 @@
 
   const messageCreatedAt = message.createdAt;
 
+  // True when the message has attachments that are all images and no text content
+  let isImageOnly = $derived(
+    !message.content &&
+      !!message.attachments &&
+      message.attachments.length > 0 &&
+      message.attachments.every((a) => a.type === 'image' && a.previewUrl),
+  );
+
   const dispatch = createEventDispatcher<{
     regenerate: { message: MessageWithAttachments };
     edit: { message: MessageWithAttachments; newContent: string; providerInstanceId: string; modelId: string };
@@ -154,10 +162,10 @@
       </div>
     {/if}
   {/if}
-  <div class="message-container peer">
+  <div class="message-container peer" class:image-only-container={isImageOnly}>
     <div class="message-content flex flex-col gap-2">
       {#if message.attachments && message.attachments.length > 0}
-        <MessageAttachments attachments={message.attachments} isSent></MessageAttachments>
+        <MessageAttachments attachments={message.attachments} isSent imageOnly={isImageOnly}></MessageAttachments>
       {/if}
       {#if isEditing}
         <!-- Edit Mode -->
@@ -306,6 +314,15 @@
   .message .message-container {
     @apply w-fit max-w-full rounded-3xl px-5 py-2.5;
     background-color: var(--color-a2);
+  }
+
+  .message .message-container.image-only-container {
+    @apply rounded-xl bg-transparent px-0 py-0;
+  }
+
+  .message.user .message-container.image-only-container,
+  .message.assistant .message-container.image-only-container {
+    @apply bg-transparent;
   }
 
   .message.editing .message-container {
