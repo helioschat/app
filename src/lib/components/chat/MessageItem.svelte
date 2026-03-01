@@ -201,10 +201,18 @@
         </div>
       {:else}
         <!-- Display Mode -->
-        <MarkdownRenderer
-          content={message.content}
-          isStreaming={isCurrentlyStreaming && message.role === 'assistant'}
-          messageDate={message.createdAt}></MarkdownRenderer>
+        {#if isThinking && !message.content}
+          <div class="typing-indicator" aria-label="Generating response">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        {:else}
+          <MarkdownRenderer
+            content={message.content}
+            isStreaming={isCurrentlyStreaming && message.role === 'assistant'}
+            messageDate={message.createdAt}></MarkdownRenderer>
+        {/if}
       {/if}
     </div>
   </div>
@@ -373,6 +381,41 @@
     }
     100% {
       background-position: 200%;
+    }
+  }
+
+  .typing-indicator {
+    @apply flex items-center gap-1 py-1;
+  }
+
+  .typing-indicator span {
+    @apply block h-2 w-2 rounded-full;
+    background-color: var(--color-a9);
+    animation: typing-bounce 1.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+    opacity: 0.35;
+  }
+
+  .typing-indicator span:nth-child(2) {
+    animation-delay: 0.18s;
+  }
+
+  .typing-indicator span:nth-child(3) {
+    animation-delay: 0.36s;
+  }
+
+  @keyframes typing-bounce {
+    0%,
+    100% {
+      transform: translateY(0);
+      opacity: 0.35;
+    }
+    35% {
+      transform: translateY(-4px);
+      opacity: 0.9;
+    }
+    55% {
+      transform: translateY(0);
+      opacity: 0.35;
     }
   }
 </style>
