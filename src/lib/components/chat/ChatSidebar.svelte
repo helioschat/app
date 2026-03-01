@@ -301,112 +301,114 @@
         if (folderPickerOpenFor) folderPickerOpenFor = null;
       }}>
       <!-- ── Folders ── -->
-      {#each $folders as folder (folder.id)}
-        {@const folderChats = chatsForFolder(folder.id)}
-        {@const isExpanded = expandedFolders.has(folder.id)}
+      {#if $folders.length > 0}
         <div class="folder-section">
-          <!-- Folder header row -->
-          <div
-            class="folder-row group flex h-8 w-full items-center rounded-[10px] pr-0.5 pl-1"
-            on:click|stopPropagation={() => toggleFolder(folder.id)}>
-            <!-- Expand/collapse toggle -->
-            <button class="flex flex-1 cursor-pointer items-center gap-1.5 truncate text-left" title={folder.name}>
-              <ChevronRight
-                size={13}
-                class="min-w-[13px] transition-transform duration-150"
-                style={isExpanded ? 'transform: rotate(90deg)' : ''} />
-              {#if isExpanded}
-                <FolderOpen size={14} class="min-w-[14px] text-[var(--color-a11)]" />
-              {:else}
-                <Folder size={14} class="min-w-[14px] text-[var(--color-a11)]" />
-              {/if}
-              <span class="truncate text-[0.8rem]">{folder.name}</span>
-              {#if folderChats.length > 0}
-                <span class="folder-count ml-auto shrink-0 pr-1 text-[0.65rem] text-[var(--color-a9)]">
-                  {folderChats.length}
-                </span>
-              {/if}
-            </button>
+          {#each $folders as folder (folder.id)}
+            {@const folderChats = chatsForFolder(folder.id)}
+            {@const isExpanded = expandedFolders.has(folder.id)}
+            <!-- Folder header row -->
+            <div
+              class="folder-row group flex h-8 w-full items-center rounded-[10px] pr-0.5 pl-1"
+              on:click|stopPropagation={() => toggleFolder(folder.id)}>
+              <!-- Expand/collapse toggle -->
+              <button class="flex flex-1 cursor-pointer items-center gap-1.5 truncate text-left" title={folder.name}>
+                <ChevronRight
+                  size={13}
+                  class="min-w-[13px] transition-transform duration-150"
+                  style={isExpanded ? 'transform: rotate(90deg)' : ''} />
+                {#if isExpanded}
+                  <FolderOpen size={14} class="min-w-[14px] text-[var(--color-a11)]" />
+                {:else}
+                  <Folder size={14} class="min-w-[14px] text-[var(--color-a11)]" />
+                {/if}
+                <span class="truncate text-[0.8rem]">{folder.name}</span>
+                {#if folderChats.length > 0}
+                  <span class="folder-count ml-auto shrink-0 pr-1 text-[0.65rem] text-[var(--color-a9)]">
+                    {folderChats.length}
+                  </span>
+                {/if}
+              </button>
 
-            <!-- Folder actions (visible on hover) -->
-            <div class="hidden shrink-0 items-center group-hover:flex">
-              <button
-                class="button button-ghost button-small button-circle"
-                on:click|stopPropagation={() => openRenameFolder(folder.id, folder.name)}
-                aria-label="Rename folder">
-                <Pencil size={13} />
-              </button>
-              <button
-                class="button button-ghost button-small button-circle"
-                on:click|stopPropagation={() => handleDeleteFolder(folder.id)}
-                aria-label="Delete folder">
-                <Trash size={13} />
-              </button>
+              <!-- Folder actions (visible on hover) -->
+              <div class="hidden shrink-0 items-center group-hover:flex">
+                <button
+                  class="button button-ghost button-small button-circle"
+                  on:click|stopPropagation={() => openRenameFolder(folder.id, folder.name)}
+                  aria-label="Rename folder">
+                  <Pencil size={13} />
+                </button>
+                <button
+                  class="button button-ghost button-small button-circle"
+                  on:click|stopPropagation={() => handleDeleteFolder(folder.id)}
+                  aria-label="Delete folder">
+                  <Trash size={13} />
+                </button>
+              </div>
             </div>
-          </div>
 
-          <!-- Chats inside folder -->
-          {#if isExpanded}
-            <div class="folder-chats pl-4">
-              {#each folderChats as chat (chat.id)}
-                {@const isSelected = chat.id === page.params.chatId}
-                {@const isGenerating = $streamStates[chat.id]?.isStreaming ?? false}
-                {@const isPinned = pinStates[chat.id] ?? false}
-                <a
-                  href="/{chat.id}"
-                  on:click={closeSidebarOnInteraction}
-                  class="thread-item group flex h-8 items-center justify-between rounded-[10px] pr-0.5 pl-2.5"
-                  class:selected={isSelected}
-                  class:generating={isGenerating}
-                  class:!pl-2={chat.branchedFrom !== undefined}
-                  title={chat.title}>
-                  <span class="flex items-center gap-0.5 truncate text-[0.8rem] transition-colors duration-200">
-                    {#if chat.branchedFrom !== undefined}
-                      <button
-                        class="button button-ghost button-small button-circle inline-block !min-w-fit"
-                        on:click|preventDefault|stopPropagation={() => {
-                          goto(`/${chat.branchedFrom?.threadId}#${chat.branchedFrom?.messageId}`);
-                          closeSidebarOnInteraction();
-                        }}
-                        title="Branched from chat">
-                        <GitBranch size={14}></GitBranch>
-                      </button>
-                    {/if}
-                    {chat.title}</span>
-                  <div class="hidden items-center group-hover:flex">
-                    <button
-                      class="button button-ghost button-small button-circle"
-                      on:click|preventDefault|stopPropagation={() => handleMoveChatToFolder(chat.id, null)}
-                      aria-label="Remove from folder"
-                      title="Remove from folder">
-                      <FolderMinus size={13}></FolderMinus>
-                    </button>
-                    <button
-                      class="button button-ghost button-small button-circle"
-                      on:click|preventDefault|stopPropagation={() => handlePinChat(chat.id)}
-                      aria-label={isPinned ? 'Unpin chat' : 'Pin chat'}>
-                      {#if !isPinned}
-                        <Pin size={14}></Pin>
-                      {:else}
-                        <PinOff size={14}></PinOff>
+            <!-- Chats inside folder -->
+            {#if isExpanded}
+              <div class="folder-chats pl-4">
+                {#each folderChats as chat (chat.id)}
+                  {@const isSelected = chat.id === page.params.chatId}
+                  {@const isGenerating = $streamStates[chat.id]?.isStreaming ?? false}
+                  {@const isPinned = pinStates[chat.id] ?? false}
+                  <a
+                    href="/{chat.id}"
+                    on:click={closeSidebarOnInteraction}
+                    class="thread-item group flex h-8 items-center justify-between rounded-[10px] pr-0.5 pl-2.5"
+                    class:selected={isSelected}
+                    class:generating={isGenerating}
+                    class:!pl-2={chat.branchedFrom !== undefined}
+                    title={chat.title}>
+                    <span class="flex items-center gap-0.5 truncate text-[0.8rem] transition-colors duration-200">
+                      {#if chat.branchedFrom !== undefined}
+                        <button
+                          class="button button-ghost button-small button-circle inline-block !min-w-fit"
+                          on:click|preventDefault|stopPropagation={() => {
+                            goto(`/${chat.branchedFrom?.threadId}#${chat.branchedFrom?.messageId}`);
+                            closeSidebarOnInteraction();
+                          }}
+                          title="Branched from chat">
+                          <GitBranch size={14}></GitBranch>
+                        </button>
                       {/if}
-                    </button>
-                    <button
-                      class="button button-ghost button-small button-circle"
-                      on:click|preventDefault|stopPropagation={() => handleDeleteChat(chat.id)}
-                      aria-label={`Delete chat ${chat.title}`}>
-                      <Trash size={14}></Trash>
-                    </button>
-                  </div>
-                </a>
-              {/each}
-              {#if folderChats.length === 0}
-                <p class="py-1 pl-2 text-[0.75rem] text-[var(--color-a9)] italic">Empty folder</p>
-              {/if}
-            </div>
-          {/if}
+                      {chat.title}</span>
+                    <div class="hidden items-center group-hover:flex">
+                      <button
+                        class="button button-ghost button-small button-circle"
+                        on:click|preventDefault|stopPropagation={() => handleMoveChatToFolder(chat.id, null)}
+                        aria-label="Remove from folder"
+                        title="Remove from folder">
+                        <FolderMinus size={13}></FolderMinus>
+                      </button>
+                      <button
+                        class="button button-ghost button-small button-circle"
+                        on:click|preventDefault|stopPropagation={() => handlePinChat(chat.id)}
+                        aria-label={isPinned ? 'Unpin chat' : 'Pin chat'}>
+                        {#if !isPinned}
+                          <Pin size={14}></Pin>
+                        {:else}
+                          <PinOff size={14}></PinOff>
+                        {/if}
+                      </button>
+                      <button
+                        class="button button-ghost button-small button-circle"
+                        on:click|preventDefault|stopPropagation={() => handleDeleteChat(chat.id)}
+                        aria-label={`Delete chat ${chat.title}`}>
+                        <Trash size={14}></Trash>
+                      </button>
+                    </div>
+                  </a>
+                {/each}
+                {#if folderChats.length === 0}
+                  <p class="py-1 pl-2 text-[0.75rem] text-[var(--color-a9)] italic">Empty folder</p>
+                {/if}
+              </div>
+            {/if}
+          {/each}
         </div>
-      {/each}
+      {/if}
 
       <!-- ── Un-foldered chats (date-grouped) ── -->
       {#each groupedChats as { group, chats: groupChats } (group)}
