@@ -65,7 +65,7 @@
   <!-- This is only cosmetic, we don't need to watch out for a11y here -->
   <div on:mouseenter={addTabFocus} on:mouseleave={removeTabFocus}>
     <div class="relative flex overflow-x-auto" bind:this={container}>
-      {#each tabs.filter((tab) => tab.hidden !== true) as tab}
+      {#each tabs.filter((tab) => tab.hidden !== true) as tab (tab.id)}
         <input
           type="radio"
           {name}
@@ -84,7 +84,7 @@
           href={tab.url}
           class="tab peer z-[1] flex h-8 w-full min-w-fit cursor-pointer flex-col items-center justify-center gap-2.5 rounded-lg px-4"
           class:active={tab.id == activeTab}
-          on:click={(e) => {
+          on:click={() => {
             handleClick(tab.id);
           }}
           on:mouseenter={tabFocus}>

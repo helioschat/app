@@ -160,6 +160,7 @@
 </script>
 
 <div class="markdown-content" class:streaming={isStreaming}>
+  <!-- eslint-disable svelte/no-at-html-tags -->
   {#each tokens as token, idx (idx)}
     {#if token.type === 'heading'}
       <svelte:element this={headerComponent(token.depth)}>
@@ -210,7 +211,7 @@
     {:else if token.type === 'list'}
       {#if token.ordered}
         <ol start={token.start || 1}>
-          {#each token.items as item}
+          {#each token.items as item (item.text)}
             <li>
               {#if item.task}
                 <input type="checkbox" checked={item.checked} disabled />
@@ -221,7 +222,7 @@
         </ol>
       {:else}
         <ul>
-          {#each token.items as item}
+          {#each token.items as item (item.text)}
             <li>
               {#if item.task}
                 <input type="checkbox" checked={item.checked} disabled />
@@ -235,15 +236,15 @@
       <table>
         <thead>
           <tr>
-            {#each token.header as header}
+            {#each token.header as header, hi (hi)}
               <th>{@html sanitizeHtml(renderInlineTokens(header.tokens || []))}</th>
             {/each}
           </tr>
         </thead>
         <tbody>
-          {#each token.rows as row}
+          {#each token.rows as row, ri (ri)}
             <tr>
-              {#each row as cell}
+              {#each row as cell, ci (ci)}
                 <td>{@html sanitizeHtml(renderInlineTokens(cell.tokens || []))}</td>
               {/each}
             </tr>
@@ -264,6 +265,7 @@
       <div class="space"></div>
     {/if}
   {/each}
+  <!-- eslint-enable svelte/no-at-html-tags -->
 </div>
 
 <style lang="postcss">

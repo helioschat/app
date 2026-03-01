@@ -72,7 +72,7 @@
 {#if showQuickSetup && !editingProvider}
   <!-- Quick Setup Options -->
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-    {#each quickSetupProviders as provider}
+    {#each quickSetupProviders as provider (provider.providerId)}
       <button
         class="provider-button button button-secondary button-large !h-full !gap-4 !text-left"
         class:active={selectedKnownProvider === provider.providerId}

@@ -125,7 +125,7 @@
         <!-- Stacked bar -->
         {#if storageInfo.totalEstimatedBytes > 0}
           <div class="mb-3 flex h-3 w-full overflow-hidden rounded-full bg-[var(--color-a3)]">
-            {#each storageInfo.stores as store, i}
+            {#each storageInfo.stores as store, i (store.name)}
               {@const pct = getBarPercent(store.estimatedBytes, storageInfo.totalEstimatedBytes)}
               {#if pct > 0}
                 <div
@@ -142,7 +142,7 @@
 
         <!-- Per-store rows -->
         <div class="flex flex-col gap-2">
-          {#each storageInfo.stores as store, i}
+          {#each storageInfo.stores as store, i (store.name)}
             {@const meta = storeLabels[store.name]}
             <div class="flex items-center justify-between gap-3">
               <div class="flex min-w-0 items-center gap-2">

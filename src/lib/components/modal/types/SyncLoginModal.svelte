@@ -95,7 +95,7 @@
         } else {
           error = 'Invalid credentials file format';
         }
-      } catch (err) {
+      } catch {
         error = 'Failed to parse credentials file';
       }
     };

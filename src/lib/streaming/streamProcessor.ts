@@ -52,7 +52,7 @@ export class StreamProcessor {
         } else {
           throw new Error('Not an attachment JSON');
         }
-      } catch (e) {
+      } catch {
         // Not a valid JSON or not an attachment, treat as text or reasoning chunk
         const result = await MessageProcessor.processStreamChunk(
           value,

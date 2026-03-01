@@ -167,7 +167,7 @@
     <nav
       class="flex flex-1 flex-col gap-y-0.5 overflow-y-auto"
       transition:fade={{ duration: COLLAPSE_ANIMATION_DURATION * 0.75 }}>
-      {#each groupedChats as { group, chats: groupChats }}
+      {#each groupedChats as { group, chats: groupChats } (group)}
         <div class="group-section">
           {#if group}
             <h3 class="group-header mb-1 px-2.5 py-1 text-xs font-medium text-[var(--color-a11)]">{group}</h3>

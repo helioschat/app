@@ -53,12 +53,8 @@
     },
   ];
 
-  $: activeTabId = page.url.pathname.split('/').pop() || 'providers';
-  $: activeTab = tabs.find((tab) => tab.id === activeTabId) || tabs[0];
-
-  const handleTabChange = (e: Event) => {
-    activeTabId = (e.target as HTMLInputElement).value;
-  };
+  let activeTabId = $derived(page.url.pathname.split('/').pop() || 'providers');
+  let activeTab = $derived(tabs.find((tab) => tab.id === activeTabId) || tabs[0]);
 </script>
 
 <svelte:head>
@@ -67,7 +63,7 @@
 
 <div class="settings mx-auto mt-[3.75rem] max-w-7xl px-4 pb-8">
   <div class="mb-4 w-fit max-w-full">
-    <Tabs {tabs} activeTab={activeTabId} onChange={handleTabChange}></Tabs>
+    <Tabs {tabs} activeTab={activeTabId}></Tabs>
   </div>
 
   {#if activeTab.title && activeTab.description}

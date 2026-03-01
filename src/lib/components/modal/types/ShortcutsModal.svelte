@@ -22,11 +22,11 @@
 
 <Modal {id} title="Keyboard Shortcuts" {isOpen} on:close={handleClose}>
   <div class="space-y-6">
-    {#each shortcutGroups as group}
+    {#each shortcutGroups as group (group.category)}
       <div>
         <h3 class="mb-3 text-sm font-semibold tracking-wide text-[var(--color-a11)] uppercase">{group.category}</h3>
         <div class="space-y-2">
-          {#each group.shortcuts as [_key, shortcut]}
+          {#each group.shortcuts as [_key, shortcut] (_key)}
             <div class="flex items-center justify-between rounded-lg bg-[var(--color-a2)] px-4 py-2.5">
               <span class="text-sm">{shortcut.description}</span>
               <kbd

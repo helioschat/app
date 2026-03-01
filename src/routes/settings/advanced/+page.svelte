@@ -9,7 +9,6 @@
   import { syncManager } from '$lib/stores/sync';
   import { exportUserData, importUserData, clearAllData } from '$lib/utils/dataExport';
 
-  $: currentSettings = $advancedSettings;
   $: instances = $providerInstances;
 
   // Get all available models for title generation across all providers
@@ -166,7 +165,7 @@
     <div>
       <textarea
         id="systemPrompt"
-        bind:value={currentSettings.systemPrompt}
+        bind:value={$advancedSettings.systemPrompt}
         on:change={updateSettings}
         class="h-32 w-full"
         placeholder="Enter system instructions for the AI"></textarea>
@@ -181,7 +180,7 @@
       <input
         id="titleGeneration"
         type="checkbox"
-        bind:checked={currentSettings.titleGenerationEnabled}
+        bind:checked={$advancedSettings.titleGenerationEnabled}
         on:change={updateSettings} />
       <label for="titleGeneration" class="select-none">Enable automatic chat title generation</label>
       <p class="text-secondary text-xs opacity-75">
@@ -189,17 +188,17 @@
       </p>
     </div>
   </div>
-  {#if currentSettings.titleGenerationEnabled}
+  {#if $advancedSettings.titleGenerationEnabled}
     <div class="section">
       <h4>Title Generation Model</h4>
 
       <div>
         <select
           id="titleModel"
-          bind:value={currentSettings.titleGenerationModel}
+          bind:value={$advancedSettings.titleGenerationModel}
           on:change={updateSettings}
           class="w-full">
-          {#each titleModelOptions as option}
+          {#each titleModelOptions as option (option.value)}
             <option value={option.value}>{option.label}</option>
           {/each}
         </select>

@@ -86,6 +86,7 @@
   <link rel="image_src" href={meta.image} />
 
   <!-- This should be deprecated, however Bing still uses this: -->
+  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
   {@html `<meta http-equiv="content-language" content="en-US">`}
 
   <!-- OpenSearch definition -->

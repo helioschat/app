@@ -71,7 +71,7 @@
     <div class="text-left">
       <h2 class="mb-3 text-lg font-medium">Try asking about:</h2>
       <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
-        {#each sampleQueries as query}
+        {#each sampleQueries as query (query)}
           <button
             onclick={(e) => {
               searchInput = query;

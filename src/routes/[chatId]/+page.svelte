@@ -40,7 +40,6 @@
   const scrollToBottom = () => {
     if (messagesContainerElement) {
       messagesContainerElement.scrollTop = messagesContainerElement.scrollHeight;
-      autoScroll = true;
 
       // Focus the last message for accessibility
       const messageElements = messagesContainerElement.querySelectorAll('.message');
@@ -327,6 +326,7 @@
       tick().then(() => {
         // Use setTimeout to allow markdown rendering and layout calculations to complete
         setTimeout(() => {
+          autoScroll = true;
           scrollToBottom();
         }, 100);
       });
@@ -380,7 +380,10 @@
       class:pointer-events-none={!showScrollButton}
       class:opacity-100={showScrollButton}
       class:opacity-0={!showScrollButton}
-      on:click={scrollToBottom}
+      on:click={() => {
+        autoScroll = true;
+        scrollToBottom();
+      }}
       title="Scroll to bottom"
       inert={!showScrollButton}>
       <ArrowDown size={20} />
