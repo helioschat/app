@@ -69,7 +69,6 @@
               type="button"
               class="button button-ghost button-circle modal-close-btn"
               class:!hidden={hideCloseButton}
-              class:!pointer-events-none={!hideCloseButton}
               inert={hideCloseButton}
               aria-label="Close modal"
               on:click={close}>
