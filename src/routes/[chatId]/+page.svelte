@@ -27,6 +27,10 @@
   let messagesContainerElement: HTMLDivElement;
   let showScrollButton = false;
 
+  // Message being edited — null when not in edit mode
+  let editingMessage: Message | null = null;
+  let editInput = '';
+
   // Modifier state — initialized from the chat object when the chat changes,
   // but kept as local state so they don't get overwritten on every streaming token.
   let webSearchEnabled = false;
@@ -220,10 +224,42 @@
   }
 
   /**
-   * Handles editing a message and regenerating from that point
+   * Called when the user clicks Edit on a message — opens the edit ChatInput.
    */
-  async function handleEdit(messageToEdit: Message, newContent: string, providerInstanceId: string, modelId: string) {
-    if (!activeChat || isLoading) return;
+  function handleStartEdit(messageToEdit: Message) {
+    if (isLoading) return;
+    editingMessage = messageToEdit;
+    editInput = messageToEdit.content;
+  }
+
+  /**
+   * Called when the user cancels editing.
+   */
+  function handleCancelEdit() {
+    editingMessage = null;
+    editInput = '';
+  }
+
+  /**
+   * Called when the user submits the edited message via the ChatInput.
+   */
+  async function handleEditSubmit(
+    _: Event,
+    _attachments?: Attachment[],
+    editWebSearchEnabled?: boolean,
+    editWebSearchContextSize?: 'low' | 'medium' | 'high',
+    editReasoningEnabled?: boolean,
+    editReasoningEffort?: 'minimal' | 'low' | 'medium' | 'high',
+    editReasoningSummary?: 'auto' | 'concise' | 'detailed',
+  ) {
+    if (!editingMessage || !activeChat || isLoading || !editInput.trim()) return;
+
+    const messageToEdit = editingMessage;
+    const newContent = editInput.trim();
+
+    // Clear edit mode immediately
+    editingMessage = null;
+    editInput = '';
 
     const messageIndex = activeChat.messages.findIndex((m) => m.id === messageToEdit.id);
     if (messageIndex === -1) {
@@ -243,27 +279,27 @@
     if (!wasLastMessage) {
       const controller = getOrCreateStreamController(chatId);
       const updatedChat = $chats.find((c) => c.id === chatId);
-      if (!updatedChat) return;
+      if (!updatedChat || !$selectedModel) return;
 
-      // Find the next assistant message to get its web search settings
+      // Find the next assistant message to get its original settings
       const nextAssistantMessage = activeChat.messages.slice(messageIndex + 1).find((m) => m.role === 'assistant');
 
-      const originalWebSearchEnabled = nextAssistantMessage?.webSearchEnabled || false;
-      const originalWebSearchContextSize = nextAssistantMessage?.webSearchContextSize || 'low';
-
-      const originalReasoningEnabled = nextAssistantMessage?.reasoningEnabled || false;
-      const originalReasoningEffort = nextAssistantMessage?.reasoningEffort || 'medium';
-      const originalReasoningSummary = nextAssistantMessage?.reasoningSummary || 'auto';
+      const originalWebSearchEnabled = editWebSearchEnabled ?? nextAssistantMessage?.webSearchEnabled ?? false;
+      const originalWebSearchContextSize =
+        editWebSearchContextSize ?? nextAssistantMessage?.webSearchContextSize ?? 'low';
+      const originalReasoningEnabled = editReasoningEnabled ?? nextAssistantMessage?.reasoningEnabled ?? false;
+      const originalReasoningEffort = editReasoningEffort ?? nextAssistantMessage?.reasoningEffort ?? 'medium';
+      const originalReasoningSummary = editReasoningSummary ?? nextAssistantMessage?.reasoningSummary ?? 'auto';
 
       await controller.handleRegenerate(
         updatedChat,
-        providerInstanceId,
-        modelId,
-        originalWebSearchEnabled, // Use original web search settings
-        originalWebSearchContextSize, // Use original web search context size
-        originalReasoningEnabled, // Use original reasoning settings
-        originalReasoningEffort, // Use original reasoning effort
-        originalReasoningSummary, // Use original reasoning summary
+        $selectedModel.providerInstanceId,
+        $selectedModel.modelId,
+        originalWebSearchEnabled,
+        originalWebSearchContextSize,
+        originalReasoningEnabled,
+        originalReasoningEffort,
+        originalReasoningSummary,
       );
     }
   }
@@ -447,8 +483,14 @@
       class="messages-container -mb-30 h-full overflow-y-auto"
       bind:this={messagesContainerElement}
       on:scroll={handleScroll}>
-      <ChatMessages chat={activeChat} {currentlyStreamingMessageId} {handleRegenerate} {handleEdit} {handleBranch}
-      ></ChatMessages>
+      <ChatMessages
+        chat={activeChat}
+        {currentlyStreamingMessageId}
+        editingMessageId={editingMessage?.id ?? ''}
+        {handleRegenerate}
+        {handleStartEdit}
+        {handleCancelEdit}
+        {handleBranch}></ChatMessages>
     </div>
 
     <button
@@ -467,20 +509,52 @@
     </button>
 
     <div class="input-container z-[1]">
-      <ChatInput
-        bind:userInput
-        {webSearchEnabled}
-        {webSearchContextSize}
-        {reasoningEnabled}
-        {reasoningEffort}
-        {reasoningSummary}
-        {isLoading}
-        {handleSubmit}
-        {handleStop}
-        isTemporaryChat={activeChat.temporary || false}
-        on:webSearchToggle={handleWebSearchToggle}
-        on:reasoningToggle={handleReasoningToggle}>
-      </ChatInput>
+      {#if editingMessage}
+        <div class="edit-banner mx-auto -mb-6 w-full max-w-4xl px-4">
+          <div
+            class="flex w-full items-center justify-between gap-2 rounded-t-[28px] bg-[var(--color-2)] px-4 pt-2 pb-8 shadow">
+            <div class="flex items-center gap-1.5">
+              <span class="edit-dot inline-block h-1.5 w-1.5 rounded-full"></span>
+              <span class="text-xs font-medium">Editing message</span>
+            </div>
+            <button
+              class="button button-ghost button-small button-circle text-xs"
+              data-cancel-edit-btn
+              on:click={handleCancelEdit}
+              title="Cancel edit (Escape)">
+              Cancel
+            </button>
+          </div>
+        </div>
+        <ChatInput
+          bind:userInput={editInput}
+          isLoading={false}
+          handleSubmit={handleEditSubmit}
+          {handleStop}
+          {webSearchEnabled}
+          {webSearchContextSize}
+          {reasoningEnabled}
+          {reasoningEffort}
+          {reasoningSummary}
+          isTemporaryChat={activeChat.temporary || false}
+          on:webSearchToggle={handleWebSearchToggle}
+          on:reasoningToggle={handleReasoningToggle}></ChatInput>
+      {:else}
+        <ChatInput
+          bind:userInput
+          {webSearchEnabled}
+          {webSearchContextSize}
+          {reasoningEnabled}
+          {reasoningEffort}
+          {reasoningSummary}
+          {isLoading}
+          {handleSubmit}
+          {handleStop}
+          isTemporaryChat={activeChat.temporary || false}
+          on:webSearchToggle={handleWebSearchToggle}
+          on:reasoningToggle={handleReasoningToggle}>
+        </ChatInput>
+      {/if}
     </div>
   {:else}
     <div class="flex flex-1 items-center justify-center">
@@ -492,9 +566,26 @@
 </main>
 
 <style lang="postcss">
+  @reference "tailwindcss";
+
   .input-container {
     background-image: linear-gradient(to top, var(--color-1), transparent);
     background-size: 100% 120px;
     background-repeat: no-repeat;
+  }
+
+  .edit-dot {
+    background-color: var(--red-9);
+    animation: edit-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes edit-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.4;
+    }
   }
 </style>

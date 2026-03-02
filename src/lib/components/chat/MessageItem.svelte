@@ -5,20 +5,19 @@
   import type { MessageWithAttachments } from '$lib/types';
   import { isMessageStreaming } from '$lib/streaming';
   import { page } from '$app/state';
-  import { ChevronDown, ChevronUp, Copy, RefreshCw, Check, X, Edit, GitBranch } from 'lucide-svelte';
-  import { createEventDispatcher, tick } from 'svelte';
-  import { providerInstances, selectedModel } from '$lib/settings/SettingsManager';
-  import { availableModels } from '$lib/stores/modelCache';
-  import ModelSelectorModal from '$lib/components/modal/types/ModelSelectorModal.svelte';
+  import { ChevronDown, ChevronUp, Copy, RefreshCw, Edit, GitBranch } from 'lucide-svelte';
+  import { createEventDispatcher } from 'svelte';
+  import { providerInstances } from '$lib/settings/SettingsManager';
 
   interface Props {
     message: MessageWithAttachments;
     isStreaming?: boolean;
     isThinking?: boolean;
     canEdit?: boolean; // Whether this message can be edited
+    isEditing?: boolean; // Whether this specific message is currently being edited
   }
 
-  let { message, isStreaming = false, isThinking = false, canEdit = false }: Props = $props();
+  let { message, isStreaming = false, isThinking = false, canEdit = false, isEditing = false }: Props = $props();
 
   const messageCreatedAt = message.createdAt;
 
@@ -32,7 +31,8 @@
 
   const dispatch = createEventDispatcher<{
     regenerate: { message: MessageWithAttachments };
-    edit: { message: MessageWithAttachments; newContent: string; providerInstanceId: string; modelId: string };
+    startEdit: { message: MessageWithAttachments };
+    cancelEdit: { message: MessageWithAttachments };
     branch: { message: MessageWithAttachments };
   }>();
 
@@ -48,11 +48,6 @@
   let hasReasoning = $derived(message.role === 'assistant' && message.reasoning && message.reasoning.length > 0);
 
   let copyButtonText = $state('Copy');
-  let isEditing = $state(false);
-  let editContent = $state('');
-  let showEditModelSelector = $state(false);
-  let editProviderInstanceId = $state('');
-  let editModelId = $state('');
 
   async function copyMessageContent() {
     try {
@@ -74,56 +69,13 @@
     dispatch('regenerate', { message });
   }
 
-  function startEdit() {
+  function handleStartEdit() {
     if (isCurrentlyStreaming) return;
-
-    isEditing = true;
-    editContent = message.content;
-
-    // Default to the message's original provider and model, or fall back to selected model
-    editProviderInstanceId = message.providerInstanceId || $selectedModel?.providerInstanceId || '';
-    editModelId = message.model || $selectedModel?.modelId || '';
-  }
-
-  function cancelEdit() {
-    isEditing = false;
-    editContent = '';
-    editProviderInstanceId = '';
-    editModelId = '';
-  }
-
-  function confirmEdit() {
-    if (!editContent.trim()) return;
-
-    dispatch('edit', {
-      message,
-      newContent: editContent.trim(),
-      providerInstanceId: editProviderInstanceId,
-      modelId: editModelId,
-    });
-
-    isEditing = false;
-  }
-
-  function resizeTextarea(e: Event) {
-    const target = e.target as HTMLTextAreaElement;
-    target.style.height = 'auto';
-    target.style.height = target.scrollHeight + 'px';
-  }
-
-  function handleEditKeydown(e: KeyboardEvent) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      confirmEdit();
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      cancelEdit();
+    if (isEditing) {
+      dispatch('cancelEdit', { message });
+    } else {
+      dispatch('startEdit', { message });
     }
-  }
-
-  async function openEditModelSelector() {
-    await tick();
-    showEditModelSelector = true;
   }
 
   function handleBranch() {
@@ -167,60 +119,18 @@
       {#if message.attachments && message.attachments.length > 0}
         <MessageAttachments attachments={message.attachments} isSent imageOnly={isImageOnly}></MessageAttachments>
       {/if}
-      {#if isEditing}
-        <!-- Edit Mode -->
-        <div class="edit-container flex w-full flex-col gap-2">
-          <textarea
-            bind:value={editContent}
-            rows="3"
-            placeholder="Edit your message..."
-            class="w-full !rounded-2xl"
-            oninput={resizeTextarea}
-            onkeydown={handleEditKeydown}></textarea>
-
-          <div class="flex items-center justify-between gap-4 sm:gap-8">
-            <button
-              type="button"
-              onclick={openEditModelSelector}
-              class="button button-primary button-small button-circle">
-              <span>{editModelId || 'Select Model'}</span>
-            </button>
-
-            <div class="flex items-center gap-2">
-              <button
-                type="button"
-                onclick={cancelEdit}
-                class="button button-secondary button-small button-circle"
-                aria-label="Cancel edit">
-                <X size={16} />
-                <span class="hidden md:block"> Cancel </span>
-              </button>
-              <button
-                type="button"
-                onclick={confirmEdit}
-                disabled={!editContent.trim()}
-                class="button button-secondary button-small button-circle"
-                aria-label="Save edit">
-                <Check size={16} />
-                <span class="hidden sm:block"> Save </span>
-              </button>
-            </div>
-          </div>
+      <!-- Display Mode -->
+      {#if isThinking && !message.content}
+        <div class="typing-indicator" aria-label="Generating response">
+          <span></span>
+          <span></span>
+          <span></span>
         </div>
       {:else}
-        <!-- Display Mode -->
-        {#if isThinking && !message.content}
-          <div class="typing-indicator" aria-label="Generating response">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        {:else}
-          <MarkdownRenderer
-            content={message.content}
-            isStreaming={isCurrentlyStreaming && message.role === 'assistant'}
-            messageDate={message.createdAt}></MarkdownRenderer>
-        {/if}
+        <MarkdownRenderer
+          content={message.content}
+          isStreaming={isCurrentlyStreaming && message.role === 'assistant'}
+          messageDate={message.createdAt}></MarkdownRenderer>
       {/if}
     </div>
   </div>
@@ -228,39 +138,37 @@
   <div
     class="message-actions flex h-[64px] max-h-[64px] opacity-0 group-hover:opacity-100 peer-hover:opacity-100 hover:opacity-100 xl:h-[44px]">
     <div class="flex flex-col gap-1 p-2 xl:flex-row">
-      {#if !isEditing}
-        <div class="buttons flex items-center gap-2">
-          <button class="button button-ghost button-small button-circle" onclick={copyMessageContent}>
-            <Copy size={16}></Copy>
-            <span>{copyButtonText}</span>
+      <div class="buttons flex items-center gap-2">
+        <button class="button button-ghost button-small button-circle" onclick={copyMessageContent}>
+          <Copy size={16}></Copy>
+          <span>{copyButtonText}</span>
+        </button>
+        {#if message.role === 'assistant'}
+          <button
+            class="button button-ghost button-small button-circle"
+            disabled={isCurrentlyStreaming}
+            onclick={handleRegenerate}>
+            <RefreshCw size={16}></RefreshCw>
+            <span>Regenerate</span>
           </button>
-          {#if message.role === 'assistant'}
-            <button
-              class="button button-ghost button-small button-circle"
-              disabled={isCurrentlyStreaming}
-              onclick={handleRegenerate}>
-              <RefreshCw size={16}></RefreshCw>
-              <span>Regenerate</span>
-            </button>
-            <button
-              class="button button-ghost button-small button-circle"
-              disabled={isCurrentlyStreaming}
-              onclick={handleBranch}>
-              <GitBranch size={16}></GitBranch>
-              <span>Branch off</span>
-            </button>
-          {/if}
-          {#if message.role === 'user'}
-            <button
-              class="button button-ghost button-small button-circle"
-              disabled={!canEdit || isCurrentlyStreaming}
-              onclick={startEdit}>
-              <Edit size={16}></Edit>
-              <span>Edit</span>
-            </button>
-          {/if}
-        </div>
-      {/if}
+          <button
+            class="button button-ghost button-small button-circle"
+            disabled={isCurrentlyStreaming}
+            onclick={handleBranch}>
+            <GitBranch size={16}></GitBranch>
+            <span>Branch off</span>
+          </button>
+        {/if}
+        {#if message.role === 'user'}
+          <button
+            class="button button-ghost button-small button-circle"
+            disabled={!canEdit || isCurrentlyStreaming}
+            onclick={handleStartEdit}>
+            <Edit size={16}></Edit>
+            <span>{isEditing ? 'Editing...' : 'Edit'}</span>
+          </button>
+        {/if}
+      </div>
 
       <div class="text-secondary flex items-center gap-1 text-xs">
         {#if messageCreatedAt}
@@ -289,23 +197,9 @@
   </div>
 </div>
 
-<ModelSelectorModal
-  id="message-edit-model-selector"
-  isOpen={showEditModelSelector}
-  providerInstances={$providerInstances}
-  availableModels={$availableModels}
-  currentModelId={editModelId}
-  on:close={() => (showEditModelSelector = false)}
-  on:select={(e) => {
-    const { providerInstanceId, modelId } = e.detail;
-    editProviderInstanceId = providerInstanceId;
-    editModelId = modelId;
-    showEditModelSelector = false;
-  }}>
-</ModelSelectorModal>
-
 <style lang="postcss">
   @reference "tailwindcss";
+  @reference "../../../app.css";
 
   .message {
     @apply outline-none;
@@ -326,7 +220,18 @@
   }
 
   .message.editing .message-container {
-    @apply min-w-2/3 px-2.5;
+    @apply opacity-60;
+    animation: editing-pulse 1.8s ease-in-out infinite;
+  }
+
+  @keyframes editing-pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--red-9) 30%, transparent);
+    }
+    50% {
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--red-9) 70%, transparent);
+    }
   }
 
   .message.assistant {

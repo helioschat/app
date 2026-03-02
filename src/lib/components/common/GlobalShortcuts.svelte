@@ -49,6 +49,21 @@
    * Add new shortcuts here for easy management
    */
   const shortcuts: ShortcutRegistry = {
+    cancelEdit: {
+      key: 'Escape',
+      displayKey: 'Esc',
+      modifiers: {},
+      description: 'Cancel message edit',
+      category: ShortcutCategory.ChatActions,
+      requiresSetup: true,
+      allowInInput: true,
+      condition: () => !!document.querySelector('[data-cancel-edit-btn]'),
+      hideInHelp: true,
+      action: () => {
+        const button = document.querySelector<HTMLButtonElement>('[data-cancel-edit-btn]');
+        button?.click();
+      },
+    },
     dismiss: {
       key: 'Escape',
       modifiers: {},
@@ -281,6 +296,10 @@
       }
 
       if (matchesShortcut(event, config)) {
+        // Skip if shortcut has a condition that isn't met
+        if (config.condition && !config.condition()) {
+          continue;
+        }
         event.preventDefault();
         event.stopPropagation();
         config.action();

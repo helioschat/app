@@ -17,6 +17,8 @@ export interface ShortcutConfig {
     meta?: boolean;
   };
   action: () => void;
+  condition?: () => boolean; // If provided, shortcut only fires when this returns true
+  hideInHelp?: boolean; // If true, shortcut is hidden from help menu
   description: string;
   category: ShortcutCategory;
   requiresSetup?: boolean; // If true, only works after setup is complete
@@ -85,6 +87,7 @@ export function groupShortcuts(shortcuts: ShortcutRegistry): Array<{
 
   for (const [key, config] of Object.entries(shortcuts)) {
     if (config.category === ShortcutCategory.Generic) continue;
+    if (config.hideInHelp) continue;
 
     if (!groups.has(config.category)) {
       groups.set(config.category, []);

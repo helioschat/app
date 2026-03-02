@@ -6,13 +6,10 @@
 
   export let chat: Chat;
   export let currentlyStreamingMessageId: string = '';
+  export let editingMessageId: string = '';
   export let handleRegenerate: (message: Message) => Promise<void>;
-  export let handleEdit: (
-    message: Message,
-    newContent: string,
-    providerInstanceId: string,
-    modelId: string,
-  ) => Promise<void>;
+  export let handleStartEdit: (message: Message) => void;
+  export let handleCancelEdit: () => void;
   export let handleBranch: (message: Message) => void;
 </script>
 
@@ -49,9 +46,10 @@
           message.content.length === 0 &&
           message.role === 'assistant'}
         canEdit={!currentlyStreamingMessageId}
+        isEditing={editingMessageId === message.id}
         on:regenerate={({ detail }) => handleRegenerate(detail.message)}
-        on:edit={({ detail }) =>
-          handleEdit(detail.message, detail.newContent, detail.providerInstanceId, detail.modelId)}
+        on:startEdit={({ detail }) => handleStartEdit(detail.message)}
+        on:cancelEdit={handleCancelEdit}
         on:branch={({ detail }) => handleBranch(detail.message)}></MessageItem>
     {/if}
   {/each}
