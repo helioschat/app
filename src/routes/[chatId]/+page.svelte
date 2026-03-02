@@ -37,6 +37,7 @@
   let reasoningEnabled = false;
   let reasoningEffort: 'minimal' | 'low' | 'medium' | 'high' = 'medium';
   let reasoningSummary: 'auto' | 'concise' | 'detailed' = 'auto';
+  let toolUseEnabled = false;
 
   // Track which chat ID we last synced modifiers from so we only re-read the
   // persisted settings when the user actually switches to a different chat.
@@ -49,6 +50,7 @@
     reasoningEnabled = activeChat.reasoningEnabled ?? false;
     reasoningEffort = activeChat.reasoningEffort ?? 'medium';
     reasoningSummary = activeChat.reasoningSummary ?? 'auto';
+    toolUseEnabled = activeChat.toolUseEnabled ?? false;
   }
 
   // Map provides clearer semantics and easier cleanup than a plain object
@@ -100,6 +102,7 @@
     reasoningEnabled?: boolean,
     reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high',
     reasoningSummary?: 'auto' | 'concise' | 'detailed',
+    toolUseEnabled?: boolean,
   ) {
     const messageContent = userInput;
     if (
@@ -123,6 +126,7 @@
       reasoningEnabled,
       reasoningEffort,
       reasoningSummary,
+      toolUseEnabled,
     );
   }
 
@@ -178,6 +182,9 @@
     const originalReasoningEffort = messageToRegenerate.reasoningEffort || 'medium';
     const originalReasoningSummary = messageToRegenerate.reasoningSummary || 'auto';
 
+    // Extract tool use settings from the original assistant message
+    const originalToolUseEnabled = messageToRegenerate.toolUseEnabled || false;
+
     // Truncate chat history to the point *before* the user message we are regenerating from.
     const truncatedMessages = activeChat.messages.slice(0, messageIndex - 1);
 
@@ -214,6 +221,7 @@
       originalReasoningEnabled, // Use original reasoning settings
       originalReasoningEffort, // Use original reasoning effort
       originalReasoningSummary, // Use original reasoning summary
+      originalToolUseEnabled, // Use original tool use settings
     );
   }
 
@@ -245,6 +253,7 @@
     editReasoningEnabled?: boolean,
     editReasoningEffort?: 'minimal' | 'low' | 'medium' | 'high',
     editReasoningSummary?: 'auto' | 'concise' | 'detailed',
+    editToolUseEnabled?: boolean,
   ) {
     if (!editingMessage || !activeChat || isLoading || !editInput.trim()) return;
 
@@ -296,6 +305,7 @@
       const originalReasoningEnabled = editReasoningEnabled ?? nextAssistantMessage?.reasoningEnabled ?? false;
       const originalReasoningEffort = editReasoningEffort ?? nextAssistantMessage?.reasoningEffort ?? 'medium';
       const originalReasoningSummary = editReasoningSummary ?? nextAssistantMessage?.reasoningSummary ?? 'auto';
+      const originalToolUseEnabled = editToolUseEnabled ?? nextAssistantMessage?.toolUseEnabled ?? false;
 
       await controller.handleRegenerate(
         updatedChat,
@@ -306,6 +316,7 @@
         originalReasoningEnabled,
         originalReasoningEffort,
         originalReasoningSummary,
+        originalToolUseEnabled,
       );
     }
   }
@@ -325,58 +336,23 @@
     }
   }
 
-  function handleWebSearchToggle(e: CustomEvent<{ enabled: boolean; contextSize: 'low' | 'medium' | 'high' }>) {
-    if (!activeChat) return;
-
-    // Update local state immediately so the UI reflects the change
-    webSearchEnabled = e.detail.enabled;
-    webSearchContextSize = e.detail.contextSize;
-
-    let updatedChatSettings: typeof activeChat | null = null;
-    // Persist to the chat object so settings survive reloads
+  // Persist modifier changes to the chat store whenever local state changes.
+  // These reactive blocks only run after the initial sync from activeChat (guarded
+  // by modifierSyncedChatId) so they won't overwrite persisted settings on load.
+  $: if (modifierSyncedChatId === chatId && activeChat) {
     chats.update((allChats) =>
       allChats.map((chat) => {
         if (chat.id === chatId) {
-          updatedChatSettings = {
+          return {
             ...chat,
-            webSearchEnabled: e.detail.enabled,
-            webSearchContextSize: e.detail.contextSize,
+            webSearchEnabled,
+            webSearchContextSize,
+            reasoningEnabled,
+            reasoningEffort,
+            reasoningSummary,
+            toolUseEnabled,
             updatedAt: new Date(),
           };
-          return updatedChatSettings;
-        }
-        return chat;
-      }),
-    );
-  }
-
-  function handleReasoningToggle(
-    e: CustomEvent<{
-      enabled: boolean;
-      effort: 'minimal' | 'low' | 'medium' | 'high';
-      summary: 'auto' | 'concise' | 'detailed';
-    }>,
-  ) {
-    if (!activeChat) return;
-
-    // Update local state immediately so the UI reflects the change
-    reasoningEnabled = e.detail.enabled;
-    reasoningEffort = e.detail.effort;
-    reasoningSummary = e.detail.summary;
-
-    let updatedChatSettings: typeof activeChat | null = null;
-    // Persist to the chat object so settings survive reloads
-    chats.update((allChats) =>
-      allChats.map((chat) => {
-        if (chat.id === chatId) {
-          updatedChatSettings = {
-            ...chat,
-            reasoningEnabled: e.detail.enabled,
-            reasoningEffort: e.detail.effort,
-            reasoningSummary: e.detail.summary,
-            updatedAt: new Date(),
-          };
-          return updatedChatSettings;
         }
         return chat;
       }),
@@ -463,6 +439,7 @@
           reasoningEnabled, // Pass the reasoning options
           reasoningEffort, // Pass the reasoning effort
           reasoningSummary, // Pass the reasoning summary
+          toolUseEnabled, // Pass the tool use option
         );
       }
     }, 100);
@@ -527,28 +504,26 @@
           isLoading={false}
           handleSubmit={handleEditSubmit}
           {handleStop}
-          {webSearchEnabled}
-          {webSearchContextSize}
-          {reasoningEnabled}
-          {reasoningEffort}
-          {reasoningSummary}
-          isTemporaryChat={activeChat.temporary || false}
-          on:webSearchToggle={handleWebSearchToggle}
-          on:reasoningToggle={handleReasoningToggle}></ChatInput>
+          bind:webSearchEnabled
+          bind:webSearchContextSize
+          bind:reasoningEnabled
+          bind:reasoningEffort
+          bind:reasoningSummary
+          bind:toolUseEnabled
+          isTemporaryChat={activeChat.temporary || false}></ChatInput>
       {:else}
         <ChatInput
           bind:userInput
-          {webSearchEnabled}
-          {webSearchContextSize}
-          {reasoningEnabled}
-          {reasoningEffort}
-          {reasoningSummary}
+          bind:webSearchEnabled
+          bind:webSearchContextSize
+          bind:reasoningEnabled
+          bind:reasoningEffort
+          bind:reasoningSummary
+          bind:toolUseEnabled
           {isLoading}
           {handleSubmit}
           {handleStop}
-          isTemporaryChat={activeChat.temporary || false}
-          on:webSearchToggle={handleWebSearchToggle}
-          on:reasoningToggle={handleReasoningToggle}>
+          isTemporaryChat={activeChat.temporary || false}>
         </ChatInput>
       {/if}
     </div>

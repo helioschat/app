@@ -215,6 +215,7 @@ export function createNewChat(
   reasoningEnabled?: boolean,
   reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high',
   reasoningSummary?: 'auto' | 'concise' | 'detailed',
+  toolUseEnabled?: boolean,
 ): string {
   const newChat: Chat = createInitialChat();
 
@@ -240,6 +241,11 @@ export function createNewChat(
   }
   if (reasoningSummary !== undefined) {
     newChat.reasoningSummary = reasoningSummary;
+  }
+
+  // Set tool use option if specified
+  if (toolUseEnabled !== undefined) {
+    newChat.toolUseEnabled = toolUseEnabled;
   }
 
   // If an initial message is provided OR attachments exist, add it as a user message

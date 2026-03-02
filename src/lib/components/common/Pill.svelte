@@ -3,7 +3,7 @@
   import type { Icon } from 'lucide-svelte';
 
   export let text: string = '';
-  export let variant: 'default' | 'secondary' | 'success' | 'warning' | 'error' | 'special' = 'default';
+  export let variant: 'default' | 'secondary' | 'success' | 'warning' | 'error' | 'special' | 'cyan' = 'default';
   export let size: 'xs' | 'sm' | 'md' | 'lg' = 'md';
   export let icon: ComponentType<Icon> | undefined = undefined;
 
@@ -14,6 +14,7 @@
     warning: 'bg-yellow-900/30 text-yellow-300',
     error: 'bg-red-900/30 text-red-300',
     special: 'bg-purple-900/30 text-purple-300',
+    cyan: 'bg-cyan-900/30 text-cyan-300',
   };
 
   const sizeClasses = {

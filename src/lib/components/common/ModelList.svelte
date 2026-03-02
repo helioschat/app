@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import ModelItem from './ModelItem.svelte';
-  import { Search, Funnel, Image, Text, Brain, Star, Clock } from 'lucide-svelte';
+  import { Search, Funnel, Image, Text, Brain, Star, Clock, Wrench } from 'lucide-svelte';
   import type { ModelInfo } from '$lib/providers/base';
   import type { ProviderInstance } from '$lib/types';
   import { settingsManager } from '$lib/settings/SettingsManager';
@@ -27,6 +27,7 @@
   let filterImageGeneration = false;
   let filterReasoning = false;
   let filterWebSearch = false;
+  let filterTools = false;
   let selectedProviderIds: string[] = [];
 
   const dispatch = createEventDispatcher<{
@@ -71,6 +72,10 @@
     return (model as any).supportsWebSearch ?? false;
   }
 
+  function supportsTools(model: ModelInfo): boolean {
+    return (model as any).supportsTools ?? false;
+  }
+
   // Clear all filters
   function clearFilters() {
     filterFileInput = false;
@@ -78,6 +83,7 @@
     filterImageGeneration = false;
     filterReasoning = false;
     filterWebSearch = false;
+    filterTools = false;
     selectedProviderIds = [];
   }
 
@@ -88,6 +94,7 @@
     filterImageGeneration ||
     filterReasoning ||
     filterWebSearch ||
+    filterTools ||
     selectedProviderIds.length > 0;
 
   // Clear filters when filter panel is closed
@@ -115,7 +122,7 @@
 
     // Apply capability filters with OR logic
     const hasCapabilityFilters =
-      filterFileInput || filterImageInput || filterImageGeneration || filterReasoning || filterWebSearch;
+      filterFileInput || filterImageInput || filterImageGeneration || filterReasoning || filterWebSearch || filterTools;
     if (hasCapabilityFilters) {
       filteredModels = filteredModels.filter((model) => {
         return (
@@ -123,7 +130,8 @@
           (filterImageInput && supportsImageInput(model)) ||
           (filterImageGeneration && supportsImageGeneration(model)) ||
           (filterReasoning && supportsReasoning(model)) ||
-          (filterWebSearch && supportsWebSearch(model))
+          (filterWebSearch && supportsWebSearch(model)) ||
+          (filterTools && supportsTools(model))
         );
       });
     }
@@ -248,6 +256,9 @@
               class:inactive={!filterWebSearch}
               on:click={() => (filterWebSearch = !filterWebSearch)}>
               <Pill icon={Search} text="Web Search" variant={filterWebSearch ? 'error' : 'default'} size="md"></Pill>
+            </button>
+            <button class="filter-btn" class:inactive={!filterTools} on:click={() => (filterTools = !filterTools)}>
+              <Pill icon={Wrench} text="Tool Use" variant={filterTools ? 'cyan' : 'default'} size="md"></Pill>
             </button>
             {#if providerInstances.length > 1}
               <div class="h-8 w-px bg-[var(--color-a6)]"></div>

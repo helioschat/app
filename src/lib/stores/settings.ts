@@ -1,9 +1,9 @@
 import { settingsManager } from '$lib/settings/SettingsManager';
 
-export { advancedSettings, disabledModels, providerInstances } from '$lib/settings/SettingsManager';
+export { advancedSettings, disabledModels, providerInstances, toolsSettings } from '$lib/settings/SettingsManager';
 
 // Types
-export type { AdvancedSettings } from '$lib/settings/SettingsManager';
+export type { AdvancedSettings, ToolsSettings } from '$lib/settings/SettingsManager';
 
 // Re-export the provider instance management functions from the SettingsManager instance
 export const addProviderInstance = settingsManager.addProviderInstance.bind(settingsManager);

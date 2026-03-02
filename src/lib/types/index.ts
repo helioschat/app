@@ -12,6 +12,24 @@ export type Attachment = {
   previewUrl?: string;
 };
 
+// Tool call issued by the model
+export type ToolCall = {
+  id: string;
+  name: string;
+  // JSON-serialised arguments object
+  arguments: string;
+};
+
+// Result returned by the app after executing a tool
+export type ToolResult = {
+  toolCallId: string;
+  name: string;
+  // JSON-serialised result object
+  result: string;
+  // Whether the tool call resulted in an error
+  error?: boolean;
+};
+
 export type Message = {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -35,6 +53,12 @@ export type Message = {
   reasoningEnabled?: boolean;
   reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high';
   reasoningSummary?: 'auto' | 'concise' | 'detailed';
+  // Tool use settings used for this message
+  toolUseEnabled?: boolean;
+  // Tool calls emitted during this assistant message
+  toolCalls?: ToolCall[];
+  // Tool results included in this message (role=tool equivalent stored inline)
+  toolResults?: ToolResult[];
 };
 
 // Message with populated attachments for UI usage
@@ -69,6 +93,7 @@ export type Chat = {
   reasoningEnabled?: boolean;
   reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high';
   reasoningSummary?: 'auto' | 'concise' | 'detailed';
+  toolUseEnabled?: boolean;
 };
 
 export type ProviderType = 'openai-compatible';

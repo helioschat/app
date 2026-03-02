@@ -2,7 +2,7 @@
   import { page } from '$app/state';
   import Tabs from '$lib/components/common/Tabs.svelte';
   import { manifest } from '$lib';
-  import { BrainCircuit, HardDrive, Info, ServerCog, Wrench } from 'lucide-svelte';
+  import { BrainCircuit, HardDrive, Info, ServerCog, Wrench, Hammer } from 'lucide-svelte';
 
   const tabs = [
     {
@@ -20,6 +20,14 @@
       description: 'Enable or disable models for each provider.',
       icon: BrainCircuit,
       url: '/settings/models',
+    },
+    {
+      id: 'tools',
+      text: 'Tools',
+      title: 'Tools',
+      description: 'Enable or disable tools and configure their settings.',
+      icon: Hammer,
+      url: '/settings/tools',
     },
     {
       id: 'storage',

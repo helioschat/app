@@ -1,4 +1,4 @@
-import type { MessageWithAttachments } from '$lib/types';
+import type { MessageWithAttachments, ToolCall, ToolResult } from '$lib/types';
 import { MessageProcessor } from './messageProcessor';
 import { updateStreamContent, updateStreamReasoning } from './state';
 
@@ -29,10 +29,14 @@ export class StreamProcessor {
   ): Promise<{
     accumulatedContent: string;
     accumulatedReasoning: string;
+    accumulatedToolCalls: ToolCall[];
+    accumulatedToolResults: ToolResult[];
     thinkingTime?: number;
   }> {
     let accumulatedContent = initialContent;
     let accumulatedReasoning = '';
+    let accumulatedToolCalls: ToolCall[] = [];
+    let accumulatedToolResults: ToolResult[] = [];
     let firstContentReceived = initialContent.length > 0;
     let thinkingTime: number | undefined;
     const startTime = Date.now();
@@ -43,17 +47,43 @@ export class StreamProcessor {
 
       try {
         const parsedValue = JSON.parse(value);
+
         if (parsedValue.type === 'attachment' && parsedValue.data) {
           // Handle attachment by adding it to the message
           this.updateMessageCallback(this.messageId, (m) => ({
             ...m,
             attachments: m.attachments ? [...m.attachments, parsedValue.data] : [parsedValue.data],
           }));
+        } else if (parsedValue.type === 'tool_calls' && Array.isArray(parsedValue.data)) {
+          // Handle tool calls emitted by the provider
+          const newCalls: ToolCall[] = parsedValue.data.map((tc: { id: string; name: string; arguments: string }) => ({
+            id: tc.id,
+            name: tc.name,
+            arguments: tc.arguments,
+          }));
+          accumulatedToolCalls = [...accumulatedToolCalls, ...newCalls];
+          this.updateMessageCallback(this.messageId, (m) => ({
+            ...m,
+            toolCalls: accumulatedToolCalls,
+          }));
+        } else if (parsedValue.type === 'tool_result' && parsedValue.data) {
+          // Handle a tool execution result
+          const result: ToolResult = {
+            toolCallId: parsedValue.data.toolCallId,
+            name: parsedValue.data.name,
+            result: parsedValue.data.result,
+            error: parsedValue.data.error,
+          };
+          accumulatedToolResults = [...accumulatedToolResults, result];
+          this.updateMessageCallback(this.messageId, (m) => ({
+            ...m,
+            toolResults: accumulatedToolResults,
+          }));
         } else {
-          throw new Error('Not an attachment JSON');
+          throw new Error('Unrecognised JSON event');
         }
       } catch {
-        // Not a valid JSON or not an attachment, treat as text or reasoning chunk
+        // Not a valid JSON event, treat as text or reasoning chunk
         const result = await MessageProcessor.processStreamChunk(
           value,
           accumulatedContent,
@@ -87,6 +117,6 @@ export class StreamProcessor {
       }
     }
 
-    return { accumulatedContent, accumulatedReasoning, thinkingTime };
+    return { accumulatedContent, accumulatedReasoning, accumulatedToolCalls, accumulatedToolResults, thinkingTime };
   }
 }

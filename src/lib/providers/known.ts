@@ -179,6 +179,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         supportsWebSearch: true,
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
+        supportsTools: true,
       },
       'gpt-3.5-turbo': {
         name: 'GPT-3.5 Turbo',
@@ -190,6 +191,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         },
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
+        supportsTools: true,
       },
       'gpt-4': {
         name: 'GPT-4',
@@ -201,6 +203,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         },
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
+        supportsTools: true,
       },
       'gpt-4-turbo': {
         name: 'GPT-4 Turbo',
@@ -212,6 +215,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         },
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
+        supportsTools: true,
       },
       'gpt-4.1': {
         name: 'GPT-4.1',
@@ -223,6 +227,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         },
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
+        supportsTools: true,
       },
       'gpt-4.1-mini': {
         name: 'GPT-4.1 mini',
@@ -234,6 +239,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         },
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
+        supportsTools: true,
       },
       'gpt-4.1-nano': {
         name: 'GPT-4.1 nano',
@@ -245,6 +251,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         },
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
+        supportsTools: true,
       },
       'gpt-4o': {
         name: 'GPT-4o',
@@ -257,6 +264,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         supportsWebSearch: true,
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
+        supportsTools: true,
       },
       'gpt-4o-mini': {
         name: 'GPT-4o mini',
@@ -269,6 +277,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         supportsWebSearch: true,
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
+        supportsTools: true,
       },
       'gpt-5-pro': {
         name: 'GPT-5 pro',
@@ -281,6 +290,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: true,
         supportsReasoning: true,
+        supportsTools: true,
       },
       'gpt-5': {
         name: 'GPT-5',
@@ -295,6 +305,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         supportsReasoning: true,
         supportsWebSearch: true,
         webSearchOnlyThroughResponsesEndpoint: true,
+        supportsTools: true,
       },
       'gpt-5-mini': {
         name: 'GPT-5 mini',
@@ -307,6 +318,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
         supportsReasoning: true,
+        supportsTools: true,
       },
       'gpt-5-nano': {
         name: 'GPT-5 nano',
@@ -319,6 +331,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
         supportsReasoning: true,
+        supportsTools: true,
       },
       'gpt-5-chat-latest': {
         name: 'ChatGPT 5',
@@ -330,6 +343,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         },
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
+        supportsTools: true,
       },
       'gpt-5.1-chat-latest': {
         name: 'GPT-5.1 Chat',
@@ -341,6 +355,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         },
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
+        supportsTools: true,
       },
       'gpt-5.1': {
         name: 'GPT-5.1',
@@ -355,6 +370,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         supportsReasoning: true,
         supportsWebSearch: true,
         webSearchOnlyThroughResponsesEndpoint: true,
+        supportsTools: true,
       },
       'gpt-5.2-chat-latest': {
         name: 'GPT-5.2 Chat',
@@ -366,6 +382,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         },
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: false,
+        supportsTools: true,
       },
       'gpt-5.2-pro': {
         name: 'GPT-5.2 Pro',
@@ -378,6 +395,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         supportsResponsesEndpoint: true,
         doesntSupportChatCompletionsEndpoint: true,
         supportsReasoning: true,
+        supportsTools: true,
       },
       'gpt-5.2': {
         name: 'GPT-5.2',
@@ -392,6 +410,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         supportsReasoning: true,
         supportsWebSearch: true,
         webSearchOnlyThroughResponsesEndpoint: true,
+        supportsTools: true,
       },
       'o1-pro': {
         name: 'o1-pro',
@@ -405,6 +424,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         doesntSupportChatCompletionsEndpoint: true,
         supportsReasoning: true,
         doesntSupportReasoningSummary: true,
+        supportsTools: true,
       },
       o1: {
         name: 'o1',
@@ -418,6 +438,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         doesntSupportChatCompletionsEndpoint: false,
         supportsReasoning: true,
         doesntSupportReasoningSummary: true,
+        supportsTools: true,
       },
       'o1-mini': {
         name: 'o1-mini',
@@ -444,6 +465,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         doesntSupportChatCompletionsEndpoint: true,
         supportsReasoning: true,
         doesntSupportReasoningSummary: true,
+        supportsTools: true,
       },
       o3: {
         name: 'o3',
@@ -457,6 +479,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         doesntSupportChatCompletionsEndpoint: false,
         supportsReasoning: true,
         doesntSupportReasoningSummary: true,
+        supportsTools: true,
       },
       'o3-mini': {
         name: 'o3-mini',
@@ -470,6 +493,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         doesntSupportChatCompletionsEndpoint: false,
         supportsReasoning: true,
         doesntSupportReasoningSummary: true,
+        supportsTools: true,
       },
       'o4-mini': {
         name: 'o4-mini',
@@ -483,6 +507,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
         doesntSupportChatCompletionsEndpoint: false,
         supportsReasoning: true,
         doesntSupportReasoningSummary: true,
+        supportsTools: true,
       },
       'gpt-image-1': {
         name: 'GPT Image 1',
@@ -590,6 +615,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
       },
       'openai/gpt-5-pro': {
         supportsReasoning: true,
+        // gpt-5-pro is responses-endpoint-only via OpenRouter; tool support depends on OpenRouter's supported_parameters
       },
       'openai/gpt-5': {
         supportsReasoning: true,
@@ -603,26 +629,32 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
       'openai/o1-pro': {
         supportsReasoning: true,
         doesntSupportReasoningSummary: true,
+        // o1-pro is responses-endpoint-only via OpenRouter; tool support depends on OpenRouter's supported_parameters
       },
       'openai/o1': {
         supportsReasoning: true,
         doesntSupportReasoningSummary: true,
+        supportsTools: true,
       },
       'openai/o3-pro': {
         supportsReasoning: true,
         doesntSupportReasoningSummary: true,
+        // o3-pro is responses-endpoint-only via OpenRouter; tool support depends on OpenRouter's supported_parameters
       },
       'openai/o3': {
         supportsReasoning: true,
         doesntSupportReasoningSummary: true,
+        supportsTools: true,
       },
       'openai/o3-mini': {
         supportsReasoning: true,
         doesntSupportReasoningSummary: true,
+        supportsTools: true,
       },
       'openai/o4-mini': {
         supportsReasoning: true,
         doesntSupportReasoningSummary: true,
+        supportsTools: true,
       },
     },
     baseUrlPatterns: [/https?:\/\/openrouter\.ai\/api/],
@@ -645,6 +677,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
           inputModalities: ['text', 'image'],
           outputModalities: ['text'],
         },
+        supportsTools: true,
       },
       'claude-sonnet-4-20250514': {
         name: 'Claude Sonnet 4',
@@ -654,6 +687,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
           inputModalities: ['text', 'image'],
           outputModalities: ['text'],
         },
+        supportsTools: true,
       },
       'claude-3-7-sonnet-20250219': {
         name: 'Claude 3.7 Sonnet',
@@ -663,6 +697,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
           inputModalities: ['text', 'image'],
           outputModalities: ['text'],
         },
+        supportsTools: true,
       },
       'claude-3-5-sonnet-20241022': {
         name: 'Claude 3.5 Sonnet',
@@ -672,6 +707,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
           inputModalities: ['text', 'image'],
           outputModalities: ['text'],
         },
+        supportsTools: true,
       },
       'claude-3-5-haiku-20241022': {
         name: 'Claude 3.5 Haiku',
@@ -681,6 +717,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
           inputModalities: ['text', 'image'],
           outputModalities: ['text'],
         },
+        supportsTools: true,
       },
       'claude-3-opus-20240229': {
         name: 'Claude 3 Opus',
@@ -690,6 +727,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
           inputModalities: ['text', 'image'],
           outputModalities: ['text'],
         },
+        supportsTools: true,
       },
       'claude-3-haiku-20240307': {
         name: 'Claude 3 Haiku',
@@ -699,6 +737,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
           inputModalities: ['text', 'image'],
           outputModalities: ['text'],
         },
+        supportsTools: true,
       },
     },
     baseUrlPatterns: [/https?:\/\/api\.anthropic\.com/],
@@ -748,6 +787,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
           inputModalities: ['text', 'image'],
           outputModalities: ['text'],
         },
+        supportsTools: true,
       },
       'gemini-2.5-flash': {
         name: 'Gemini 2.5 Flash',
@@ -758,6 +798,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
           inputModalities: ['text', 'image', 'audio', 'video'],
           outputModalities: ['text'],
         },
+        supportsTools: true,
       },
       'gemini-2.5-flash-lite': {
         name: 'Gemini 2.5 Flash Lite',
@@ -767,6 +808,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
           inputModalities: ['text', 'image', 'audio', 'video'],
           outputModalities: ['text'],
         },
+        supportsTools: true,
       },
       'gemini-2.0-flash': {
         name: 'Gemini 2.0 Flash',
@@ -776,6 +818,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
           inputModalities: ['text', 'image', 'audio', 'video'],
           outputModalities: ['text'],
         },
+        supportsTools: true,
       },
       'gemini-2.0-flash-lite': {
         name: 'Gemini 2.0 Flash Lite',
@@ -785,6 +828,7 @@ export const KNOWN_PROVIDERS: Record<string, KnownProviderMetadata> = {
           inputModalities: ['text', 'image', 'audio', 'video'],
           outputModalities: ['text'],
         },
+        supportsTools: true,
       },
       'imagen-4.0-generate-001': {
         name: 'Imagen 4',

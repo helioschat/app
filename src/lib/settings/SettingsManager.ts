@@ -13,6 +13,14 @@ export interface AdvancedSettings {
   allowAssistantMessageEditing: boolean;
 }
 
+// Tools settings interface — one entry per built-in tool
+export interface ToolsSettings {
+  exa: {
+    enabled: boolean;
+    apiKey: string;
+  };
+}
+
 export class SettingsManager {
   // Default settings
   private static getDefaultProviderInstances(): ProviderInstance[] {
@@ -85,11 +93,19 @@ Only describe capabilities that are actually available in the current environmen
     allowAssistantMessageEditing: false,
   };
 
+  private static readonly defaultToolsSettings: ToolsSettings = {
+    exa: {
+      enabled: false,
+      apiKey: '',
+    },
+  };
+
   // Stores
   public readonly providerInstances = writable<ProviderInstance[]>(this.getInitialProviderInstances());
   public readonly selectedModel = writable<SelectedModel | null>(this.getInitialSelectedModel());
   public readonly advancedSettings = writable<AdvancedSettings>(this.getInitialAdvancedSettings());
   public readonly disabledModels = writable<Record<string, string[]>>(this.getInitialDisabledModels());
+  public readonly toolsSettings = writable<ToolsSettings>(this.getInitialToolsSettings());
 
   constructor() {
     // Initialize persistence
@@ -112,6 +128,10 @@ Only describe capabilities that are actually available in the current environmen
 
       this.disabledModels.subscribe((value) => {
         localStorage.setItem('disabledModels', JSON.stringify(value));
+      });
+
+      this.toolsSettings.subscribe((value) => {
+        localStorage.setItem('toolsSettings', JSON.stringify(value));
       });
     }
   }
@@ -177,6 +197,26 @@ Only describe capabilities that are actually available in the current environmen
       }
     }
     return {};
+  }
+
+  private getInitialToolsSettings(): ToolsSettings {
+    if (browser) {
+      const storedValue = localStorage.getItem('toolsSettings');
+      if (storedValue) {
+        try {
+          const parsed = JSON.parse(storedValue);
+          return {
+            ...SettingsManager.defaultToolsSettings,
+            ...parsed,
+            exa: { ...SettingsManager.defaultToolsSettings.exa, ...parsed.exa },
+          };
+        } catch (error) {
+          console.error('Error parsing tools settings from localStorage', error);
+          return SettingsManager.defaultToolsSettings;
+        }
+      }
+    }
+    return SettingsManager.defaultToolsSettings;
   }
 
   public addProviderInstance(name: string, providerType: ProviderType, config: ProviderConfig): string {
@@ -336,4 +376,4 @@ Only describe capabilities that are actually available in the current environmen
 // Settings singleton
 export const settingsManager = new SettingsManager();
 
-export const { providerInstances, selectedModel, advancedSettings, disabledModels } = settingsManager;
+export const { providerInstances, selectedModel, advancedSettings, disabledModels, toolsSettings } = settingsManager;

@@ -1,3 +1,4 @@
+import type { Tool } from '../tools/types';
 import type { MessageWithAttachments } from '../types';
 
 export interface LanguageModel {
@@ -11,6 +12,7 @@ export interface LanguageModel {
       effort?: 'minimal' | 'low' | 'medium' | 'high';
       summary?: 'auto' | 'concise' | 'detailed';
     },
+    tools?: Tool[],
   ) => ReadableStream<string>;
   getAvailableModels: () => Promise<ModelInfo[]>;
   fallbackModel?: string;
@@ -44,6 +46,7 @@ export interface ModelInfo {
   supportsReasoning?: boolean; // Whether the model supports advanced reasoning capabilities.
   doesntSupportReasoningSummary?: boolean; // Whether the model doesn't support reasoning summary parameter.
   doesntSupportChatCompletionsEndpoint?: boolean; // Whether the model doesn't support the /v1/chat/completions endpoint.
+  supportsTools?: boolean; // Whether the model supports function calling / tool use.
 }
 
 export interface StreamMetrics {

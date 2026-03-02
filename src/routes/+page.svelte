@@ -15,6 +15,7 @@
   let reasoningEnabled = $state(false);
   let reasoningEffort: 'minimal' | 'low' | 'medium' | 'high' = $state('medium');
   let reasoningSummary: 'auto' | 'concise' | 'detailed' = $state('auto');
+  let toolUseEnabled = $state(false);
 
   // Check if this is first-time setup
   const isFirstTime = $derived($setupStore.isFirstTime);
@@ -27,6 +28,7 @@
     reasoningEnabled?: boolean,
     reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high',
     reasoningSummary?: 'auto' | 'concise' | 'detailed',
+    toolUseEnabled?: boolean,
   ) {
     e.preventDefault();
     if (!searchInput.trim() && (!attachments || attachments.length === 0)) return;
@@ -41,6 +43,7 @@
       reasoningEnabled,
       reasoningEffort,
       reasoningSummary,
+      toolUseEnabled,
     );
     goto(`/${newChatId}`);
   }
@@ -74,6 +77,7 @@
       bind:reasoningEnabled
       bind:reasoningEffort
       bind:reasoningSummary
+      bind:toolUseEnabled
       handleSubmit={handleSearch}
       handleStop={async () => {}}
       showTemporaryToggle={true}

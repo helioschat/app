@@ -5,7 +5,8 @@
   import type { MessageWithAttachments } from '$lib/types';
   import { streamStates } from '$lib/streaming';
   import { page } from '$app/state';
-  import { ChevronDown, ChevronUp, Copy, RefreshCw, Edit, GitBranch } from 'lucide-svelte';
+  import { ChevronDown, ChevronUp, Copy, RefreshCw, Edit, GitBranch, Wrench, Brain } from 'lucide-svelte';
+  import { getToolDisplayInfo } from '$lib/tools';
   import { providerInstances } from '$lib/settings/SettingsManager';
 
   interface Props {
@@ -56,6 +57,19 @@
 
   let showReasoning = $state(false);
   let hasReasoning = $derived(message.role === 'assistant' && message.reasoning && message.reasoning.length > 0);
+
+  let showToolCalls = $state(false);
+  let hasToolActivity = $derived(
+    message.role === 'assistant' &&
+      ((message.toolCalls && message.toolCalls.length > 0) || (message.toolResults && message.toolResults.length > 0)),
+  );
+
+  // True while this message is streaming and tool calls are in-flight (called but not all results back yet)
+  let isUsingTools = $derived(
+    isCurrentlyStreaming &&
+      (message.toolCalls?.length ?? 0) > 0 &&
+      (message.toolResults?.length ?? 0) < (message.toolCalls?.length ?? 0),
+  );
 
   let copyButtonText = $state('Copy');
 
@@ -111,6 +125,7 @@
             <ChevronUp size={16}></ChevronUp>
           {/if}
         </div>
+        <Brain size={14}></Brain>
         {isThinking
           ? 'Thinking...'
           : message.metrics?.thinkingTime
@@ -121,6 +136,76 @@
     {#if showReasoning}
       <div class="reasoning-content text-secondary mb-2 text-xs">
         <MarkdownRenderer content={message.reasoning} isStreaming={false}></MarkdownRenderer>
+      </div>
+    {/if}
+  {/if}
+
+  {#if hasToolActivity}
+    <button
+      class="reasoning-button button button-ghost button-small button-circle mb-0.5"
+      class:thinking={isUsingTools}
+      onclick={() => (showToolCalls = !showToolCalls)}>
+      <span class="flex items-center gap-1">
+        <div class="inline-block">
+          {#if !showToolCalls}
+            <ChevronDown size={16}></ChevronDown>
+          {:else}
+            <ChevronUp size={16}></ChevronUp>
+          {/if}
+        </div>
+        <Wrench size={14}></Wrench>
+        {message.toolResults && message.toolResults.length > 0
+          ? `Used ${message.toolResults.length} tool${message.toolResults.length !== 1 ? 's' : ''}`
+          : isCurrentlyStreaming
+            ? 'Using tools...'
+            : `Called ${message.toolCalls?.length ?? 0} tool${(message.toolCalls?.length ?? 0) !== 1 ? 's' : ''}`}
+      </span>
+    </button>
+
+    {#if showToolCalls}
+      <div class="tool-calls-content mb-2">
+        {#if message.toolCalls && message.toolCalls.length > 0}
+          {#each message.toolCalls as toolCall (toolCall.id)}
+            {@const matchingResult = message.toolResults?.find((r) => r.toolCallId === toolCall.id)}
+            {@const toolInfo = getToolDisplayInfo(toolCall.name)}
+            {@const parsedArgs = (() => {
+              try {
+                return JSON.parse(toolCall.arguments || '{}');
+              } catch {
+                return {};
+              }
+            })()}
+            {@const primaryArg = parsedArgs.query ?? parsedArgs.input ?? parsedArgs.text ?? null}
+            <div class="tool-call-item">
+              <div class="tool-call-header">
+                <Wrench size={12}></Wrench>
+                <span class="text-xs font-medium">{toolInfo.displayName}</span>
+                {#if primaryArg}
+                  <span class="tool-call-arg truncate text-xs opacity-60">&ldquo;{primaryArg}&rdquo;</span>
+                {/if}
+                {#if matchingResult?.error}
+                  <span class="tool-error-badge">error</span>
+                {/if}
+              </div>
+              <details class="tool-call-details">
+                <summary class="cursor-pointer text-xs opacity-60 select-none">Arguments</summary>
+                <pre class="tool-call-pre">{JSON.stringify(parsedArgs, null, 2)}</pre>
+              </details>
+              {#if matchingResult}
+                <details class="tool-call-details">
+                  <summary class="cursor-pointer text-xs opacity-60 select-none">Result</summary>
+                  <pre class="tool-call-pre">{(() => {
+                      try {
+                        return JSON.stringify(JSON.parse(matchingResult.result), null, 2);
+                      } catch {
+                        return matchingResult.result;
+                      }
+                    })()}</pre>
+                </details>
+              {/if}
+            </div>
+          {/each}
+        {/if}
       </div>
     {/if}
   {/if}
@@ -290,6 +375,42 @@
   .reasoning-content {
     @apply rounded-xl p-3 opacity-90;
     background-color: var(--color-a2);
+  }
+
+  .tool-calls-content {
+    @apply rounded-xl p-3;
+    background-color: var(--color-a2);
+  }
+
+  .tool-call-item {
+    @apply mb-4 last:mb-0;
+    border-color: var(--color-a4);
+  }
+
+  .tool-call-header {
+    @apply mb-1 flex items-center gap-1.5;
+    color: var(--color-a11);
+  }
+
+  .tool-call-arg {
+    @apply max-w-[24rem] overflow-hidden text-ellipsis whitespace-nowrap;
+    color: var(--color-a9);
+  }
+
+  .tool-error-badge {
+    @apply rounded px-1 py-0.5 text-xs font-medium;
+    background-color: color-mix(in srgb, var(--red-9) 20%, transparent);
+    color: var(--red-9);
+  }
+
+  .tool-call-details {
+    @apply mt-1;
+  }
+
+  .tool-call-pre {
+    @apply mt-1 overflow-x-auto rounded-lg p-2 font-mono text-xs;
+    background-color: var(--color-a3);
+    color: var(--color-a11);
   }
 
   .reasoning-button > span {

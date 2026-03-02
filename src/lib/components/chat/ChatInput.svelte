@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Square, VenetianMask, Paperclip, Search, ArrowUp, Brain, Settings } from 'lucide-svelte';
-  import { providerInstances, selectedModel, settingsManager } from '$lib/settings/SettingsManager';
+  import { Square, VenetianMask, Paperclip, Search, ArrowUp, Brain, Settings, Wrench } from 'lucide-svelte';
+  import { providerInstances, selectedModel, settingsManager, toolsSettings } from '$lib/settings/SettingsManager';
   import { availableModels } from '$lib/stores/modelCache';
   import { onMount, tick, createEventDispatcher } from 'svelte';
   import { lastUsedModels } from '$lib/stores/modelPreferences';
@@ -27,6 +27,7 @@
       effort: 'minimal' | 'low' | 'medium' | 'high';
       summary: 'auto' | 'concise' | 'detailed';
     };
+    toolUseToggle: { enabled: boolean };
   }>();
 
   export let userInput: string = '';
@@ -39,6 +40,7 @@
     reasoningEnabled?: boolean,
     reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high',
     reasoningSummary?: 'auto' | 'concise' | 'detailed',
+    toolUseEnabled?: boolean,
   ) => Promise<void>;
   export let handleStop: () => Promise<void>;
   export let showTemporaryToggle: boolean = false;
@@ -48,6 +50,7 @@
   export let reasoningEnabled: boolean = false;
   export let reasoningEffort: 'minimal' | 'low' | 'medium' | 'high' = 'medium';
   export let reasoningSummary: 'auto' | 'concise' | 'detailed' = 'auto';
+  export let toolUseEnabled: boolean = false;
   export let noPadding: boolean = false;
   export let isTemporaryChat: boolean = false;
 
@@ -85,6 +88,17 @@
   $: supportsWebSearch = currentModel?.supportsWebSearch;
   $: supportsReasoning = currentModel?.supportsReasoning || false;
   $: supportsReasoningSummary = currentModel?.doesntSupportReasoningSummary !== true;
+  $: supportsTools = currentModel?.supportsTools || false;
+
+  // Reset feature toggles when switching to a model that doesn't support them
+  $: if (!supportsTools && toolUseEnabled) {
+    toolUseEnabled = false;
+  }
+
+  // Auto-enable tools when switching to a model that supports them and a tool is configured
+  $: if (supportsTools && !toolUseEnabled && $toolsSettings.exa.apiKey.trim()) {
+    toolUseEnabled = true;
+  }
 
   onMount(() => {
     cachedModels = $availableModels;
@@ -171,6 +185,7 @@
       reasoningEnabled,
       reasoningEffort,
       reasoningSummary,
+      toolUseEnabled,
     );
     attachments = []; // Clear attachments after submit
     resizeTextarea({ target: userInputComponent } as unknown as Event);
@@ -310,6 +325,12 @@
     });
   }
 
+  function handleToolUseToggle() {
+    const newEnabled = !toolUseEnabled;
+    toolUseEnabled = newEnabled;
+    dispatch('toolUseToggle', { enabled: newEnabled });
+  }
+
   function handleReasoningOptionsSelect(
     event: CustomEvent<{ effort: 'minimal' | 'low' | 'medium' | 'high'; summary: 'auto' | 'concise' | 'detailed' }>,
   ) {
@@ -384,6 +405,17 @@
                 title={isTemporary ? "Temporary chat (won't be saved)" : 'Regular chat (will be saved)'}>
                 <VenetianMask size={16}></VenetianMask>
                 <span class="hidden text-xs lg:block">Temporary</span>
+              </button>
+            {/if}
+            {#if supportsTools}
+              <button
+                on:click|preventDefault={handleToolUseToggle}
+                class="button button-circle"
+                class:button-tertiary={!toolUseEnabled}
+                class:button-secondary={toolUseEnabled}
+                title={toolUseEnabled ? 'Tools enabled (Exa Search)' : 'Tools disabled'}>
+                <Wrench size={16}></Wrench>
+                <span class="hidden text-xs lg:block">Tools</span>
               </button>
             {/if}
             {#if supportsWebSearch}

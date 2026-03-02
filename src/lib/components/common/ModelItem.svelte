@@ -2,7 +2,7 @@
   import type { ModelInfo } from '$lib/providers/base';
   import Pill from './Pill.svelte';
   import { supportsImageGeneration } from '$lib/utils/attachments';
-  import { Archive, Brain, FileInput, Image, Search, Star, Text, X } from 'lucide-svelte';
+  import { Archive, Brain, FileInput, Image, Search, Star, Text, Wrench, X } from 'lucide-svelte';
   import { favoriteModels } from '$lib/stores/modelPreferences';
 
   export let model: ModelInfo;
@@ -133,6 +133,9 @@
         {/if}
         {#if model.supportsWebSearch}
           <Pill icon={Search} text="Web Search" size="sm" variant="error"></Pill>
+        {/if}
+        {#if model.supportsTools}
+          <Pill icon={Wrench} text="Tool Use" size="sm" variant="cyan"></Pill>
         {/if}
       </div>
     {/if}

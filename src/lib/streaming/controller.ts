@@ -2,7 +2,8 @@ import type { ModelInfo } from '$lib/providers/base';
 import { getLanguageModel } from '$lib/providers/registry';
 import { chats } from '$lib/stores/chat';
 import { availableModels } from '$lib/stores/modelCache';
-import { advancedSettings, providerInstances } from '$lib/stores/settings';
+import { advancedSettings, providerInstances, toolsSettings } from '$lib/stores/settings';
+import { buildTools } from '$lib/tools';
 import type { Attachment, Chat, MessageWithAttachments, ProviderInstance } from '$lib/types';
 import { resolveSystemPromptVariables } from '$lib/utils/systemPromptVariables';
 import { get } from 'svelte/store';
@@ -32,7 +33,7 @@ export class StreamingController {
     return instance;
   }
 
-  private buildModel(providerInstanceId: string, modelId: string, webSearchEnabled?: boolean) {
+  private buildModel(providerInstanceId: string, modelId: string) {
     const providerInstance = this.getProviderInstance(providerInstanceId);
 
     const effectiveConfig = { ...providerInstance.config, model: modelId, providerInstanceId };
@@ -54,6 +55,8 @@ export class StreamingController {
     accumulatedContent: string,
     accumulatedReasoning: string,
     model: ReturnType<typeof getLanguageModel>,
+    accumulatedToolCalls?: import('$lib/types').ToolCall[],
+    accumulatedToolResults?: import('$lib/types').ToolResult[],
   ) {
     endStream(this.chatId);
     this.isLoading = false;
@@ -77,6 +80,10 @@ export class StreamingController {
                 ...m,
                 content: accumulatedContent,
                 reasoning: accumulatedReasoning,
+                ...(accumulatedToolCalls && accumulatedToolCalls.length > 0 ? { toolCalls: accumulatedToolCalls } : {}),
+                ...(accumulatedToolResults && accumulatedToolResults.length > 0
+                  ? { toolResults: accumulatedToolResults }
+                  : {}),
                 updatedAt: new Date(),
                 usage: {
                   promptTokens: finalMetrics.promptTokens,
@@ -118,6 +125,7 @@ export class StreamingController {
     reasoningEnabled?: boolean,
     reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high',
     reasoningSummary?: 'auto' | 'concise' | 'detailed',
+    toolUseEnabled?: boolean,
   ): Promise<StreamControllerState> {
     if ((!userInput.trim() && (!attachments || attachments.length === 0)) || !activeChat || this.isLoading) {
       return this.getState();
@@ -131,7 +139,7 @@ export class StreamingController {
     let updatedMessages: MessageWithAttachments[];
     let assistantMessage: MessageWithAttachments;
 
-    const model = this.buildModel(providerInstanceId, modelId, webSearchEnabled);
+    const model = this.buildModel(providerInstanceId, modelId);
     const systemPrompt = resolveSystemPromptVariables(get(advancedSettings).systemPrompt);
 
     const messagesForProvider = [];
@@ -154,6 +162,7 @@ export class StreamingController {
         reasoningEnabled: reasoningEnabled,
         reasoningEffort: reasoningEffort,
         reasoningSummary: reasoningSummary,
+        toolUseEnabled: toolUseEnabled,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -188,6 +197,7 @@ export class StreamingController {
         reasoningEnabled: reasoningEnabled,
         reasoningEffort: reasoningEffort,
         reasoningSummary: reasoningSummary,
+        toolUseEnabled: toolUseEnabled,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -204,6 +214,7 @@ export class StreamingController {
       reasoningEnabled: reasoningEnabled,
       reasoningEffort: reasoningEffort,
       reasoningSummary: reasoningSummary,
+      toolUseEnabled: toolUseEnabled,
       updatedAt: new Date(),
     };
 
@@ -256,7 +267,15 @@ export class StreamingController {
           }
         : undefined;
 
-      const stream = model.stream(messagesForProvider as MessageWithAttachments[], webSearchOptions, reasoningOptions);
+      // Build tools if tool use is enabled
+      const tools = toolUseEnabled ? buildTools(get(toolsSettings)) : undefined;
+
+      const stream = model.stream(
+        messagesForProvider as MessageWithAttachments[],
+        webSearchOptions,
+        reasoningOptions,
+        tools,
+      );
       this.currentReader = stream.getReader();
 
       startStream(this.chatId, assistantMessage.id, contextMessages);
@@ -267,12 +286,18 @@ export class StreamingController {
         this.updateAssistantMessage.bind(this),
       );
 
-      const { accumulatedContent, accumulatedReasoning, thinkingTime } = await streamProcessor.processStream(
-        this.currentReader,
-      );
+      const { accumulatedContent, accumulatedReasoning, accumulatedToolCalls, accumulatedToolResults, thinkingTime } =
+        await streamProcessor.processStream(this.currentReader);
 
       this.streamMetrics.thinkingTime = thinkingTime;
-      this.finalizeAssistantMessage(assistantMessage.id, accumulatedContent, accumulatedReasoning, model);
+      this.finalizeAssistantMessage(
+        assistantMessage.id,
+        accumulatedContent,
+        accumulatedReasoning,
+        model,
+        accumulatedToolCalls,
+        accumulatedToolResults,
+      );
     } catch (error) {
       await this.handleStreamError(error, assistantMessage.id, '');
     } finally {
@@ -295,12 +320,13 @@ export class StreamingController {
     reasoningEnabled?: boolean,
     reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high',
     reasoningSummary?: 'auto' | 'concise' | 'detailed',
+    toolUseEnabled?: boolean,
   ): Promise<StreamControllerState> {
     if (!activeChat || this.isLoading || activeChat.messages.length === 0) {
       return this.getState();
     }
 
-    const model = this.buildModel(providerInstanceId, modelId, webSearchEnabled);
+    const model = this.buildModel(providerInstanceId, modelId);
     const systemPrompt = resolveSystemPromptVariables(get(advancedSettings).systemPrompt);
 
     // Create assistant message
@@ -315,6 +341,7 @@ export class StreamingController {
       reasoningEnabled: reasoningEnabled,
       reasoningEffort: reasoningEffort,
       reasoningSummary: reasoningSummary,
+      toolUseEnabled: toolUseEnabled,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -390,7 +417,15 @@ export class StreamingController {
           }
         : undefined;
 
-      const stream = model.stream(messagesForProvider as MessageWithAttachments[], webSearchOptions, reasoningOptions);
+      // Build tools if tool use is enabled
+      const tools = toolUseEnabled ? buildTools(get(toolsSettings)) : undefined;
+
+      const stream = model.stream(
+        messagesForProvider as MessageWithAttachments[],
+        webSearchOptions,
+        reasoningOptions,
+        tools,
+      );
       this.currentReader = stream.getReader();
 
       const streamProcessor = new StreamProcessor(
@@ -399,12 +434,18 @@ export class StreamingController {
         this.updateAssistantMessage.bind(this),
       );
 
-      const { accumulatedContent, accumulatedReasoning, thinkingTime } = await streamProcessor.processStream(
-        this.currentReader,
-      );
+      const { accumulatedContent, accumulatedReasoning, accumulatedToolCalls, accumulatedToolResults, thinkingTime } =
+        await streamProcessor.processStream(this.currentReader);
 
       this.streamMetrics.thinkingTime = thinkingTime;
-      this.finalizeAssistantMessage(assistantMessage.id, accumulatedContent, accumulatedReasoning, model);
+      this.finalizeAssistantMessage(
+        assistantMessage.id,
+        accumulatedContent,
+        accumulatedReasoning,
+        model,
+        accumulatedToolCalls,
+        accumulatedToolResults,
+      );
     } catch (error) {
       await this.handleStreamError(error, assistantMessage.id, '');
     } finally {
