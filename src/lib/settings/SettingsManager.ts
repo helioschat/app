@@ -10,6 +10,7 @@ export interface AdvancedSettings {
   systemPrompt: string;
   titleGenerationEnabled: boolean;
   titleGenerationModel: string | null; // null means use default
+  allowAssistantMessageEditing: boolean;
 }
 
 export class SettingsManager {
@@ -81,6 +82,7 @@ Only describe capabilities that are actually available in the current environmen
 - If such tools are not available, answer based on your existing knowledge and clearly state any limitations or uncertainty.`,
     titleGenerationEnabled: true,
     titleGenerationModel: null, // Will use provider default
+    allowAssistantMessageEditing: false,
   };
 
   // Stores
@@ -151,7 +153,8 @@ Only describe capabilities that are actually available in the current environmen
       const storedValue = localStorage.getItem('advancedSettings');
       if (storedValue) {
         try {
-          return JSON.parse(storedValue);
+          // Merge with defaults so new fields are populated for existing users
+          return { ...SettingsManager.defaultAdvancedSettings, ...JSON.parse(storedValue) };
         } catch (error) {
           console.error('Error parsing advanced settings from localStorage', error);
           return SettingsManager.defaultAdvancedSettings;

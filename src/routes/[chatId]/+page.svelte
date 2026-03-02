@@ -1,6 +1,6 @@
 <script lang="ts">
   import { chats, loadChat, clearTemporaryChats, editMessage, branchOffChat } from '$lib/stores/chat';
-  import { selectedModel } from '$lib/settings/SettingsManager';
+  import { selectedModel, advancedSettings } from '$lib/settings/SettingsManager';
   import { syncThread } from '$lib/sync';
   import type { Message, Attachment } from '$lib/types';
   import { page } from '$app/stores';
@@ -269,20 +269,32 @@
 
     const wasLastMessage = messageIndex === activeChat.messages.length - 1;
 
+    // Assistant message edits are in-place — the full conversation history is
+    // preserved and the updated content will be included in the context on the
+    // next model call. No truncation or regeneration occurs.
+    if (messageToEdit.role === 'assistant') {
+      editMessage(chatId, messageToEdit.id, newContent, false);
+      return;
+    }
+
+    // Snapshot messages after the edited message before the store is mutated
+    const messagesAfter = activeChat.messages.slice(messageIndex + 1);
+
     // Edit the message and truncate messages after it
     editMessage(chatId, messageToEdit.id, newContent);
 
     // Wait for Svelte to process the store update
     await tick();
 
-    // If this was not the last message, regenerate from this point
+    // If this was not the last message, regenerate from this point so the model
+    // sees the updated history (applies to both user and assistant message edits)
     if (!wasLastMessage) {
       const controller = getOrCreateStreamController(chatId);
-      const updatedChat = $chats.find((c) => c.id === chatId);
+      let updatedChat = $chats.find((c) => c.id === chatId);
       if (!updatedChat || !$selectedModel) return;
 
-      // Find the next assistant message to get its original settings
-      const nextAssistantMessage = activeChat.messages.slice(messageIndex + 1).find((m) => m.role === 'assistant');
+      // Find the next assistant message to inherit its original generation settings
+      const nextAssistantMessage = messagesAfter.find((m) => m.role === 'assistant');
 
       const originalWebSearchEnabled = editWebSearchEnabled ?? nextAssistantMessage?.webSearchEnabled ?? false;
       const originalWebSearchContextSize =
@@ -486,6 +498,7 @@
       <ChatMessages
         chat={activeChat}
         editingMessageId={editingMessage?.id ?? ''}
+        allowAssistantEditing={$advancedSettings.allowAssistantMessageEditing}
         {handleRegenerate}
         {handleStartEdit}
         {handleCancelEdit}

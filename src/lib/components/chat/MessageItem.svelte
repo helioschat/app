@@ -11,13 +11,22 @@
   interface Props {
     message: MessageWithAttachments;
     isEditing?: boolean;
+    allowAssistantEditing?: boolean;
     onregenerate?: (detail: { message: MessageWithAttachments }) => void;
     onstartEdit?: (detail: { message: MessageWithAttachments }) => void;
     oncancelEdit?: (detail: { message: MessageWithAttachments }) => void;
     onbranch?: (detail: { message: MessageWithAttachments }) => void;
   }
 
-  let { message, isEditing = false, onregenerate, onstartEdit, oncancelEdit, onbranch }: Props = $props();
+  let {
+    message,
+    isEditing = false,
+    allowAssistantEditing = false,
+    onregenerate,
+    onstartEdit,
+    oncancelEdit,
+    onbranch,
+  }: Props = $props();
 
   const messageCreatedAt = message.createdAt;
 
@@ -161,6 +170,15 @@
           </button>
         {/if}
         {#if message.role === 'user'}
+          <button
+            class="button button-ghost button-small button-circle"
+            disabled={!canEdit || isCurrentlyStreaming}
+            onclick={handleStartEdit}>
+            <Edit size={16}></Edit>
+            <span>{isEditing ? 'Editing...' : 'Edit'}</span>
+          </button>
+        {/if}
+        {#if message.role === 'assistant' && allowAssistantEditing}
           <button
             class="button button-ghost button-small button-circle"
             disabled={!canEdit || isCurrentlyStreaming}

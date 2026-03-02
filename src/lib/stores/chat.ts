@@ -445,7 +445,7 @@ export async function toggleChatPin(id: string): Promise<void> {
  * @param messageId The ID of the message to edit
  * @param newContent The new content for the message
  */
-export function editMessage(chatId: string, messageId: string, newContent: string): void {
+export function editMessage(chatId: string, messageId: string, newContent: string, truncate = true): void {
   chats.update((allChats) => {
     const chatIndex = allChats.findIndex((c) => c.id === chatId);
     if (chatIndex === -1) return allChats;
@@ -454,8 +454,8 @@ export function editMessage(chatId: string, messageId: string, newContent: strin
     const messageIndex = chat.messages.findIndex((m) => m.id === messageId);
     if (messageIndex === -1) return allChats;
 
-    // Create new messages array with the edit and truncate after
-    const newMessages = chat.messages.slice(0, messageIndex + 1);
+    const newMessages = truncate ? chat.messages.slice(0, messageIndex + 1) : [...chat.messages];
+
     newMessages[messageIndex] = {
       ...newMessages[messageIndex],
       content: newContent,

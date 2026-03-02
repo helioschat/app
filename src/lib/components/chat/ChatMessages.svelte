@@ -7,6 +7,7 @@
   interface Props {
     chat: Chat;
     editingMessageId?: string;
+    allowAssistantEditing?: boolean;
     handleRegenerate: (message: Message) => Promise<void>;
     handleStartEdit: (message: Message) => void;
     handleCancelEdit: () => void;
@@ -16,6 +17,7 @@
   let {
     chat,
     editingMessageId = '',
+    allowAssistantEditing = false,
     handleRegenerate,
     handleStartEdit,
     handleCancelEdit,
@@ -52,6 +54,7 @@
       <MessageItem
         {message}
         isEditing={editingMessageId === message.id}
+        {allowAssistantEditing}
         onregenerate={({ message }) => handleRegenerate(message)}
         onstartEdit={({ message }) => handleStartEdit(message)}
         oncancelEdit={handleCancelEdit}

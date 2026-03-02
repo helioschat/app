@@ -225,6 +225,28 @@
 </div>
 
 <div class="panel">
+  <h3>Experimental</h3>
+
+  <div class="section">
+    <h4>Assistant Message Editing</h4>
+
+    <div>
+      <input
+        id="allowAssistantMessageEditing"
+        type="checkbox"
+        bind:checked={$advancedSettings.allowAssistantMessageEditing}
+        on:change={updateSettings} />
+      <label for="allowAssistantMessageEditing" class="select-none">Allow editing assistant messages</label>
+      <p class="text-secondary text-xs opacity-75">
+        Shows an edit button on assistant messages. The edit is applied in-place — the full conversation history is
+        preserved and the updated content is included in the context on the next model call. Intended for testing how
+        models react to modified assistant turns.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
   <h3>Danger Zone</h3>
 
   <div class="section">
