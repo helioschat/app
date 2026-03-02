@@ -115,7 +115,7 @@
       {/if}
     </div>
     {#if modelFeatures.length > 0 || isImageGeneration}
-      <div class="flex flex-wrap gap-1" class:mt-2={!minimal}>
+      <div class="flex flex-wrap justify-end gap-1" class:mt-2={!minimal}>
         {#if modelFeatures.includes('text')}
           <Pill icon={Text} text="Text" size="sm"></Pill>
         {/if}
