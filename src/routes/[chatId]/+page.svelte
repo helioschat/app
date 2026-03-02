@@ -485,7 +485,6 @@
       on:scroll={handleScroll}>
       <ChatMessages
         chat={activeChat}
-        {currentlyStreamingMessageId}
         editingMessageId={editingMessage?.id ?? ''}
         {handleRegenerate}
         {handleStartEdit}

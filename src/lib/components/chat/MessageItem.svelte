@@ -3,21 +3,21 @@
   import MessageAttachments from '$lib/components/chat/MessageAttachments.svelte';
   import { formatMessageTimestamp } from '$lib/utils/date';
   import type { MessageWithAttachments } from '$lib/types';
-  import { isMessageStreaming } from '$lib/streaming';
+  import { streamStates } from '$lib/streaming';
   import { page } from '$app/state';
   import { ChevronDown, ChevronUp, Copy, RefreshCw, Edit, GitBranch } from 'lucide-svelte';
-  import { createEventDispatcher } from 'svelte';
   import { providerInstances } from '$lib/settings/SettingsManager';
 
   interface Props {
     message: MessageWithAttachments;
-    isStreaming?: boolean;
-    isThinking?: boolean;
-    canEdit?: boolean; // Whether this message can be edited
-    isEditing?: boolean; // Whether this specific message is currently being edited
+    isEditing?: boolean;
+    onregenerate?: (detail: { message: MessageWithAttachments }) => void;
+    onstartEdit?: (detail: { message: MessageWithAttachments }) => void;
+    oncancelEdit?: (detail: { message: MessageWithAttachments }) => void;
+    onbranch?: (detail: { message: MessageWithAttachments }) => void;
   }
 
-  let { message, isStreaming = false, isThinking = false, canEdit = false, isEditing = false }: Props = $props();
+  let { message, isEditing = false, onregenerate, onstartEdit, oncancelEdit, onbranch }: Props = $props();
 
   const messageCreatedAt = message.createdAt;
 
@@ -29,20 +29,21 @@
       message.attachments.every((a) => a.type === 'image' && a.previewUrl),
   );
 
-  const dispatch = createEventDispatcher<{
-    regenerate: { message: MessageWithAttachments };
-    startEdit: { message: MessageWithAttachments };
-    cancelEdit: { message: MessageWithAttachments };
-    branch: { message: MessageWithAttachments };
-  }>();
-
   const providerName = $providerInstances.find((p) => p.id === message.providerInstanceId)?.name;
   let totalTime = $derived(message.metrics?.totalTime);
   let tokensPerSecond = $derived(message.metrics?.tokensPerSecond);
 
   let isCurrentlyStreaming = $derived(
-    isStreaming || (message.role === 'assistant' && isMessageStreaming(page.params.chatId, message.id)),
+    !!$streamStates[page.params.chatId] &&
+      $streamStates[page.params.chatId].messageId === message.id &&
+      $streamStates[page.params.chatId].isStreaming,
   );
+
+  // True when this assistant message is the one currently streaming but has no content yet
+  let isThinking = $derived(isCurrentlyStreaming && message.role === 'assistant' && message.content.length === 0);
+
+  // User messages can only be edited when nothing is streaming in this chat
+  let canEdit = $derived(!$streamStates[page.params.chatId]?.isStreaming);
 
   let showReasoning = $state(false);
   let hasReasoning = $derived(message.role === 'assistant' && message.reasoning && message.reasoning.length > 0);
@@ -66,20 +67,20 @@
   }
 
   function handleRegenerate() {
-    dispatch('regenerate', { message });
+    onregenerate?.({ message });
   }
 
   function handleStartEdit() {
     if (isCurrentlyStreaming) return;
     if (isEditing) {
-      dispatch('cancelEdit', { message });
+      oncancelEdit?.({ message });
     } else {
-      dispatch('startEdit', { message });
+      onstartEdit?.({ message });
     }
   }
 
   function handleBranch() {
-    dispatch('branch', { message });
+    onbranch?.({ message });
   }
 </script>
 

@@ -4,13 +4,23 @@
   import ChatNotice from '$lib/components/chat/ChatNotice.svelte';
   import { RefreshCw } from 'lucide-svelte';
 
-  export let chat: Chat;
-  export let currentlyStreamingMessageId: string = '';
-  export let editingMessageId: string = '';
-  export let handleRegenerate: (message: Message) => Promise<void>;
-  export let handleStartEdit: (message: Message) => void;
-  export let handleCancelEdit: () => void;
-  export let handleBranch: (message: Message) => void;
+  interface Props {
+    chat: Chat;
+    editingMessageId?: string;
+    handleRegenerate: (message: Message) => Promise<void>;
+    handleStartEdit: (message: Message) => void;
+    handleCancelEdit: () => void;
+    handleBranch: (message: Message) => void;
+  }
+
+  let {
+    chat,
+    editingMessageId = '',
+    handleRegenerate,
+    handleStartEdit,
+    handleCancelEdit,
+    handleBranch,
+  }: Props = $props();
 </script>
 
 <div class="mx-auto h-full w-full max-w-4xl flex-1 justify-center px-4 pt-16">
@@ -31,7 +41,7 @@
             {/if}
           </div>
           <div class="flex justify-end">
-            <button class="button button-secondary button-small" on:click={() => handleRegenerate(message)}>
+            <button class="button button-secondary button-small" onclick={() => handleRegenerate(message)}>
               <RefreshCw size={16}></RefreshCw>
               Regenerate
             </button>
@@ -41,16 +51,11 @@
     {:else}
       <MessageItem
         {message}
-        isStreaming={currentlyStreamingMessageId === message.id}
-        isThinking={currentlyStreamingMessageId === message.id &&
-          message.content.length === 0 &&
-          message.role === 'assistant'}
-        canEdit={!currentlyStreamingMessageId}
         isEditing={editingMessageId === message.id}
-        on:regenerate={({ detail }) => handleRegenerate(detail.message)}
-        on:startEdit={({ detail }) => handleStartEdit(detail.message)}
-        on:cancelEdit={handleCancelEdit}
-        on:branch={({ detail }) => handleBranch(detail.message)}></MessageItem>
+        onregenerate={({ message }) => handleRegenerate(message)}
+        onstartEdit={({ message }) => handleStartEdit(message)}
+        oncancelEdit={handleCancelEdit}
+        onbranch={({ message }) => handleBranch(message)}></MessageItem>
     {/if}
   {/each}
 </div>

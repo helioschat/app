@@ -5,8 +5,9 @@ import type { StreamContextMessage, StreamState } from './types';
 export const streamStates: Writable<Record<string, StreamState>> = writable({});
 
 export function startStream(chatId: string, messageId: string, contextMessages: StreamContextMessage[]): void {
-  streamStates.update((states) => {
-    states[chatId] = {
+  streamStates.update((states) => ({
+    ...states,
+    [chatId]: {
       chatId,
       messageId,
       isStreaming: true,
@@ -14,34 +15,28 @@ export function startStream(chatId: string, messageId: string, contextMessages: 
       partialContent: '',
       partialReasoning: '',
       contextMessages,
-    };
-
-    return states;
-  });
+    },
+  }));
 }
 
 export function updateStreamContent(chatId: string, content: string): void {
   streamStates.update((states) => {
-    if (states[chatId]) {
-      states[chatId].partialContent = content;
-    }
-    return states;
+    if (!states[chatId]) return states;
+    return { ...states, [chatId]: { ...states[chatId], partialContent: content } };
   });
 }
 
 export function updateStreamReasoning(chatId: string, reasoning: string): void {
   streamStates.update((states) => {
-    if (states[chatId]) {
-      states[chatId].partialReasoning = reasoning;
-    }
-    return states;
+    if (!states[chatId]) return states;
+    return { ...states, [chatId]: { ...states[chatId], partialReasoning: reasoning } };
   });
 }
 
 export function endStream(chatId: string): void {
   streamStates.update((states) => {
-    delete states[chatId];
-    return states;
+    const { [chatId]: _, ...rest } = states;
+    return rest;
   });
 }
 
