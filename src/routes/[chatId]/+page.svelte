@@ -1,6 +1,6 @@
 <script lang="ts">
   import { chats, loadChat, clearTemporaryChats, editMessage, branchOffChat } from '$lib/stores/chat';
-  import { selectedModel, advancedSettings } from '$lib/settings/SettingsManager';
+  import { selectedModel, advancedSettings, personalizationSettings } from '$lib/settings/SettingsManager';
   import type { Message, Attachment } from '$lib/types';
   import { page } from '$app/stores';
   import { goto, onNavigate } from '$app/navigation';
@@ -13,6 +13,7 @@
   import Spinner from '$lib/components/common/Spinner.svelte';
   import { ArrowDown } from 'lucide-svelte';
   import { manifest } from '$lib';
+  import { toggleStore, restoreTogglesFromChat } from '$lib/stores/toggles';
 
   $: chatId = $page.params.chatId;
   $: activeChat = $chats.find((chat) => chat.id === chatId);
@@ -30,29 +31,16 @@
   let editingMessage: Message | null = null;
   let editInput = '';
 
-  // Modifier state — initialized from the chat object when the chat changes,
-  // but kept as local state so they don't get overwritten on every streaming token.
-  let webSearchEnabled = false;
-  let webSearchContextSize: 'low' | 'medium' | 'high' = 'low';
-  let reasoningEnabled = false;
-  let reasoningEffort: 'minimal' | 'low' | 'medium' | 'high' = 'medium';
-  let reasoningSummary: 'auto' | 'concise' | 'detailed' = 'auto';
-  let toolUseEnabled = false;
-  let memoryEnabled = true;
-
-  // Track which chat ID we last synced modifiers from so we only re-read the
+  // Track which chat ID we last restored toggles for so we only re-read the
   // persisted settings when the user actually switches to a different chat.
-  let modifierSyncedChatId = '';
+  let toggleRestoredForChatId = '';
 
-  $: if (activeChat && activeChat.id !== modifierSyncedChatId) {
-    modifierSyncedChatId = activeChat.id;
-    webSearchEnabled = activeChat.webSearchEnabled ?? false;
-    webSearchContextSize = activeChat.webSearchContextSize ?? 'low';
-    reasoningEnabled = activeChat.reasoningEnabled ?? false;
-    reasoningEffort = activeChat.reasoningEffort ?? 'medium';
-    reasoningSummary = activeChat.reasoningSummary ?? 'auto';
-    toolUseEnabled = activeChat.toolUseEnabled ?? false;
-    memoryEnabled = activeChat.memoryEnabled ?? true;
+  $: if (activeChat && activeChat.id !== toggleRestoredForChatId) {
+    toggleRestoredForChatId = activeChat.id;
+    // Only restore from the chat's saved toggles if the user has opted in
+    if ($personalizationSettings.restoreTogglesOnReopen) {
+      restoreTogglesFromChat(activeChat);
+    }
   }
 
   // Map provides clearer semantics and easier cleanup than a plain object
@@ -96,17 +84,7 @@
   /**
    * Handles the submission of a new message from the user.
    */
-  async function handleSubmit(
-    _: Event,
-    attachments?: Attachment[],
-    webSearchEnabled?: boolean,
-    webSearchContextSize?: 'low' | 'medium' | 'high',
-    reasoningEnabled?: boolean,
-    reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high',
-    reasoningSummary?: 'auto' | 'concise' | 'detailed',
-    toolUseEnabled?: boolean,
-    memoryEnabled?: boolean,
-  ) {
+  async function handleSubmit(_: Event, attachments?: Attachment[]) {
     const messageContent = userInput;
     if (
       (!messageContent.trim() && (!attachments || attachments.length === 0)) ||
@@ -116,6 +94,7 @@
     )
       return;
 
+    const toggles = $toggleStore;
     const controller = getOrCreateStreamController(chatId);
     userInput = ''; // Clear input
     controller.handleSubmit(
@@ -124,13 +103,13 @@
       $selectedModel.providerInstanceId,
       $selectedModel.modelId,
       attachments,
-      webSearchEnabled,
-      webSearchContextSize,
-      reasoningEnabled,
-      reasoningEffort,
-      reasoningSummary,
-      toolUseEnabled,
-      memoryEnabled,
+      toggles.webSearchEnabled,
+      toggles.webSearchContextSize,
+      toggles.reasoningEnabled,
+      toggles.reasoningEffort,
+      toggles.reasoningSummary,
+      toggles.toolUseEnabled,
+      toggles.memoryEnabled,
     );
   }
 
@@ -177,20 +156,15 @@
     const originalUserInput = previousMessage.content;
     const originalAttachments = previousMessage.attachments;
 
-    // Extract web search settings from the original assistant message
+    // Extract toggle settings from the original assistant message
     const originalWebSearchEnabled = messageToRegenerate.webSearchEnabled || false;
     const originalWebSearchContextSize = messageToRegenerate.webSearchContextSize || 'low';
-
-    // Extract reasoning settings from the original assistant message
     const originalReasoningEnabled = messageToRegenerate.reasoningEnabled || false;
     const originalReasoningEffort = messageToRegenerate.reasoningEffort || 'medium';
     const originalReasoningSummary = messageToRegenerate.reasoningSummary || 'auto';
-
-    // Extract tool use settings from the original assistant message
     const originalToolUseEnabled = messageToRegenerate.toolUseEnabled || false;
-
-    // Memory is a chat-level toggle not stored per-message — fall back to the chat setting
-    const originalMemoryEnabled = activeChat.memoryEnabled ?? true;
+    // Memory was stored on the user message in the new system; fall back to chat setting
+    const originalMemoryEnabled = previousMessage.memoryEnabled ?? activeChat.memoryEnabled ?? true;
 
     // Truncate chat history to the point *before* the user message we are regenerating from.
     const truncatedMessages = activeChat.messages.slice(0, messageIndex - 1);
@@ -223,13 +197,13 @@
       storedProviderInstanceId,
       storedModelId,
       originalAttachments,
-      originalWebSearchEnabled, // Use original web search settings
-      originalWebSearchContextSize, // Use original web search context size
-      originalReasoningEnabled, // Use original reasoning settings
-      originalReasoningEffort, // Use original reasoning effort
-      originalReasoningSummary, // Use original reasoning summary
-      originalToolUseEnabled, // Use original tool use settings
-      originalMemoryEnabled, // Use chat-level memory setting
+      originalWebSearchEnabled,
+      originalWebSearchContextSize,
+      originalReasoningEnabled,
+      originalReasoningEffort,
+      originalReasoningSummary,
+      originalToolUseEnabled,
+      originalMemoryEnabled,
     );
   }
 
@@ -253,17 +227,7 @@
   /**
    * Called when the user submits the edited message via the ChatInput.
    */
-  async function handleEditSubmit(
-    _: Event,
-    _attachments?: Attachment[],
-    editWebSearchEnabled?: boolean,
-    editWebSearchContextSize?: 'low' | 'medium' | 'high',
-    editReasoningEnabled?: boolean,
-    editReasoningEffort?: 'minimal' | 'low' | 'medium' | 'high',
-    editReasoningSummary?: 'auto' | 'concise' | 'detailed',
-    editToolUseEnabled?: boolean,
-    editMemoryEnabled?: boolean,
-  ) {
+  async function handleEditSubmit(_: Event, _attachments?: Attachment[]) {
     if (!editingMessage || !activeChat || isLoading || !editInput.trim()) return;
 
     const messageToEdit = editingMessage;
@@ -281,9 +245,7 @@
 
     const wasLastMessage = messageIndex === activeChat.messages.length - 1;
 
-    // Assistant message edits are in-place — the full conversation history is
-    // preserved and the updated content will be included in the context on the
-    // next model call. No truncation or regeneration occurs.
+    // Assistant message edits are in-place — no truncation or regeneration occurs.
     if (messageToEdit.role === 'assistant') {
       editMessage(chatId, messageToEdit.id, newContent, false);
       return;
@@ -299,7 +261,7 @@
     await tick();
 
     // If this was not the last message, regenerate from this point so the model
-    // sees the updated history (applies to both user and assistant message edits)
+    // sees the updated history
     if (!wasLastMessage) {
       const controller = getOrCreateStreamController(chatId);
       let updatedChat = $chats.find((c) => c.id === chatId);
@@ -307,16 +269,17 @@
 
       // Find the next assistant message to inherit its original generation settings
       const nextAssistantMessage = messagesAfter.find((m) => m.role === 'assistant');
+      // Use current toggleStore values (which were restored from the edit message if opted in)
+      const toggles = $toggleStore;
 
-      const originalWebSearchEnabled = editWebSearchEnabled ?? nextAssistantMessage?.webSearchEnabled ?? false;
+      const originalWebSearchEnabled = toggles.webSearchEnabled ?? nextAssistantMessage?.webSearchEnabled ?? false;
       const originalWebSearchContextSize =
-        editWebSearchContextSize ?? nextAssistantMessage?.webSearchContextSize ?? 'low';
-      const originalReasoningEnabled = editReasoningEnabled ?? nextAssistantMessage?.reasoningEnabled ?? false;
-      const originalReasoningEffort = editReasoningEffort ?? nextAssistantMessage?.reasoningEffort ?? 'medium';
-      const originalReasoningSummary = editReasoningSummary ?? nextAssistantMessage?.reasoningSummary ?? 'auto';
-      const originalToolUseEnabled = editToolUseEnabled ?? nextAssistantMessage?.toolUseEnabled ?? false;
-      // Memory is a chat-level toggle — fall back to the current chat setting
-      const originalMemoryEnabled = editMemoryEnabled ?? activeChat.memoryEnabled ?? true;
+        toggles.webSearchContextSize ?? nextAssistantMessage?.webSearchContextSize ?? 'low';
+      const originalReasoningEnabled = toggles.reasoningEnabled ?? nextAssistantMessage?.reasoningEnabled ?? false;
+      const originalReasoningEffort = toggles.reasoningEffort ?? nextAssistantMessage?.reasoningEffort ?? 'medium';
+      const originalReasoningSummary = toggles.reasoningSummary ?? nextAssistantMessage?.reasoningSummary ?? 'auto';
+      const originalToolUseEnabled = toggles.toolUseEnabled ?? nextAssistantMessage?.toolUseEnabled ?? false;
+      const originalMemoryEnabled = toggles.memoryEnabled ?? activeChat.memoryEnabled ?? true;
 
       await controller.handleRegenerate(
         updatedChat,
@@ -346,30 +309,6 @@
     } catch (error) {
       console.error('Failed to branch off chat:', error);
     }
-  }
-
-  // Persist modifier changes to the chat store whenever local state changes.
-  // These reactive blocks only run after the initial sync from activeChat (guarded
-  // by modifierSyncedChatId) so they won't overwrite persisted settings on load.
-  $: if (modifierSyncedChatId === chatId && activeChat) {
-    chats.update((allChats) =>
-      allChats.map((chat) => {
-        if (chat.id === chatId) {
-          return {
-            ...chat,
-            webSearchEnabled,
-            webSearchContextSize,
-            reasoningEnabled,
-            reasoningEffort,
-            reasoningSummary,
-            toolUseEnabled,
-            memoryEnabled,
-            updatedAt: new Date(),
-          };
-        }
-        return chat;
-      }),
-    );
   }
 
   onMount(() => {
@@ -518,24 +457,10 @@
           isLoading={false}
           handleSubmit={handleEditSubmit}
           {handleStop}
-          bind:webSearchEnabled
-          bind:webSearchContextSize
-          bind:reasoningEnabled
-          bind:reasoningEffort
-          bind:reasoningSummary
-          bind:toolUseEnabled
-          bind:memoryEnabled
           isTemporaryChat={activeChat.temporary || false}></ChatInput>
       {:else}
         <ChatInput
           bind:userInput
-          bind:webSearchEnabled
-          bind:webSearchContextSize
-          bind:reasoningEnabled
-          bind:reasoningEffort
-          bind:reasoningSummary
-          bind:toolUseEnabled
-          bind:memoryEnabled
           {isLoading}
           {handleSubmit}
           {handleStop}

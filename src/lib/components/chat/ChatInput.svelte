@@ -2,7 +2,7 @@
   import { Square, VenetianMask, Paperclip, Search, ArrowUp, Brain, Settings, Wrench } from 'lucide-svelte';
   import { providerInstances, selectedModel, settingsManager, toolsSettings } from '$lib/settings/SettingsManager';
   import { availableModels } from '$lib/stores/modelCache';
-  import { onMount, tick, createEventDispatcher } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { lastUsedModels } from '$lib/stores/modelPreferences';
   import ModelSelectorModal from '$lib/components/modal/types/ModelSelectorModal.svelte';
   import ReasoningOptionsModal from '$lib/components/modal/types/ReasoningOptionsModal.svelte';
@@ -19,41 +19,14 @@
   import { getDefaultModel, detectKnownProvider } from '$lib/providers/known';
   import { promptHistory } from '$lib/stores/promptHistory';
   import { toast } from 'svelte-sonner';
-
-  const dispatch = createEventDispatcher<{
-    webSearchToggle: { enabled: boolean; contextSize: 'low' | 'medium' | 'high' };
-    reasoningToggle: {
-      enabled: boolean;
-      effort: 'minimal' | 'low' | 'medium' | 'high';
-      summary: 'auto' | 'concise' | 'detailed';
-    };
-    toolUseToggle: { enabled: boolean };
-    memoryToggle: { enabled: boolean };
-  }>();
+  import { toggleStore } from '$lib/stores/toggles';
 
   export let userInput: string = '';
   export let isLoading: boolean = false;
-  export let handleSubmit: (
-    e: Event,
-    attachments?: Attachment[],
-    webSearchEnabled?: boolean,
-    webSearchContextSize?: 'low' | 'medium' | 'high',
-    reasoningEnabled?: boolean,
-    reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high',
-    reasoningSummary?: 'auto' | 'concise' | 'detailed',
-    toolUseEnabled?: boolean,
-    memoryEnabled?: boolean,
-  ) => Promise<void>;
+  export let handleSubmit: (e: Event, attachments?: Attachment[]) => Promise<void>;
   export let handleStop: () => Promise<void>;
   export let showTemporaryToggle: boolean = false;
   export let isTemporary: boolean = false;
-  export let webSearchEnabled: boolean = false;
-  export let webSearchContextSize: 'low' | 'medium' | 'high' = 'low';
-  export let reasoningEnabled: boolean = false;
-  export let reasoningEffort: 'minimal' | 'low' | 'medium' | 'high' = 'medium';
-  export let reasoningSummary: 'auto' | 'concise' | 'detailed' = 'auto';
-  export let toolUseEnabled: boolean = false;
-  export let memoryEnabled: boolean = true;
   export let noPadding: boolean = false;
   export let isTemporaryChat: boolean = false;
 
@@ -95,8 +68,8 @@
 
   // Reset the tool-use toggle only when the loaded model explicitly doesn't support tools.
   // Guard with currentModel so we don't fire while models are still loading (currentModel=null).
-  $: if (currentModel && !supportsTools && toolUseEnabled) {
-    toolUseEnabled = false;
+  $: if (currentModel && !supportsTools && $toggleStore.toolUseEnabled) {
+    toggleStore.update((s) => ({ ...s, toolUseEnabled: false }));
   }
 
   onMount(() => {
@@ -176,17 +149,7 @@
       promptHistory.addPrompt(userInput.trim());
     }
 
-    await handleSubmit(
-      e,
-      attachments,
-      webSearchEnabled,
-      webSearchContextSize,
-      reasoningEnabled,
-      reasoningEffort,
-      reasoningSummary,
-      toolUseEnabled,
-      memoryEnabled,
-    );
+    await handleSubmit(e, attachments);
     attachments = []; // Clear attachments after submit
     resizeTextarea({ target: userInputComponent } as unknown as Event);
   }
@@ -307,46 +270,29 @@
   }
 
   function handleWebSearchToggle() {
-    const newEnabled = !webSearchEnabled;
-    webSearchEnabled = newEnabled;
-    dispatch('webSearchToggle', {
-      enabled: newEnabled,
-      contextSize: webSearchContextSize,
-    });
+    toggleStore.update((s) => ({ ...s, webSearchEnabled: !s.webSearchEnabled }));
   }
 
   function handleReasoningToggle() {
-    const newEnabled = !reasoningEnabled;
-    reasoningEnabled = newEnabled;
-    dispatch('reasoningToggle', {
-      enabled: newEnabled,
-      effort: reasoningEffort,
-      summary: reasoningSummary,
-    });
+    toggleStore.update((s) => ({ ...s, reasoningEnabled: !s.reasoningEnabled }));
   }
 
   function handleToolUseToggle() {
-    const newEnabled = !toolUseEnabled;
-    toolUseEnabled = newEnabled;
-    dispatch('toolUseToggle', { enabled: newEnabled });
+    toggleStore.update((s) => ({ ...s, toolUseEnabled: !s.toolUseEnabled }));
   }
 
   function handleMemoryToggle() {
-    const newEnabled = !memoryEnabled;
-    memoryEnabled = newEnabled;
-    dispatch('memoryToggle', { enabled: newEnabled });
+    toggleStore.update((s) => ({ ...s, memoryEnabled: !s.memoryEnabled }));
   }
 
   function handleReasoningOptionsSelect(
     event: CustomEvent<{ effort: 'minimal' | 'low' | 'medium' | 'high'; summary: 'auto' | 'concise' | 'detailed' }>,
   ) {
-    reasoningEffort = event.detail.effort;
-    reasoningSummary = event.detail.summary;
-    dispatch('reasoningToggle', {
-      enabled: reasoningEnabled,
-      effort: reasoningEffort,
-      summary: reasoningSummary,
-    });
+    toggleStore.update((s) => ({
+      ...s,
+      reasoningEffort: event.detail.effort,
+      reasoningSummary: event.detail.summary,
+    }));
   }
 </script>
 
@@ -417,9 +363,9 @@
               <button
                 on:click|preventDefault={handleToolUseToggle}
                 class="button button-circle"
-                class:button-tertiary={!toolUseEnabled}
-                class:button-secondary={toolUseEnabled}
-                title={toolUseEnabled ? 'Tools enabled (Exa Search)' : 'Tools disabled'}>
+                class:button-tertiary={!$toggleStore.toolUseEnabled}
+                class:button-secondary={$toggleStore.toolUseEnabled}
+                title={$toggleStore.toolUseEnabled ? 'Tools enabled (Exa Search)' : 'Tools disabled'}>
                 <Wrench size={16}></Wrench>
                 <span class="hidden text-xs lg:block">Tools</span>
               </button>
@@ -428,9 +374,9 @@
               <button
                 on:click|preventDefault={handleMemoryToggle}
                 class="button button-circle"
-                class:button-tertiary={!memoryEnabled}
-                class:button-secondary={memoryEnabled}
-                title={memoryEnabled ? 'Memory enabled' : 'Memory disabled'}>
+                class:button-tertiary={!$toggleStore.memoryEnabled}
+                class:button-secondary={$toggleStore.memoryEnabled}
+                title={$toggleStore.memoryEnabled ? 'Memory enabled' : 'Memory disabled'}>
                 <Brain size={16}></Brain>
                 <span class="hidden text-xs lg:block">Memory</span>
               </button>
@@ -439,9 +385,9 @@
               <button
                 on:click|preventDefault={handleWebSearchToggle}
                 class="button button-circle"
-                class:button-tertiary={!webSearchEnabled}
-                class:button-secondary={webSearchEnabled}
-                title={webSearchEnabled ? 'Web search enabled' : 'Web search disabled'}>
+                class:button-tertiary={!$toggleStore.webSearchEnabled}
+                class:button-secondary={$toggleStore.webSearchEnabled}
+                title={$toggleStore.webSearchEnabled ? 'Web search enabled' : 'Web search disabled'}>
                 <Search size={16}></Search>
                 <span class="hidden text-xs lg:block">Search</span>
               </button>
@@ -450,9 +396,11 @@
               <button
                 on:click|preventDefault={handleReasoningToggle}
                 class="button button-circle"
-                class:button-tertiary={!reasoningEnabled}
-                class:button-secondary={reasoningEnabled}
-                title={reasoningEnabled ? `Reasoning enabled (${reasoningEffort})` : 'Reasoning disabled'}>
+                class:button-tertiary={!$toggleStore.reasoningEnabled}
+                class:button-secondary={$toggleStore.reasoningEnabled}
+                title={$toggleStore.reasoningEnabled
+                  ? `Reasoning enabled (${$toggleStore.reasoningEffort})`
+                  : 'Reasoning disabled'}>
                 <Brain size={16}></Brain>
                 <span class="hidden text-xs lg:block">Reason</span>
               </button>
@@ -510,8 +458,8 @@
 <ReasoningOptionsModal
   id="chat-reasoning-options"
   isOpen={showReasoningOptions}
-  currentEffort={reasoningEffort}
-  currentSummary={reasoningSummary}
+  currentEffort={$toggleStore.reasoningEffort}
+  currentSummary={$toggleStore.reasoningSummary}
   {supportsReasoningSummary}
   on:close={() => (showReasoningOptions = false)}
   on:select={handleReasoningOptionsSelect}>

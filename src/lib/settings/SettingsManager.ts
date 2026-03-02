@@ -13,6 +13,20 @@ export interface AdvancedSettings {
   allowAssistantMessageEditing: boolean;
 }
 
+// Personalization settings interface
+export interface PersonalizationSettings {
+  // Default toggle values used when initialising a fresh toggle state
+  defaultWebSearchEnabled: boolean;
+  defaultWebSearchContextSize: 'low' | 'medium' | 'high';
+  defaultReasoningEnabled: boolean;
+  defaultReasoningEffort: 'minimal' | 'low' | 'medium' | 'high';
+  defaultReasoningSummary: 'auto' | 'concise' | 'detailed';
+  defaultToolUseEnabled: boolean;
+  defaultMemoryEnabled: boolean;
+  // Restore the chat's last-used toggles when re-opening an existing chat
+  restoreTogglesOnReopen: boolean;
+}
+
 // Tools settings interface — one entry per built-in tool
 export interface ToolsSettings {
   exa: {
@@ -96,6 +110,17 @@ Only describe capabilities that are actually available in the current environmen
     allowAssistantMessageEditing: false,
   };
 
+  private static readonly defaultPersonalizationSettings: PersonalizationSettings = {
+    defaultWebSearchEnabled: false,
+    defaultWebSearchContextSize: 'low',
+    defaultReasoningEnabled: false,
+    defaultReasoningEffort: 'medium',
+    defaultReasoningSummary: 'auto',
+    defaultToolUseEnabled: true,
+    defaultMemoryEnabled: true,
+    restoreTogglesOnReopen: false,
+  };
+
   private static readonly defaultToolsSettings: ToolsSettings = {
     exa: {
       enabled: false,
@@ -112,6 +137,7 @@ Only describe capabilities that are actually available in the current environmen
   public readonly advancedSettings = writable<AdvancedSettings>(this.getInitialAdvancedSettings());
   public readonly disabledModels = writable<Record<string, string[]>>(this.getInitialDisabledModels());
   public readonly toolsSettings = writable<ToolsSettings>(this.getInitialToolsSettings());
+  public readonly personalizationSettings = writable<PersonalizationSettings>(this.getInitialPersonalizationSettings());
 
   constructor() {
     // Initialize persistence
@@ -138,6 +164,10 @@ Only describe capabilities that are actually available in the current environmen
 
       this.toolsSettings.subscribe((value) => {
         localStorage.setItem('toolsSettings', JSON.stringify(value));
+      });
+
+      this.personalizationSettings.subscribe((value) => {
+        localStorage.setItem('personalizationSettings', JSON.stringify(value));
       });
     }
   }
@@ -224,6 +254,21 @@ Only describe capabilities that are actually available in the current environmen
       }
     }
     return SettingsManager.defaultToolsSettings;
+  }
+
+  private getInitialPersonalizationSettings(): PersonalizationSettings {
+    if (browser) {
+      const storedValue = localStorage.getItem('personalizationSettings');
+      if (storedValue) {
+        try {
+          return { ...SettingsManager.defaultPersonalizationSettings, ...JSON.parse(storedValue) };
+        } catch (error) {
+          console.error('Error parsing personalization settings from localStorage', error);
+          return SettingsManager.defaultPersonalizationSettings;
+        }
+      }
+    }
+    return SettingsManager.defaultPersonalizationSettings;
   }
 
   public addProviderInstance(name: string, providerType: ProviderType, config: ProviderConfig): string {
@@ -383,4 +428,11 @@ Only describe capabilities that are actually available in the current environmen
 // Settings singleton
 export const settingsManager = new SettingsManager();
 
-export const { providerInstances, selectedModel, advancedSettings, disabledModels, toolsSettings } = settingsManager;
+export const {
+  providerInstances,
+  selectedModel,
+  advancedSettings,
+  disabledModels,
+  toolsSettings,
+  personalizationSettings,
+} = settingsManager;

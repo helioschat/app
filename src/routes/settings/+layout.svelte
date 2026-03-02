@@ -2,9 +2,17 @@
   import { page } from '$app/state';
   import Tabs from '$lib/components/common/Tabs.svelte';
   import { manifest } from '$lib';
-  import { Brain, BrainCircuit, HardDrive, Info, ServerCog, Wrench, Hammer } from 'lucide-svelte';
+  import { Brain, BrainCircuit, HardDrive, Info, ServerCog, Wrench, Hammer, SlidersHorizontal } from 'lucide-svelte';
 
   const tabs = [
+    {
+      id: 'personalization',
+      text: 'Personalization',
+      title: 'Personalization',
+      description: 'Set your default toggle preferences and chat restore behaviour.',
+      icon: SlidersHorizontal,
+      url: '/settings/personalization',
+    },
     {
       id: 'providers',
       text: 'Providers',

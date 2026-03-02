@@ -183,6 +183,14 @@ export class StreamingController {
         role: 'user',
         content: userInput,
         attachments: attachments,
+        // Snapshot the active toggle state on the user message for historical record
+        webSearchEnabled: webSearchEnabled,
+        webSearchContextSize: webSearchContextSize,
+        reasoningEnabled: reasoningEnabled,
+        reasoningEffort: reasoningEffort,
+        reasoningSummary: reasoningSummary,
+        toolUseEnabled: toolUseEnabled,
+        memoryEnabled: memoryEnabled,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -212,10 +220,12 @@ export class StreamingController {
       providerInstanceId: activeChat.providerInstanceId || providerInstanceId,
       model: modelId,
       messages: updatedMessages,
+      webSearchEnabled: webSearchEnabled,
       reasoningEnabled: reasoningEnabled,
       reasoningEffort: reasoningEffort,
       reasoningSummary: reasoningSummary,
       toolUseEnabled: toolUseEnabled,
+      memoryEnabled: memoryEnabled,
       updatedAt: new Date(),
     };
 

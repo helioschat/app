@@ -55,6 +55,8 @@ export type Message = {
   reasoningSummary?: 'auto' | 'concise' | 'detailed';
   // Tool use settings used for this message
   toolUseEnabled?: boolean;
+  // Memory toggle state at the time this message was sent (stored on user messages)
+  memoryEnabled?: boolean;
   // Tool calls emitted during this assistant message
   toolCalls?: ToolCall[];
   // Tool results included in this message (role=tool equivalent stored inline)

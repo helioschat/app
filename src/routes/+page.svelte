@@ -6,47 +6,32 @@
   import { manifest } from '$lib';
   import ChatInput from '$lib/components/chat/ChatInput.svelte';
   import SetupFlow from '$lib/components/setup/SetupFlow.svelte';
+  import { toggleStore } from '$lib/stores/toggles';
   import type { Attachment } from '$lib/types';
 
   let searchInput = $state('');
   let isTemporary = $state(false);
-  let webSearchEnabled = $state(false);
-  let webSearchContextSize: 'low' | 'medium' | 'high' = $state('low');
-  let reasoningEnabled = $state(false);
-  let reasoningEffort: 'minimal' | 'low' | 'medium' | 'high' = $state('medium');
-  let reasoningSummary: 'auto' | 'concise' | 'detailed' = $state('auto');
-  let toolUseEnabled = $state(false);
-  let memoryEnabled = $state(true);
 
   // Check if this is first-time setup
   const isFirstTime = $derived($setupStore.isFirstTime);
 
-  async function handleSearch(
-    e: Event,
-    attachments?: Attachment[],
-    webSearchEnabled?: boolean,
-    webSearchContextSize?: 'low' | 'medium' | 'high',
-    reasoningEnabled?: boolean,
-    reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high',
-    reasoningSummary?: 'auto' | 'concise' | 'detailed',
-    toolUseEnabled?: boolean,
-    memoryEnabled?: boolean,
-  ) {
+  async function handleSearch(e: Event, attachments?: Attachment[]) {
     e.preventDefault();
     if (!searchInput.trim() && (!attachments || attachments.length === 0)) return;
 
+    const toggles = $toggleStore;
     const newChatId = createNewChat(
       searchInput,
       isTemporary,
       attachments,
       $selectedModel?.providerInstanceId,
-      webSearchEnabled,
-      webSearchContextSize,
-      reasoningEnabled,
-      reasoningEffort,
-      reasoningSummary,
-      toolUseEnabled,
-      memoryEnabled,
+      toggles.webSearchEnabled,
+      toggles.webSearchContextSize,
+      toggles.reasoningEnabled,
+      toggles.reasoningEffort,
+      toggles.reasoningSummary,
+      toggles.toolUseEnabled,
+      toggles.memoryEnabled,
     );
     goto(`/${newChatId}`);
   }
@@ -75,13 +60,6 @@
     <ChatInput
       bind:userInput={searchInput}
       bind:isTemporary
-      bind:webSearchEnabled
-      bind:webSearchContextSize
-      bind:reasoningEnabled
-      bind:reasoningEffort
-      bind:reasoningSummary
-      bind:toolUseEnabled
-      bind:memoryEnabled
       handleSubmit={handleSearch}
       handleStop={async () => {}}
       showTemporaryToggle={true}
