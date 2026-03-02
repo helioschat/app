@@ -211,7 +211,7 @@
     {:else if token.type === 'list'}
       {#if token.ordered}
         <ol start={token.start || 1}>
-          {#each token.items as item (item.text)}
+          {#each token.items as item, i (i)}
             <li>
               {#if item.task}
                 <input type="checkbox" checked={item.checked} disabled />
@@ -222,7 +222,7 @@
         </ol>
       {:else}
         <ul>
-          {#each token.items as item (item.text)}
+          {#each token.items as item, i (i)}
             <li>
               {#if item.task}
                 <input type="checkbox" checked={item.checked} disabled />
