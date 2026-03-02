@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { ModelInfo } from '$lib/providers/base';
   import Pill from './Pill.svelte';
+  import Toggle from './Toggle.svelte';
   import { supportsImageGeneration } from '$lib/utils/attachments';
   import { Archive, Brain, FileInput, Image, Search, Star, Text, Wrench, X } from 'lucide-svelte';
   import { favoriteModels } from '$lib/stores/modelPreferences';
@@ -45,13 +46,6 @@
     }
   }
 
-  function handleCheckboxChange(event: Event) {
-    if (mode === 'toggle' && onchange) {
-      const target = event.target as HTMLInputElement;
-      onchange(target.checked);
-    }
-  }
-
   function handleFavoriteClick(event: MouseEvent) {
     event.stopPropagation();
     favoriteModels.toggleFavorite(providerInstanceId, model.id);
@@ -67,12 +61,7 @@
   role={mode === 'select' ? 'button' : 'none'}
   tabindex={mode === 'select' ? 0 : -1}>
   {#if mode === 'toggle'}
-    <input
-      type="checkbox"
-      id={`model-${model.id}`}
-      checked={isEnabled}
-      on:change={handleCheckboxChange}
-      on:click|stopPropagation />
+    <Toggle checked={isEnabled} onchange={(v) => onchange?.(v)} />
   {/if}
 
   {#if mode === 'select' && providerInstanceId}

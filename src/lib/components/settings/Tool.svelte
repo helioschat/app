@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { ComponentType, SvelteComponent } from 'svelte';
   import { Settings } from 'lucide-svelte';
+  import Toggle from '$lib/components/common/Toggle.svelte';
 
   export let name: string;
   export let description: string;
@@ -11,7 +12,17 @@
   export let onConfigure: () => void;
 </script>
 
-<div class="button button-secondary button-large w-full !justify-between !text-left">
+<div
+  class="button button-secondary button-large w-full !justify-between !text-left"
+  on:click={onToggle}
+  role="button"
+  tabindex="0"
+  on:keydown={(e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onToggle();
+    }
+  }}>
   <div class="flex gap-3">
     <div class="flex items-center">
       {#if icon}
@@ -38,41 +49,6 @@
       <Settings size={20} />
     </button>
 
-    <!-- Toggle switch -->
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-      class="toggle"
-      class:toggle-on={enabled}
-      title={enabled ? 'Disable tool' : 'Enable tool'}
-      on:click|stopPropagation={onToggle}
-      role="switch"
-      aria-checked={enabled}
-      tabindex="0"
-      on:keydown={(e) => (e.key === 'Enter' || e.key === ' ' ? onToggle() : null)}>
-      <div class="toggle-thumb"></div>
-    </div>
+    <Toggle checked={enabled} title={enabled ? 'Disable tool' : 'Enable tool'} onchange={onToggle} />
   </div>
 </div>
-
-<style lang="postcss">
-  @reference "tailwindcss";
-
-  .toggle {
-    @apply relative inline-flex h-6 w-11 cursor-pointer items-center rounded-full transition-colors duration-200;
-    background-color: var(--color-a6);
-
-    &.toggle-on {
-      background-color: var(--color-accent, #6366f1);
-    }
-  }
-
-  .toggle-thumb {
-    @apply absolute h-4 w-4 rounded-full bg-white shadow transition-transform duration-200;
-    left: 0.25rem;
-
-    .toggle-on & {
-      transform: translateX(1.25rem);
-    }
-  }
-</style>
