@@ -402,7 +402,7 @@
   }
 
   .typing-indicator {
-    @apply flex items-center gap-1 py-1;
+    @apply flex min-h-6 items-center gap-1 py-1;
   }
 
   .typing-indicator span {
