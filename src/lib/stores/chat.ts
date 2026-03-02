@@ -7,7 +7,6 @@ import {
   type Thread,
 } from '$lib/database';
 import { streamStates } from '$lib/streaming';
-import { syncThread } from '$lib/sync';
 import type { Attachment, Chat } from '$lib/types';
 import { generateChatTitle } from '$lib/utils/titleGeneration';
 import { get, writable, type Writable } from 'svelte/store';
@@ -187,8 +186,6 @@ async function generateTitleForChat(chatId: string, userMessage: string, provide
       // Save to IndexedDB if not temporary
       if (browser && !updatedChat.temporary) {
         saveChatAsThreadAndMessages(updatedChat);
-        // Sync the updated thread
-        syncThread(updatedChat);
       }
 
       return [...allChats];
@@ -280,8 +277,6 @@ export function createNewChat(
   // Only save to IndexedDB if not temporary
   if (browser && !temporary) {
     saveChatAsThreadAndMessages(newChat);
-    // Sync the new thread
-    syncThread(newChat);
   }
 
   return newChat.id;
@@ -317,8 +312,6 @@ export async function deleteChatById(id: string): Promise<void> {
       // Save the new chat to IndexedDB
       if (browser) {
         saveChatAsThreadAndMessages(newChat);
-        // Sync the new thread
-        syncThread(newChat);
       }
     }
 
@@ -431,8 +424,6 @@ export async function toggleChatPin(id: string): Promise<void> {
 
       // Trigger IndexedDB save
       saveChatAsThreadAndMessages(chat);
-      // Sync the updated thread
-      syncThread(chat);
     }
     // Return a new array to trigger Svelte reactivity, properly sorted
     return sortChats([...allChats]);
@@ -474,8 +465,6 @@ export function editMessage(chatId: string, messageId: string, newContent: strin
     // Save to IndexedDB if not temporary
     if (browser && !updatedChat.temporary) {
       saveChatAsThreadAndMessages(updatedChat);
-      // Sync the updated thread
-      syncThread(updatedChat);
     }
 
     return [...allChats];
@@ -503,7 +492,6 @@ export async function moveChatToFolder(chatId: string, folderId: string | null):
 
     if (browser && !updated.temporary) {
       saveChatAsThreadAndMessages(updated);
-      syncThread(updated);
     }
 
     return sortChats(next);
@@ -553,8 +541,6 @@ export function branchOffChat(sourceChatId: string, upToMessageId: string): stri
   // Save to IndexedDB
   if (browser) {
     saveChatAsThreadAndMessages(newChat);
-    // Sync the new branched thread
-    syncThread(newChat);
   }
 
   return newChat.id;

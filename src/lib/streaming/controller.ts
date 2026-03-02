@@ -3,7 +3,6 @@ import { getLanguageModel } from '$lib/providers/registry';
 import { chats } from '$lib/stores/chat';
 import { availableModels } from '$lib/stores/modelCache';
 import { advancedSettings, providerInstances } from '$lib/stores/settings';
-import { syncThread } from '$lib/sync';
 import type { Attachment, Chat, MessageWithAttachments, ProviderInstance } from '$lib/types';
 import { resolveSystemPromptVariables } from '$lib/utils/systemPromptVariables';
 import { get } from 'svelte/store';
@@ -92,11 +91,6 @@ export class StreamingController {
         return updatedChat;
       }),
     );
-
-    // Sync the thread after the message is finalized
-    if (updatedChat) {
-      syncThread(updatedChat);
-    }
   }
 
   async cancelStream(): Promise<void> {
@@ -214,9 +208,6 @@ export class StreamingController {
     };
 
     chats.update((allChats) => allChats.map((chat) => (chat.id === this.chatId ? updatedChat : chat)));
-
-    // Sync the thread after adding user/assistant messages
-    syncThread(updatedChat);
 
     this.isLoading = true;
     this.currentlyStreamingMessageId = assistantMessage.id;
@@ -349,9 +340,6 @@ export class StreamingController {
     };
 
     chats.update((allChats) => allChats.map((chat) => (chat.id === this.chatId ? updatedChat : chat)));
-
-    // Sync the thread after adding assistant message for regeneration
-    syncThread(updatedChat);
 
     this.isLoading = true;
     this.currentlyStreamingMessageId = assistantMessage.id;
@@ -502,11 +490,6 @@ export class StreamingController {
         return updatedChat;
       });
     });
-
-    // Sync the thread after the error is handled
-    if (updatedChat) {
-      syncThread(updatedChat);
-    }
   }
 
   private supportsWebSearch(providerInstanceId: string, modelId: string): boolean {

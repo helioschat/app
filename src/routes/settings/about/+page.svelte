@@ -1,6 +1,6 @@
 <script lang="ts">
   import { manifest } from '$lib';
-  import { Globe, Github, Heart, Zap, Shield, Clock } from 'lucide-svelte';
+  import { Github, Heart, Zap, Shield, Clock } from 'lucide-svelte';
 </script>
 
 <div class="mx-auto max-w-4xl space-y-8 px-6 pt-4">
@@ -31,71 +31,6 @@
       <Clock class="icon text-blue-500" />
       <h3 class="mb-2 font-semibold">Built in 10 Days</h3>
       <p class="text-secondary text-sm">Created for the T3 Chat Cloneathon competition.</p>
-    </div>
-  </div>
-
-  <!-- About the Creator -->
-  <div class="creator panel">
-    <h3>About the Creator</h3>
-
-    <p class="text-lg font-medium">Szalovszky Dávid</p>
-    <p class="text-secondary">
-      A passionate developer originally from Hungary 🇭🇺, now living in Germany 🇩🇪. Dedicated to building open-source
-      tools that inspire collaboration, learning, and community.
-    </p>
-
-    <div class="flex flex-wrap gap-2">
-      <a href="https://szalovszky.com" target="_blank" class="button button-secondary">
-        <Globe class="h-4 w-4"></Globe>
-        Website
-      </a>
-      <a href="https://github.com/helioschat/app" target="_blank" class="button button-secondary">
-        <Github class="h-4 w-4"></Github>
-        Source Code
-      </a>
-    </div>
-  </div>
-
-  <!-- Features List -->
-  <div class="features panel">
-    <h3>Features</h3>
-    <div class="grid gap-3 md:grid-cols-2">
-      <div class="feature-item">
-        <div class="dot bg-green-500"></div>
-        <div>
-          <strong>100% Client-Side:</strong> All processing happens in your browser
-        </div>
-      </div>
-      <div class="feature-item">
-        <div class="dot bg-blue-500"></div>
-        <div>
-          <strong>End-to-End Encrypted Sync:</strong> Secure cross-device synchronization
-        </div>
-      </div>
-      <div class="feature-item">
-        <div class="dot bg-purple-500"></div>
-        <div>
-          <strong>Bring Your Own Key:</strong> Compatible with OpenAI API providers
-        </div>
-      </div>
-      <div class="feature-item">
-        <div class="dot bg-orange-500"></div>
-        <div>
-          <strong>Temporary Chats:</strong> Quick, disposable conversations
-        </div>
-      </div>
-      <div class="feature-item">
-        <div class="dot bg-red-500"></div>
-        <div>
-          <strong>Web Search Support:</strong> Integrate search into conversations
-        </div>
-      </div>
-      <div class="feature-item">
-        <div class="dot bg-yellow-500"></div>
-        <div>
-          <strong>Advanced Organization:</strong> Edit, pin, and branch conversations
-        </div>
-      </div>
     </div>
   </div>
 
@@ -142,18 +77,6 @@
 
   .key-features .panel {
     @apply flex items-center text-center;
-  }
-
-  .features .feature-item {
-    @apply flex items-center gap-3;
-  }
-
-  .features .feature-item .dot {
-    @apply inline-block h-full min-h-2 min-w-1 rounded-full;
-  }
-
-  .features .feature-item strong {
-    @apply font-semibold;
   }
 
   .gradient-text {

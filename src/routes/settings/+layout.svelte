@@ -2,7 +2,7 @@
   import { page } from '$app/state';
   import Tabs from '$lib/components/common/Tabs.svelte';
   import { manifest } from '$lib';
-  import { BrainCircuit, CloudUpload, HardDrive, Info, ServerCog, Wrench } from 'lucide-svelte';
+  import { BrainCircuit, HardDrive, Info, ServerCog, Wrench } from 'lucide-svelte';
 
   const tabs = [
     {
@@ -28,14 +28,6 @@
       description: 'View and manage storage used by your chats and attachments.',
       icon: HardDrive,
       url: '/settings/storage',
-    },
-    {
-      id: 'sync',
-      text: 'Sync',
-      title: 'Sync Settings',
-      description: 'Manage your chat synchronization settings.',
-      icon: CloudUpload,
-      url: '/settings/sync',
     },
     {
       id: 'advanced',

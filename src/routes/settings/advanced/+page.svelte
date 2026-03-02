@@ -6,7 +6,6 @@
   import type { ModelInfo } from '$lib/providers/base';
   import { resetSetup } from '$lib/stores/setup';
   import { goto } from '$app/navigation';
-  import { syncManager } from '$lib/stores/sync';
   import { exportUserData, importUserData, clearAllData } from '$lib/utils/dataExport';
   import { SYSTEM_PROMPT_VARIABLES } from '$lib/utils/systemPromptVariables';
 
@@ -93,10 +92,6 @@
   function resetSetupStatus() {
     resetSetup();
     goto('/');
-  }
-
-  function clearSyncSettings() {
-    syncManager.clearSyncSettings();
   }
 
   async function handleExportData() {
@@ -268,7 +263,6 @@
       <div class="flex flex-wrap gap-2">
         <button class="button button-secondary" on:click={clearModelCache}>Clear model cache</button>
         <button class="button button-secondary" on:click={resetSetupStatus}>Reset setup status</button>
-        <button class="button button-danger" on:click={clearSyncSettings}>Clear All Sync Settings</button>
         <button class="button button-danger" on:click={handleClearAllData}>Clear All Data</button>
       </div>
     </div>

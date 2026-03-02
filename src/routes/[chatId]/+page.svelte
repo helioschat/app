@@ -1,7 +1,6 @@
 <script lang="ts">
   import { chats, loadChat, clearTemporaryChats, editMessage, branchOffChat } from '$lib/stores/chat';
   import { selectedModel, advancedSettings } from '$lib/settings/SettingsManager';
-  import { syncThread } from '$lib/sync';
   import type { Message, Attachment } from '$lib/types';
   import { page } from '$app/stores';
   import { goto, onNavigate } from '$app/navigation';
@@ -196,11 +195,6 @@
       return allChats;
     });
 
-    // Sync the thread after truncating messages for regeneration
-    if (truncatedChat) {
-      syncThread(truncatedChat);
-    }
-
     // Wait for Svelte to process the store update.
     await tick();
 
@@ -354,11 +348,6 @@
         return chat;
       }),
     );
-
-    // Sync the thread after updating web search settings
-    if (updatedChatSettings) {
-      syncThread(updatedChatSettings);
-    }
   }
 
   function handleReasoningToggle(
@@ -392,11 +381,6 @@
         return chat;
       }),
     );
-
-    // Sync the thread after updating reasoning settings
-    if (updatedChatSettings) {
-      syncThread(updatedChatSettings);
-    }
   }
 
   onMount(() => {
