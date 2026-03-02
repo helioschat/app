@@ -2,7 +2,7 @@
   import Tool from '$lib/components/settings/Tool.svelte';
   import ExaSettingsModal from '$lib/components/modal/types/ExaSettingsModal.svelte';
   import { toolsSettings } from '$lib/settings/SettingsManager';
-  import { Search } from 'lucide-svelte';
+  import { Calculator, Search } from 'lucide-svelte';
 
   let showExaModal = $state(false);
 
@@ -13,6 +13,13 @@
   function saveExaSettings(event: CustomEvent<{ apiKey: string }>) {
     toolsSettings.update((s) => ({ ...s, exa: { ...s.exa, apiKey: event.detail.apiKey } }));
     showExaModal = false;
+  }
+
+  function toggleMathEvaluator() {
+    toolsSettings.update((s) => ({
+      ...s,
+      mathEvaluator: { ...s.mathEvaluator, enabled: !s.mathEvaluator.enabled },
+    }));
   }
 </script>
 
@@ -25,6 +32,16 @@
     configured={$toolsSettings.exa.apiKey.trim().length > 0}
     onToggle={toggleExa}
     onConfigure={() => (showExaModal = true)} />
+
+  <Tool
+    name="Math Evaluator"
+    description="Evaluate mathematical expressions using mathjs. Lets the model offload calculations rather than computing them itself."
+    icon={Calculator}
+    enabled={$toolsSettings.mathEvaluator.enabled}
+    configured={true}
+    configurable={false}
+    onToggle={toggleMathEvaluator}
+    onConfigure={toggleMathEvaluator} />
 </div>
 
 <ExaSettingsModal

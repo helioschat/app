@@ -1,5 +1,6 @@
 import type { ToolsSettings } from '$lib/settings/SettingsManager';
 import { ExaSearchTool } from './exaSearch';
+import { MathEvaluatorTool } from './mathEvaluator';
 import type { Tool } from './types';
 
 /**
@@ -13,6 +14,10 @@ export function buildTools(toolsSettings: ToolsSettings): Tool[] {
     tools.push(new ExaSearchTool(toolsSettings.exa.apiKey));
   }
 
+  if (toolsSettings.mathEvaluator.enabled) {
+    tools.push(new MathEvaluatorTool());
+  }
+
   return tools;
 }
 
@@ -22,6 +27,7 @@ export function buildTools(toolsSettings: ToolsSettings): Tool[] {
  */
 const TOOL_DISPLAY_NAMES: Record<string, { displayName: string; displayDescription?: string }> = {
   exa_web_search: { displayName: 'Exa Search', displayDescription: 'Web search' },
+  math_evaluate: { displayName: 'Math Evaluator', displayDescription: 'Evaluate mathematical expressions' },
 };
 
 /**

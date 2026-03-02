@@ -19,6 +19,9 @@ export interface ToolsSettings {
     enabled: boolean;
     apiKey: string;
   };
+  mathEvaluator: {
+    enabled: boolean;
+  };
 }
 
 export class SettingsManager {
@@ -97,6 +100,9 @@ Only describe capabilities that are actually available in the current environmen
     exa: {
       enabled: false,
       apiKey: '',
+    },
+    mathEvaluator: {
+      enabled: false,
     },
   };
 
@@ -209,6 +215,7 @@ Only describe capabilities that are actually available in the current environmen
             ...SettingsManager.defaultToolsSettings,
             ...parsed,
             exa: { ...SettingsManager.defaultToolsSettings.exa, ...parsed.exa },
+            mathEvaluator: { ...SettingsManager.defaultToolsSettings.mathEvaluator, ...parsed.mathEvaluator },
           };
         } catch (error) {
           console.error('Error parsing tools settings from localStorage', error);

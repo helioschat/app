@@ -8,6 +8,7 @@
   export let enabled: boolean;
   export let configured: boolean; // true when all required settings (e.g. API key) are present
   export let icon: ComponentType<SvelteComponent> | null = null;
+  export let configurable: boolean = true; // false hides the settings gear button
   export let onToggle: () => void;
   export let onConfigure: () => void;
 </script>
@@ -45,9 +46,11 @@
   </div>
 
   <div class="flex items-center gap-1">
-    <button class="button button-ghost button-circle" title="Configure" on:click|stopPropagation={onConfigure}>
-      <Settings size={20} />
-    </button>
+    {#if configurable}
+      <button class="button button-ghost button-circle" title="Configure" on:click|stopPropagation={onConfigure}>
+        <Settings size={20} />
+      </button>
+    {/if}
 
     <Toggle checked={enabled} title={enabled ? 'Disable tool' : 'Enable tool'} onchange={onToggle} />
   </div>

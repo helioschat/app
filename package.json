@@ -45,6 +45,7 @@
     "highlight.js": "^11.11.1",
     "lucide-svelte": "^0.513.0",
     "marked": "^17.0.1",
+    "mathjs": "^15.1.1",
     "openai": "^5.1.1",
     "prettier": "^3.4.2",
     "prettier-plugin-organize-imports": "^4.1.0",
