@@ -1,11 +1,12 @@
 import { browser } from '$app/environment';
 import { getDB, getStore, promisify } from '$lib/database/connection';
-import { ATTACHMENT_STORE, DB_NAME, MESSAGE_STORE, THREAD_STORE } from '$lib/database/types';
+import { ATTACHMENT_STORE, DB_NAME, MEMORY_STORE, MESSAGE_STORE, THREAD_STORE } from '$lib/database/types';
 
 interface ExportData {
   threads: unknown[];
   messages: unknown[];
   attachments: unknown[];
+  memories?: unknown[];
   localStorage: Record<string, string>;
   metadata: {
     exportDate: string;
@@ -50,10 +51,13 @@ export async function clearAllData(closeDatabase: boolean = true): Promise<void>
       const messagesStore = getStore(db, MESSAGE_STORE, 'readwrite');
       const attachmentsStore = getStore(db, ATTACHMENT_STORE, 'readwrite');
 
+      const memoriesStore = getStore(db, MEMORY_STORE, 'readwrite');
+
       await Promise.all([
         promisify(threadsStore.clear()),
         promisify(messagesStore.clear()),
         promisify(attachmentsStore.clear()),
+        promisify(memoriesStore.clear()),
       ]);
     }
 
@@ -75,11 +79,13 @@ export async function exportUserData(): Promise<void> {
     const threadsStore = getStore(db, THREAD_STORE);
     const messagesStore = getStore(db, MESSAGE_STORE);
     const attachmentsStore = getStore(db, ATTACHMENT_STORE);
+    const memoriesStore = getStore(db, MEMORY_STORE);
 
-    const [threads, messages, attachments] = await Promise.all([
+    const [threads, messages, attachments, memories] = await Promise.all([
       promisify(threadsStore.getAll()),
       promisify(messagesStore.getAll()),
       promisify(attachmentsStore.getAll()),
+      promisify(memoriesStore.getAll()),
     ]);
 
     // Get localStorage data (excluding modelCache and other excluded keys)
@@ -98,6 +104,7 @@ export async function exportUserData(): Promise<void> {
       threads,
       messages,
       attachments,
+      memories,
       localStorage: localStorageData,
       metadata: {
         exportDate: new Date().toISOString(),
@@ -156,6 +163,8 @@ export async function importUserData(file: File): Promise<void> {
       ...importData.attachments.map((attachment) =>
         promisify(getStore(db, ATTACHMENT_STORE, 'readwrite').put(attachment)),
       ),
+      // Import memories (may be absent in older exports)
+      ...(importData.memories ?? []).map((memory) => promisify(getStore(db, MEMORY_STORE, 'readwrite').put(memory))),
     ];
 
     await Promise.all(importPromises);

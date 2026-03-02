@@ -69,6 +69,13 @@ export async function saveChatAsThreadAndMessages(chat: Chat): Promise<void> {
       pinned: chat.pinned,
       folderId: chat.folderId,
       branchedFrom: chat.branchedFrom,
+      webSearchEnabled: chat.webSearchEnabled,
+      webSearchContextSize: chat.webSearchContextSize,
+      reasoningEnabled: chat.reasoningEnabled,
+      reasoningEffort: chat.reasoningEffort,
+      reasoningSummary: chat.reasoningSummary,
+      toolUseEnabled: chat.toolUseEnabled,
+      memoryEnabled: chat.memoryEnabled,
     };
 
     await saveThread(thread);

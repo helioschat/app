@@ -28,6 +28,7 @@
       summary: 'auto' | 'concise' | 'detailed';
     };
     toolUseToggle: { enabled: boolean };
+    memoryToggle: { enabled: boolean };
   }>();
 
   export let userInput: string = '';
@@ -41,6 +42,7 @@
     reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high',
     reasoningSummary?: 'auto' | 'concise' | 'detailed',
     toolUseEnabled?: boolean,
+    memoryEnabled?: boolean,
   ) => Promise<void>;
   export let handleStop: () => Promise<void>;
   export let showTemporaryToggle: boolean = false;
@@ -51,6 +53,7 @@
   export let reasoningEffort: 'minimal' | 'low' | 'medium' | 'high' = 'medium';
   export let reasoningSummary: 'auto' | 'concise' | 'detailed' = 'auto';
   export let toolUseEnabled: boolean = false;
+  export let memoryEnabled: boolean = true;
   export let noPadding: boolean = false;
   export let isTemporaryChat: boolean = false;
 
@@ -90,14 +93,10 @@
   $: supportsReasoningSummary = currentModel?.doesntSupportReasoningSummary !== true;
   $: supportsTools = currentModel?.supportsTools || false;
 
-  // Reset feature toggles when switching to a model that doesn't support them
-  $: if (!supportsTools && toolUseEnabled) {
+  // Reset the tool-use toggle only when the loaded model explicitly doesn't support tools.
+  // Guard with currentModel so we don't fire while models are still loading (currentModel=null).
+  $: if (currentModel && !supportsTools && toolUseEnabled) {
     toolUseEnabled = false;
-  }
-
-  // Auto-enable tools when switching to a model that supports them and a tool is configured
-  $: if (supportsTools && !toolUseEnabled && $toolsSettings.exa.apiKey.trim()) {
-    toolUseEnabled = true;
   }
 
   onMount(() => {
@@ -186,6 +185,7 @@
       reasoningEffort,
       reasoningSummary,
       toolUseEnabled,
+      memoryEnabled,
     );
     attachments = []; // Clear attachments after submit
     resizeTextarea({ target: userInputComponent } as unknown as Event);
@@ -331,6 +331,12 @@
     dispatch('toolUseToggle', { enabled: newEnabled });
   }
 
+  function handleMemoryToggle() {
+    const newEnabled = !memoryEnabled;
+    memoryEnabled = newEnabled;
+    dispatch('memoryToggle', { enabled: newEnabled });
+  }
+
   function handleReasoningOptionsSelect(
     event: CustomEvent<{ effort: 'minimal' | 'low' | 'medium' | 'high'; summary: 'auto' | 'concise' | 'detailed' }>,
   ) {
@@ -416,6 +422,17 @@
                 title={toolUseEnabled ? 'Tools enabled (Exa Search)' : 'Tools disabled'}>
                 <Wrench size={16}></Wrench>
                 <span class="hidden text-xs lg:block">Tools</span>
+              </button>
+            {/if}
+            {#if supportsTools && !isTemporaryChat}
+              <button
+                on:click|preventDefault={handleMemoryToggle}
+                class="button button-circle"
+                class:button-tertiary={!memoryEnabled}
+                class:button-secondary={memoryEnabled}
+                title={memoryEnabled ? 'Memory enabled' : 'Memory disabled'}>
+                <Brain size={16}></Brain>
+                <span class="hidden text-xs lg:block">Memory</span>
               </button>
             {/if}
             {#if supportsWebSearch}

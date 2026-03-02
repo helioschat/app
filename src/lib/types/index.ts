@@ -94,6 +94,8 @@ export type Chat = {
   reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high';
   reasoningSummary?: 'auto' | 'concise' | 'detailed';
   toolUseEnabled?: boolean;
+  // Whether memory context should be available for this chat
+  memoryEnabled?: boolean;
 };
 
 export type ProviderType = 'openai-compatible';

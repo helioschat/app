@@ -126,6 +126,7 @@ export class StreamingController {
     reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high',
     reasoningSummary?: 'auto' | 'concise' | 'detailed',
     toolUseEnabled?: boolean,
+    memoryEnabled?: boolean,
   ): Promise<StreamControllerState> {
     if ((!userInput.trim() && (!attachments || attachments.length === 0)) || !activeChat || this.isLoading) {
       return this.getState();
@@ -267,8 +268,12 @@ export class StreamingController {
           }
         : undefined;
 
-      // Build tools if tool use is enabled
-      const tools = toolUseEnabled ? buildTools(get(toolsSettings)) : undefined;
+      // Memory runs independently of the tool-use toggle; build tools whenever either is on
+      const effectiveMemoryEnabled = memoryEnabled ?? true;
+      const tools =
+        toolUseEnabled || effectiveMemoryEnabled
+          ? buildTools(get(toolsSettings), toolUseEnabled, effectiveMemoryEnabled)
+          : undefined;
 
       const stream = model.stream(
         messagesForProvider as MessageWithAttachments[],
@@ -321,6 +326,7 @@ export class StreamingController {
     reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high',
     reasoningSummary?: 'auto' | 'concise' | 'detailed',
     toolUseEnabled?: boolean,
+    memoryEnabled?: boolean,
   ): Promise<StreamControllerState> {
     if (!activeChat || this.isLoading || activeChat.messages.length === 0) {
       return this.getState();
@@ -417,8 +423,12 @@ export class StreamingController {
           }
         : undefined;
 
-      // Build tools if tool use is enabled
-      const tools = toolUseEnabled ? buildTools(get(toolsSettings)) : undefined;
+      // Memory runs independently of the tool-use toggle; build tools whenever either is on
+      const effectiveMemoryEnabled2 = memoryEnabled ?? true;
+      const tools =
+        toolUseEnabled || effectiveMemoryEnabled2
+          ? buildTools(get(toolsSettings), toolUseEnabled, effectiveMemoryEnabled2)
+          : undefined;
 
       const stream = model.stream(
         messagesForProvider as MessageWithAttachments[],

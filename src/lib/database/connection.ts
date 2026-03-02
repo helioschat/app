@@ -1,5 +1,13 @@
 import { browser } from '$app/environment';
-import { ATTACHMENT_STORE, DB_NAME, DB_VERSION, FOLDER_STORE, MESSAGE_STORE, THREAD_STORE } from './types';
+import {
+  ATTACHMENT_STORE,
+  DB_NAME,
+  DB_VERSION,
+  FOLDER_STORE,
+  MEMORY_STORE,
+  MESSAGE_STORE,
+  THREAD_STORE,
+} from './types';
 
 // Database connection singleton
 let dbPromise: Promise<IDBDatabase> | null = null;
@@ -53,6 +61,14 @@ if (browser) {
           if (!threadStore.indexNames.contains('folderId')) {
             threadStore.createIndex('folderId', 'folderId', { unique: false });
           }
+        }
+      }
+      // ── v3 migration: add memories store ────────────────────────────────────
+      if (oldVersion < 3) {
+        if (!db.objectStoreNames.contains(MEMORY_STORE)) {
+          const memoryStore = db.createObjectStore(MEMORY_STORE, { keyPath: 'id' });
+          memoryStore.createIndex('createdAt', 'createdAt', { unique: false });
+          memoryStore.createIndex('source', 'source', { unique: false });
         }
       }
     };

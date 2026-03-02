@@ -216,6 +216,7 @@ export function createNewChat(
   reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high',
   reasoningSummary?: 'auto' | 'concise' | 'detailed',
   toolUseEnabled?: boolean,
+  memoryEnabled?: boolean,
 ): string {
   const newChat: Chat = createInitialChat();
 
@@ -246,6 +247,13 @@ export function createNewChat(
   // Set tool use option if specified
   if (toolUseEnabled !== undefined) {
     newChat.toolUseEnabled = toolUseEnabled;
+  }
+
+  // Set memory option — default true for non-temporary chats
+  if (memoryEnabled !== undefined) {
+    newChat.memoryEnabled = memoryEnabled;
+  } else if (!temporary) {
+    newChat.memoryEnabled = true;
   }
 
   // If an initial message is provided OR attachments exist, add it as a user message
@@ -403,6 +411,13 @@ function createEmptyChatFromThread(thread: Thread): Chat {
     pinned: thread.pinned,
     folderId: thread.folderId,
     branchedFrom: thread.branchedFrom,
+    webSearchEnabled: thread.webSearchEnabled,
+    webSearchContextSize: thread.webSearchContextSize,
+    reasoningEnabled: thread.reasoningEnabled,
+    reasoningEffort: thread.reasoningEffort,
+    reasoningSummary: thread.reasoningSummary,
+    toolUseEnabled: thread.toolUseEnabled,
+    memoryEnabled: thread.memoryEnabled,
   };
 }
 

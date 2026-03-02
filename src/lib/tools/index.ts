@@ -1,21 +1,31 @@
 import type { ToolsSettings } from '$lib/settings/SettingsManager';
 import { ExaSearchTool } from './exaSearch';
+import { ManageMemoriesTool } from './manageMemories';
 import { MathEvaluatorTool } from './mathEvaluator';
 import type { Tool } from './types';
 
 /**
  * Build the list of tools to make available to the model.
- * Only includes tools that are enabled and fully configured.
+ *
+ * @param toolsSettings  - Global tool settings (Exa key, math evaluator toggle, etc.)
+ * @param toolUseEnabled - Whether the user-facing "Tools" toggle is on (gates Exa / math)
+ * @param memoryEnabled  - Whether the memory toggle is on (independent of toolUseEnabled)
  */
-export function buildTools(toolsSettings: ToolsSettings): Tool[] {
+export function buildTools(toolsSettings: ToolsSettings, toolUseEnabled = true, memoryEnabled = true): Tool[] {
   const tools: Tool[] = [];
 
-  if (toolsSettings.exa.enabled && toolsSettings.exa.apiKey.trim()) {
-    tools.push(new ExaSearchTool(toolsSettings.exa.apiKey));
+  if (toolUseEnabled) {
+    if (toolsSettings.exa.enabled && toolsSettings.exa.apiKey.trim()) {
+      tools.push(new ExaSearchTool(toolsSettings.exa.apiKey));
+    }
+
+    if (toolsSettings.mathEvaluator.enabled) {
+      tools.push(new MathEvaluatorTool());
+    }
   }
 
-  if (toolsSettings.mathEvaluator.enabled) {
-    tools.push(new MathEvaluatorTool());
+  if (memoryEnabled) {
+    tools.push(new ManageMemoriesTool());
   }
 
   return tools;
@@ -28,6 +38,7 @@ export function buildTools(toolsSettings: ToolsSettings): Tool[] {
 const TOOL_DISPLAY_NAMES: Record<string, { displayName: string; displayDescription?: string }> = {
   exa_web_search: { displayName: 'Exa Search', displayDescription: 'Web search' },
   math_evaluate: { displayName: 'Math Evaluator', displayDescription: 'Evaluate mathematical expressions' },
+  manage_memories: { displayName: 'Memory', displayDescription: 'Manage personal memories' },
 };
 
 /**

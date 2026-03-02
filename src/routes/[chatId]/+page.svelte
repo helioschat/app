@@ -38,6 +38,7 @@
   let reasoningEffort: 'minimal' | 'low' | 'medium' | 'high' = 'medium';
   let reasoningSummary: 'auto' | 'concise' | 'detailed' = 'auto';
   let toolUseEnabled = false;
+  let memoryEnabled = true;
 
   // Track which chat ID we last synced modifiers from so we only re-read the
   // persisted settings when the user actually switches to a different chat.
@@ -51,6 +52,7 @@
     reasoningEffort = activeChat.reasoningEffort ?? 'medium';
     reasoningSummary = activeChat.reasoningSummary ?? 'auto';
     toolUseEnabled = activeChat.toolUseEnabled ?? false;
+    memoryEnabled = activeChat.memoryEnabled ?? true;
   }
 
   // Map provides clearer semantics and easier cleanup than a plain object
@@ -103,6 +105,7 @@
     reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high',
     reasoningSummary?: 'auto' | 'concise' | 'detailed',
     toolUseEnabled?: boolean,
+    memoryEnabled?: boolean,
   ) {
     const messageContent = userInput;
     if (
@@ -127,6 +130,7 @@
       reasoningEffort,
       reasoningSummary,
       toolUseEnabled,
+      memoryEnabled,
     );
   }
 
@@ -185,6 +189,9 @@
     // Extract tool use settings from the original assistant message
     const originalToolUseEnabled = messageToRegenerate.toolUseEnabled || false;
 
+    // Memory is a chat-level toggle not stored per-message — fall back to the chat setting
+    const originalMemoryEnabled = activeChat.memoryEnabled ?? true;
+
     // Truncate chat history to the point *before* the user message we are regenerating from.
     const truncatedMessages = activeChat.messages.slice(0, messageIndex - 1);
 
@@ -222,6 +229,7 @@
       originalReasoningEffort, // Use original reasoning effort
       originalReasoningSummary, // Use original reasoning summary
       originalToolUseEnabled, // Use original tool use settings
+      originalMemoryEnabled, // Use chat-level memory setting
     );
   }
 
@@ -254,6 +262,7 @@
     editReasoningEffort?: 'minimal' | 'low' | 'medium' | 'high',
     editReasoningSummary?: 'auto' | 'concise' | 'detailed',
     editToolUseEnabled?: boolean,
+    editMemoryEnabled?: boolean,
   ) {
     if (!editingMessage || !activeChat || isLoading || !editInput.trim()) return;
 
@@ -306,6 +315,8 @@
       const originalReasoningEffort = editReasoningEffort ?? nextAssistantMessage?.reasoningEffort ?? 'medium';
       const originalReasoningSummary = editReasoningSummary ?? nextAssistantMessage?.reasoningSummary ?? 'auto';
       const originalToolUseEnabled = editToolUseEnabled ?? nextAssistantMessage?.toolUseEnabled ?? false;
+      // Memory is a chat-level toggle — fall back to the current chat setting
+      const originalMemoryEnabled = editMemoryEnabled ?? activeChat.memoryEnabled ?? true;
 
       await controller.handleRegenerate(
         updatedChat,
@@ -317,6 +328,7 @@
         originalReasoningEffort,
         originalReasoningSummary,
         originalToolUseEnabled,
+        originalMemoryEnabled,
       );
     }
   }
@@ -351,6 +363,7 @@
             reasoningEffort,
             reasoningSummary,
             toolUseEnabled,
+            memoryEnabled,
             updatedAt: new Date(),
           };
         }
@@ -434,12 +447,13 @@
           $selectedModel.providerInstanceId,
           $selectedModel.modelId,
           activeChat.messages[0].attachments,
-          webSearchEnabled, // Pass the web search options
-          webSearchContextSize, // Pass the web search context size
-          reasoningEnabled, // Pass the reasoning options
-          reasoningEffort, // Pass the reasoning effort
-          reasoningSummary, // Pass the reasoning summary
-          toolUseEnabled, // Pass the tool use option
+          activeChat.webSearchEnabled,
+          activeChat.webSearchContextSize,
+          activeChat.reasoningEnabled,
+          activeChat.reasoningEffort,
+          activeChat.reasoningSummary,
+          activeChat.toolUseEnabled,
+          activeChat.memoryEnabled ?? true,
         );
       }
     }, 100);
@@ -510,6 +524,7 @@
           bind:reasoningEffort
           bind:reasoningSummary
           bind:toolUseEnabled
+          bind:memoryEnabled
           isTemporaryChat={activeChat.temporary || false}></ChatInput>
       {:else}
         <ChatInput
@@ -520,6 +535,7 @@
           bind:reasoningEffort
           bind:reasoningSummary
           bind:toolUseEnabled
+          bind:memoryEnabled
           {isLoading}
           {handleSubmit}
           {handleStop}
