@@ -8,6 +8,7 @@
   import { goto } from '$app/navigation';
   import { syncManager } from '$lib/stores/sync';
   import { exportUserData, importUserData, clearAllData } from '$lib/utils/dataExport';
+  import { SYSTEM_PROMPT_VARIABLES } from '$lib/utils/systemPromptVariables';
 
   $: instances = $providerInstances;
 
@@ -170,6 +171,19 @@
         class="h-32 w-full"
         placeholder="Enter system instructions for the AI"></textarea>
       <p class="text-secondary text-xs opacity-75">Instructions that set the behavior of the AI assistant</p>
+      <details class="mt-2">
+        <summary class="text-secondary cursor-pointer text-xs opacity-75 select-none">Available variables</summary>
+        <table class="mt-1 w-full text-xs">
+          <tbody>
+            {#each SYSTEM_PROMPT_VARIABLES as variable}
+              <tr class="border-b border-dashed last:border-0">
+                <td class="py-1 pr-3 font-mono">${variable.name}</td>
+                <td class="text-secondary py-1 opacity-75">{variable.description}</td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </details>
     </div>
   </div>
 

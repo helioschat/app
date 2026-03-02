@@ -5,6 +5,7 @@ import { availableModels } from '$lib/stores/modelCache';
 import { advancedSettings, providerInstances } from '$lib/stores/settings';
 import { syncThread } from '$lib/sync';
 import type { Attachment, Chat, MessageWithAttachments, ProviderInstance } from '$lib/types';
+import { resolveSystemPromptVariables } from '$lib/utils/systemPromptVariables';
 import { get } from 'svelte/store';
 import { v7 as uuidv7 } from 'uuid';
 import { MessageProcessor } from './messageProcessor';
@@ -137,7 +138,7 @@ export class StreamingController {
     let assistantMessage: MessageWithAttachments;
 
     const model = this.buildModel(providerInstanceId, modelId, webSearchEnabled);
-    const systemPrompt = get(advancedSettings).systemPrompt;
+    const systemPrompt = resolveSystemPromptVariables(get(advancedSettings).systemPrompt);
 
     const messagesForProvider = [];
     if (systemPrompt) {
@@ -309,7 +310,7 @@ export class StreamingController {
     }
 
     const model = this.buildModel(providerInstanceId, modelId, webSearchEnabled);
-    const systemPrompt = get(advancedSettings).systemPrompt;
+    const systemPrompt = resolveSystemPromptVariables(get(advancedSettings).systemPrompt);
 
     // Create assistant message
     const assistantMessage: MessageWithAttachments = {
